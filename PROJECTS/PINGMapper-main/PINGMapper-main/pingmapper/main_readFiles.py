@@ -1,0 +1,2364 @@
+# Part of PING-Mapper software
+#
+# GitHub: https://github.com/CameronBodine/PINGMapper
+# Website: https://cameronbodine.github.io/PINGMapper/ 
+#
+# Co-Developed by Cameron S. Bodine and Dr. Daniel Buscombe
+#
+# Inspired by PyHum: https://github.com/dbuscombe-usgs/PyHum
+#
+# MIT License
+#
+# Copyright (c) 2025 Cameron S. Bodine
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+import os, sys
+import re
+
+# Add 'pingmapper' to the path, may not need after pypi package...
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PACKAGE_DIR = os.path.dirname(SCRIPT_DIR)
+sys.path.append(PACKAGE_DIR)
+
+from pingmapper.funcs_common import *
+from pingmapper.funcs_model import DEPTH_DETECTION_AVAILABLE
+from pingmapper.class_sonObj import sonObj
+from pingmapper.class_portstarObj import portstarObj
+
+import shutil
+
+quiet_tensorflow_warnings()
+
+try:
+    with suppress_stdout_stderr():
+        from doodleverse_utils.imports import *
+except ImportError as e:
+    import traceback
+    print('\n' + '='*80)
+    print('Could not import Doodleverse Utils. Please install these packages to use PING-Mapper.')
+    print('They are not needed for GhostVision. Trying to continue...')
+    print('\nDetailed error information:')
+    print('-'*80)
+    print(f'Error Type: {type(e).__name__}')
+    print(f'Error Message: {str(e)}')
+    print('-'*80)
+    traceback.print_exc()
+    print('='*80 + '\n')
+except Exception as e:
+    import traceback
+    print('\n' + '='*80)
+    print('Unexpected error while importing Doodleverse Utils.')
+    print('Detailed error information:')
+    print('-'*80)
+    print(f'Error Type: {type(e).__name__}')
+    print(f'Error Message: {str(e)}')
+    print('-'*80)
+    traceback.print_exc()
+    print('='*80 + '\n')
+
+from scipy.signal import savgol_filter
+
+sys.path.insert(0, r'Z:\UDEL\PythonRepos\PINGVerter')
+
+from pingverter import (
+    hum2pingmapper,
+    low2pingmapper,
+    cerul2pingmapper,
+    gar2pingmapper,
+    jsf2pingmapper,
+    xtf2pingmapper,
+)
+
+import cv2
+import copy
+
+
+def _is_sidescan_beam(beam_name):
+    beam_name = str(beam_name)
+    return beam_name.startswith('ss_port') or beam_name.startswith('ss_star')
+
+
+def _sidescan_group_key(beam_name):
+    beam_name = str(beam_name)
+    if beam_name.startswith('ss_port_'):
+        return beam_name[len('ss_port_'):]
+    if beam_name.startswith('ss_star_'):
+        return beam_name[len('ss_star_'):]
+    if beam_name in {'ss_port', 'ss_star'}:
+        return 'default'
+    return beam_name
+
+
+def _extract_chunk_id_from_path(path):
+    name = os.path.splitext(os.path.basename(path))[0]
+    match = re.search(r'_(\d+)$', name)
+    if match:
+        return int(match.group(1))
+    return None
+
+
+def _sort_tile_paths(paths):
+    def _key(path):
+        chunk_id = _extract_chunk_id_from_path(path)
+        if chunk_id is None:
+            return (1, os.path.basename(path))
+        return (0, chunk_id)
+
+    return sorted(paths, key=_key)
+
+
+def _to_bgr8(img):
+    if img is None:
+        return None
+
+    if img.dtype == np.uint16:
+        img = (img / 257.0).astype(np.uint8)
+    elif img.dtype != np.uint8:
+        arr = np.asarray(img, dtype=np.float32)
+        finite = np.isfinite(arr)
+        if finite.any():
+            lo = arr[finite].min()
+            hi = arr[finite].max()
+            if hi > lo:
+                arr = (arr - lo) / (hi - lo)
+            else:
+                arr = np.zeros_like(arr)
+        else:
+            arr = np.zeros_like(arr)
+        img = (arr * 255.0).clip(0, 255).astype(np.uint8)
+
+    if img.ndim == 2:
+        return cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+
+    if img.ndim == 3 and img.shape[2] == 4:
+        return cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+
+    return img
+
+
+def _resize_height(img, target_h):
+    if img.shape[0] == target_h:
+        return img
+
+    h, w = img.shape[:2]
+    if h <= 0 or w <= 0 or target_h <= 0:
+        return img
+
+    new_w = max(1, int(round(w * (target_h / float(h)))))
+    return cv2.resize(img, (new_w, target_h), interpolation=cv2.INTER_AREA)
+
+
+def _resize_width(img, target_w):
+    if img.shape[1] == target_w:
+        return img
+
+    h, w = img.shape[:2]
+    if h <= 0 or w <= 0 or target_w <= 0:
+        return img
+
+    new_h = max(1, int(round(h * (target_w / float(w)))))
+    return cv2.resize(img, (target_w, new_h), interpolation=cv2.INTER_AREA)
+
+
+def _downscale_if_needed(img, max_dim=20000):
+    h, w = img.shape[:2]
+    max_hw = max(h, w)
+    if max_hw <= max_dim:
+        return img
+
+    scale = float(max_dim) / float(max_hw)
+    new_w = max(1, int(round(w * scale)))
+    new_h = max(1, int(round(h * scale)))
+    print(f"\n\tDownscaling waterfall from {w}x{h} to {new_w}x{new_h} to control memory usage.")
+    return cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_AREA)
+
+
+def _fit_width(img, max_w):
+    h, w = img.shape[:2]
+    if w <= max_w:
+        return img
+    scale = float(max_w) / float(w)
+    new_h = max(1, int(round(h * scale)))
+    return cv2.resize(img, (max_w, new_h), interpolation=cv2.INTER_AREA)
+
+
+def _collect_mode_tile_paths(son, mode):
+    mode_dir = os.path.join(son.projDir, son.beamName, mode)
+    if not os.path.exists(mode_dir):
+        return []
+
+    exts = ['*.png', '*.jpg', '*.jpeg', '*.tif', '*.tiff']
+    paths = []
+    for ext in exts:
+        paths.extend(glob(os.path.join(mode_dir, ext)))
+
+    return _sort_tile_paths(paths)
+
+
+def _get_chunk_range_map(son):
+    chunk_range = {}
+    try:
+        meta_path = getattr(son, 'sonMetaFile', None)
+        if not meta_path or not os.path.exists(meta_path):
+            return chunk_range
+
+        df = pd.read_csv(meta_path, usecols=['chunk_id', 'ping_cnt', 'pixM'])
+        if len(df) == 0:
+            return chunk_range
+
+        df['chunk_id'] = pd.to_numeric(df['chunk_id'], errors='coerce')
+        df['ping_cnt'] = pd.to_numeric(df['ping_cnt'], errors='coerce')
+        df['pixM'] = pd.to_numeric(df['pixM'], errors='coerce')
+        df = df.dropna(subset=['chunk_id', 'ping_cnt', 'pixM'])
+        if len(df) == 0:
+            return chunk_range
+
+        # Approximate chunk range in meters from ping count and pixel size.
+        df['range_m'] = df['ping_cnt'] * df['pixM']
+        grouped = df.groupby('chunk_id', as_index=False)['range_m'].median()
+        for _, row in grouped.iterrows():
+            cid = int(row['chunk_id'])
+            rng = float(row['range_m'])
+            if np.isfinite(rng) and rng > 0:
+                chunk_range[cid] = rng
+    except Exception:
+        return {}
+
+    return chunk_range
+
+
+def _range_reference_m(chunk_range_map):
+    if not chunk_range_map:
+        return None
+    vals = [float(v) for v in chunk_range_map.values() if np.isfinite(v) and float(v) > 0]
+    if len(vals) == 0:
+        return None
+    return float(np.median(vals))
+
+
+def _pad_to_height(img, target_h):
+    h, w = img.shape[:2]
+    if h >= target_h:
+        return img
+    pad_h = target_h - h
+    return cv2.copyMakeBorder(img, 0, pad_h, 0, 0, cv2.BORDER_CONSTANT, value=0)
+
+
+def _pad_to_height_center(img, target_h):
+    h, w = img.shape[:2]
+    if h >= target_h:
+        return img
+    pad_h = target_h - h
+    top = pad_h // 2
+    bottom = pad_h - top
+    return cv2.copyMakeBorder(img, top, bottom, 0, 0, cv2.BORDER_CONSTANT, value=0)
+
+
+def _pad_to_width(img, target_w):
+    h, w = img.shape[:2]
+    if w >= target_w:
+        return img
+    pad_w = target_w - w
+    return cv2.copyMakeBorder(img, 0, 0, 0, pad_w, cv2.BORDER_CONSTANT, value=0)
+
+
+def _scale_tile_by_range(img, tile_path, chunk_range_map=None, ref_range_m=None, base_h=None):
+    if img is None:
+        return None
+    if not (chunk_range_map and ref_range_m and base_h):
+        return img
+
+    chunk_id = _extract_chunk_id_from_path(tile_path)
+    if chunk_id is None:
+        return img
+
+    rng = chunk_range_map.get(chunk_id, None)
+    if rng is None or (not np.isfinite(rng)) or rng <= 0:
+        return img
+
+    scale = float(rng) / float(ref_range_m)
+    scale = max(0.25, min(4.0, scale))
+    target_h = max(1, int(round(base_h * scale)))
+    return _resize_height(img, target_h)
+
+
+def _build_strip_from_tiles(tile_paths, chunk_range_map=None, ref_range_m=None):
+    if len(tile_paths) == 0:
+        return None
+
+    imgs = []
+    base_h = None
+    if ref_range_m is None:
+        ref_range_m = _range_reference_m(chunk_range_map)
+
+    for path in tile_paths:
+        img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
+        if img is None:
+            continue
+
+        if base_h is None:
+            base_h = img.shape[0]
+
+        if chunk_range_map and ref_range_m and base_h:
+            chunk_id = _extract_chunk_id_from_path(path)
+            rng = chunk_range_map.get(chunk_id, None)
+            if rng is not None and np.isfinite(rng) and rng > 0:
+                scale = float(rng) / float(ref_range_m)
+                scale = max(0.25, min(4.0, scale))
+                target_h = max(1, int(round(base_h * scale)))
+                img = _resize_height(img, target_h)
+
+        imgs.append(img)
+
+    if len(imgs) == 0:
+        return None
+
+    # Preserve range-driven vertical scaling by padding each tile to common max height.
+    max_h = max(img.shape[0] for img in imgs)
+    imgs = [_pad_to_height(img, max_h) for img in imgs]
+    strip = cv2.hconcat(imgs)
+    return strip
+
+
+def _build_sidescan_combined(port_tiles, star_tiles, port_range_map=None, star_range_map=None, ref_range_m=None):
+    if len(port_tiles) == 0 or len(star_tiles) == 0:
+        return None
+
+    def _map_by_chunk(paths):
+        mapped = {}
+        for p in paths:
+            cid = _extract_chunk_id_from_path(p)
+            if cid is not None:
+                mapped[int(cid)] = p
+        return mapped
+
+    port_by_chunk = _map_by_chunk(port_tiles)
+    star_by_chunk = _map_by_chunk(star_tiles)
+
+    # Newest chunk first so newer data sits at the top of the stitched waterfall,
+    # while the oldest chunk remains at the bottom for the initial video frame.
+    common = sorted(set(port_by_chunk.keys()) & set(star_by_chunk.keys()), reverse=True)
+    if len(common) == 0:
+        pair_paths = list(zip(port_tiles, star_tiles))
+        pair_paths = list(reversed(pair_paths))
+    else:
+        pair_paths = [(port_by_chunk[c], star_by_chunk[c]) for c in common]
+
+    # Baseline heights for range-based scaling.
+    base_h_port = None
+    base_h_star = None
+    for p_path, s_path in pair_paths:
+        if base_h_port is None:
+            p_img = cv2.imread(p_path, cv2.IMREAD_UNCHANGED)
+            if p_img is not None:
+                base_h_port = p_img.shape[0]
+        if base_h_star is None:
+            s_img = cv2.imread(s_path, cv2.IMREAD_UNCHANGED)
+            if s_img is not None:
+                base_h_star = s_img.shape[0]
+        if (base_h_port is not None) and (base_h_star is not None):
+            break
+
+    rows = []
+    for p_path, s_path in pair_paths:
+        p_img = cv2.imread(p_path, cv2.IMREAD_UNCHANGED)
+        s_img = cv2.imread(s_path, cv2.IMREAD_UNCHANGED)
+        if p_img is None or s_img is None:
+            continue
+
+        p_img = _scale_tile_by_range(p_img, p_path, port_range_map, ref_range_m, base_h_port)
+        s_img = _scale_tile_by_range(s_img, s_path, star_range_map, ref_range_m, base_h_star)
+
+        # Apply side-scan waterfall geometry: rotate both CCW, then flip port to place nadir at center.
+        p_img = cv2.rotate(p_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        s_img = cv2.rotate(s_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        p_img = cv2.flip(p_img, 1)
+
+        p_img = _to_bgr8(p_img)
+        s_img = _to_bgr8(s_img)
+
+        row_h = max(p_img.shape[0], s_img.shape[0])
+        # Align each chunk pair on the vertical centerline.
+        p_img = _pad_to_height_center(p_img, row_h)
+        s_img = _pad_to_height_center(s_img, row_h)
+
+        # Keep chunk row widths comparable before vertical stacking.
+        row = cv2.hconcat([p_img, s_img])
+        rows.append(row)
+
+    if len(rows) == 0:
+        return None
+
+    max_w = max(r.shape[1] for r in rows)
+    rows = [_pad_to_width(r, max_w) for r in rows]
+    return cv2.vconcat(rows)
+
+
+def _window_positions(length, window_size, stride, reverse=False):
+    if length <= window_size:
+        positions = [0]
+    else:
+        positions = list(range(0, length - window_size + 1, stride))
+        if positions[-1] != (length - window_size):
+            positions.append(length - window_size)
+
+    if reverse:
+        positions = list(reversed(positions))
+
+    return positions
+
+
+def _export_scrolling_video(
+    img,
+    out_video,
+    axis='x',
+    reverse=False,
+    fps=10,
+    target_size=(1920, 1080),
+    stride=64,
+):
+    os.makedirs(os.path.dirname(out_video), exist_ok=True)
+
+    h, w = img.shape[:2]
+    target_w, target_h = int(target_size[0]), int(target_size[1])
+    target_w = max(64, target_w)
+    target_h = max(64, target_h)
+
+    # Derive crop window from target resolution while preserving aspect ratio.
+    target_aspect = target_w / float(target_h)
+    win_w = min(w, target_w)
+    win_h = min(h, target_h)
+    if win_w <= 0 or win_h <= 0:
+        return
+
+    cur_aspect = win_w / float(win_h)
+    if cur_aspect > target_aspect:
+        win_w = max(1, int(round(win_h * target_aspect)))
+    else:
+        win_h = max(1, int(round(win_w / target_aspect)))
+
+    # If image is larger than target, prefer at least target-sized crop on scroll axis.
+    if axis == 'y' and h >= target_h:
+        win_h = target_h
+        win_w = min(w, max(1, int(round(win_h * target_aspect))))
+    elif axis != 'y' and w >= target_w:
+        win_w = target_w
+        win_h = min(h, max(1, int(round(win_w / target_aspect))))
+
+    # Ensure stride is valid and not too tiny for large windows.
+    stride = int(stride)
+    if stride <= 0:
+        stride = max(1, (win_h if axis == 'y' else win_w) // 10)
+    if axis == 'y':
+        win = min(win_h, h)
+        positions = _window_positions(h, win, stride, reverse=reverse)
+        first_frame = img[positions[0]:positions[0] + win, :win_w]
+    else:
+        win = min(win_w, w)
+        positions = _window_positions(w, win, stride, reverse=reverse)
+        first_frame = img[:win_h, positions[0]:positions[0] + win]
+
+    first_frame_bgr = _to_bgr8(first_frame)
+    frame_h, frame_w = target_h, target_w
+    writer = cv2.VideoWriter(
+        out_video,
+        cv2.VideoWriter_fourcc(*'mp4v'),
+        max(1, int(fps)),
+        (frame_w, frame_h),
+    )
+
+    if not writer.isOpened():
+        print(f"\n\tWARNING: Could not open video writer for {out_video}")
+        return
+
+    for pos in positions:
+        if axis == 'y':
+            frame = img[pos:pos + win, :win_w]
+        else:
+            frame = img[:win_h, pos:pos + win]
+
+        frame_bgr = _to_bgr8(frame)
+        if frame_bgr.shape[0] != frame_h or frame_bgr.shape[1] != frame_w:
+            frame_bgr = cv2.resize(frame_bgr, (frame_w, frame_h), interpolation=cv2.INTER_AREA)
+        writer.write(frame_bgr)
+
+    writer.release()
+
+
+def _export_waterfall_products(
+    sonObjs,
+    wcp,
+    wcm,
+    wcr,
+    wco,
+    mode_selection='auto',
+    ss_image=False,
+    ss_video=False,
+    di_image=False,
+    di_video=False,
+    fps=10,
+    video_resolution='1080p',
+    stride=64,
+):
+    if not (ss_image or ss_video or di_image or di_video):
+        return
+
+    mode_flags = {
+        'wcp': bool(wcp),
+        'wcm': bool(wcm),
+        'src': bool(wcr),
+        'wco': bool(wco),
+    }
+
+    mode_selection = str(mode_selection).strip().lower()
+    if mode_selection in {'wcp', 'src', 'wcp+src'}:
+        if mode_selection == 'wcp':
+            modes = ['wcp']
+        elif mode_selection == 'src':
+            modes = ['src']
+        else:
+            modes = ['wcp', 'src']
+    else:
+        modes = [m for m, enabled in mode_flags.items() if enabled]
+
+    if len(modes) == 0:
+        print('\n\tWaterfall export requested, but no sonogram tile modes are enabled (wcp/wcm/wcr/wco). Skipping.')
+        return
+
+    res_key = str(video_resolution).strip().lower()
+    if res_key in {'4k', '2160p'}:
+        target_size = (3840, 2160)
+    elif res_key in {'1080p', 'fhd'}:
+        target_size = (1920, 1080)
+    elif res_key in {'720p', 'hd'}:
+        target_size = (1280, 720)
+    elif res_key in {'4xxp', '480p'}:
+        target_size = (854, 480)
+    else:
+        target_size = (1920, 1080)
+
+    print('\nGenerating waterfall products...')
+
+    # Group side-scan beams into port/star pairs by suffix key.
+    ss_groups = {}
+    down_beams = []
+    for son in sonObjs:
+        beam = str(getattr(son, 'beamName', ''))
+        if _is_sidescan_beam(beam):
+            key = _sidescan_group_key(beam)
+            group = ss_groups.setdefault(key, {})
+            if beam.startswith('ss_port'):
+                group['port'] = son
+            elif beam.startswith('ss_star'):
+                group['star'] = son
+        else:
+            down_beams.append(son)
+
+    # Side-scan: combine port/star into one waterfall and scroll top -> bottom.
+    if ss_image or ss_video:
+        ss_any = False
+        for group_key, group in sorted(ss_groups.items()):
+            if 'port' not in group or 'star' not in group:
+                continue
+
+            proj_dir = group['port'].projDir
+            port_range_map = _get_chunk_range_map(group['port'])
+            star_range_map = _get_chunk_range_map(group['star'])
+            shared_ref = _range_reference_m(port_range_map)
+            if shared_ref is None:
+                shared_ref = _range_reference_m(star_range_map)
+
+            for mode in modes:
+                port_tiles = _collect_mode_tile_paths(group['port'], mode)
+                star_tiles = _collect_mode_tile_paths(group['star'], mode)
+                if len(port_tiles) == 0 or len(star_tiles) == 0:
+                    continue
+
+                ss_any = True
+
+                combined = _build_sidescan_combined(
+                    port_tiles,
+                    star_tiles,
+                    port_range_map=port_range_map,
+                    star_range_map=star_range_map,
+                    ref_range_m=shared_ref,
+                )
+                if combined is None:
+                    continue
+
+                # Ensure both port and star fully fit inside output frame width.
+                combined = _fit_width(combined, target_size[0])
+                combined = _downscale_if_needed(combined)
+
+                out_dir = os.path.join(proj_dir, 'waterfall_exports', 'sidescan', mode)
+                os.makedirs(out_dir, exist_ok=True)
+
+                if ss_image:
+                    cv2.imwrite(os.path.join(out_dir, 'waterfall.png'), combined)
+
+                if ss_video:
+                    _export_scrolling_video(
+                        combined,
+                        os.path.join(out_dir, 'waterfall_scroll_t2b.mp4'),
+                        axis='y',
+                        reverse=True,
+                        fps=fps,
+                        target_size=target_size,
+                        stride=stride,
+                    )
+
+        if not ss_any:
+            print('\n\tNo side-scan tiles found for requested waterfall mode(s).')
+            print('\tEnable or select matching mode(s), e.g., WCP and/or SRC.')
+
+    # Down-imaging: generate per-beam waterfall and scroll right -> left.
+    if di_image or di_video:
+        di_any = False
+        for son in down_beams:
+            beam = str(getattr(son, 'beamName', 'unknown_beam'))
+            proj_dir = son.projDir
+            down_range_map = _get_chunk_range_map(son)
+            down_ref = _range_reference_m(down_range_map)
+
+            for mode in modes:
+                tiles = _collect_mode_tile_paths(son, mode)
+                if len(tiles) == 0:
+                    continue
+
+                di_any = True
+
+                strip = _build_strip_from_tiles(
+                    tiles,
+                    chunk_range_map=down_range_map,
+                    ref_range_m=down_ref,
+                )
+                if strip is None:
+                    continue
+
+                strip = _downscale_if_needed(strip)
+
+                out_dir = os.path.join(proj_dir, 'waterfall_exports', 'down_imaging', mode)
+                os.makedirs(out_dir, exist_ok=True)
+
+                if di_image:
+                    cv2.imwrite(os.path.join(out_dir, f'{beam}_waterfall.png'), strip)
+
+                if di_video:
+                    _export_scrolling_video(
+                        strip,
+                        os.path.join(out_dir, f'{beam}_waterfall_scroll.mp4'),
+                        axis='x',
+                        reverse=False,
+                        fps=fps,
+                        target_size=target_size,
+                        stride=stride,
+                    )
+
+        if not di_any:
+            print('\n\tNo down-imaging tiles found for requested waterfall mode(s).')
+            print('\tEnable or select matching mode(s), e.g., WCP and/or SRC.')
+
+
+#===========================================
+def read_master_func(logfilename='',
+                     project_mode=0,
+                     script='',
+                     inFile='',
+                     sonFiles='',
+                     projDir='',
+                     coverage=False,
+                     aoi=False,
+                     max_heading_deviation = False,
+                     max_heading_distance = False,
+                     min_speed = False,
+                     max_speed = False,
+                     time_table = False,
+                     dq_table = False,
+                     dq_time_field = False,
+                     dq_flag_field = False,
+                     dq_keep_values = False,
+                     dq_src_utc_offset = 0.0,
+                     dq_target_utc_offset = 0.0,
+                     dq_time_offset = 0.0,
+                     filter_coord_outliers = True,
+                     coord_iqr_scale = 3.0,
+                     tempC=10,
+                     nchunk=500,
+                     cropRange=0,
+                     exportUnknown=False,
+                     fixNoDat=False,
+                     threadCnt=0,
+                     pix_res_son=0,
+                     pix_res_map=0,
+                     x_offset=0,
+                     y_offset=0,
+                     export_16bit=False,
+                     export_colormap_uint8=True,
+                     export_16bit_colormap=False,
+                     tileFile='.png',
+                     egn=False,
+                     egn_stretch=0,
+                     egn_stretch_factor=1,
+                     tone_gamma=1.0,
+                     tone_gain=1.0,
+                     sonar_db_transform=False,
+                     sonar_clahe=False,
+                     sonar_clahe_global=True,
+                     sonar_clahe_clip_limit=0.01,
+                     wcp=False,
+                     wcm=False,
+                     wcr=False,
+                     wco=False,
+                     sonogram_colorMap='Greys_r',
+                     mask_shdw=False,
+                     mask_wc=False,
+                     spdCor=False,
+                     maxCrop=False,
+                     USE_GPU=False,
+                     remShadow=0,
+                     detectDep=0,
+                     smthDep=0,
+                     adjDep=0,
+                     pltBedPick=False,
+                     rect_wcp=False,
+                     rect_wcr=False,
+                     rubberSheeting=True,
+                     rectMethod='COG',
+                     rectInterpDist=50,
+                     son_colorMap='Greys',
+                     pred_sub=0,
+                     map_sub=0,
+                     export_poly=False,
+                     map_predict=0,
+                     pltSubClass=False,
+                     map_class_method='max',
+                     mosaic_nchunk=50,
+                     mosaic=False,
+                     map_mosaic=0,
+                     banklines=False,
+                     side_scan_only=False,
+                     waterfall_ss_image=False,
+                     waterfall_ss_video=False,
+                     waterfall_di_image=False,
+                     waterfall_di_video=False,
+                     waterfall_video_fps=10,
+                     waterfall_video_resolution='1080p',
+                     waterfall_mode_selection='auto',
+                     waterfall_window_stride=64,
+                     return_context=False,
+                     **kwargs):
+
+    '''
+    Main script to read data from Humminbird sonar recordings. Scripts have been
+    tested on 9xx, 11xx, Helix, Solix and Onyx models but should work with any
+    Humminbird model (updated July 2021).
+
+    ----------
+    Parameters
+    ----------
+    sonFiles : str
+        DESCRIPTION - Path to .SON file directory associated w/ .DAT file.
+        EXAMPLE -     sonFiles = 'C:/PINGMapper/SonarRecordings/R00001'
+    humFile : str
+        DESCRIPTION - Path to .DAT file associated w/ .SON directory.
+        EXAMPLE -     humFile = 'C:/PINGMapper/SonarRecordings/R00001.DAT'
+    projDir : str
+        DESCRIPTION - Path to output directory.
+        EXAMPLE -     projDir = 'C:/PINGMapper/procData/R00001'
+    tempC : float : [Default=10]
+        DESCRIPTION - Water temperature (Celcius) during survey.
+        EXAMPLE -     tempC = 10
+    nchunk : int : [Default=500]
+        DESCRIPTION - Number of pings per chunk.  Chunk size dictates size of
+                      sonar tiles (sonograms).  Most testing has been on chunk
+                      sizes of 500 (recommended).
+        EXAMPLE -     nchunk = 500
+    exportUnknown : bool [Default=False]
+        DESCRIPTION - Flag indicating if unknown attributes in ping
+                      should be exported or not.  If a user of PING Mapper
+                      determines what an unkown attribute actually is, please
+                      report using a github issue.
+        EXAMPLE -     exportUnknown = False
+    wcp : bool : [Default=False]
+        DESCRIPTION - Flag to export non-rectified sonar tiles w/ water column
+                      present (wcp).
+                      True = export wcp sonar tiles;
+                      False = do not export wcp sonar tiles.
+        EXAMPLE -     wcp = True
+    wcr : bool : [Default=False]
+        DESCRIPTION - Flag to export non-rectified sonar tiles w/ water column
+                      removed (wcr).
+                      True = export wcr sonar tiles;
+                      False = do not export wcr sonar tiles.
+        EXAMPLE -     wcr = True
+    detectDep : int : [Default=0]
+        DESCRIPTION - Determines if depth will be automatically estimated for
+                      water column removal.
+                      0 = use Humminbird depth;
+                      1 = auto pick using Zheng et al. 2021;
+                      2 = auto pick using binary thresholding.
+       EXAMPLE -     detectDep = 0
+    smthDep : bool : [Default=False]
+        DESCRIPTION - Apply Savitzky-Golay filter to depth data.  May help smooth
+                      noisy depth estimations.  Recommended if using Humminbird
+                      depth to remove water column (detectDep=0).
+                      True = smooth depth estimate;
+                      False = do not smooth depth estimate.
+        EXAMPLE -     smthDep = False
+    adjDep : int : [Default=0]
+        DESCRIPTION - Specify additional depth adjustment (in pixels) for water
+                      column removal.  Does not affect the depth estimate stored
+                      in exported metadata *.CSV files.
+                      Integer > 0 = increase depth estimate by x pixels.
+                      Integer < 0 = decrease depth estimate by x pixels.
+                      0 = use depth estimate with no adjustment.
+        EXAMPLE -     adjDep = 5
+    pltBedPick : bool : [Default=False]
+        DESCRIPTION - Plot bedpick(s) on non-rectified sonogram for visual
+                      inspection.
+                      True = plot bedpick(s);
+                      False = do not plot bedpick(s).
+        EXAMPLE -     pltBedPick = True
+    threadCnt : int : [Default=0]
+        DESCRIPTION - The maximum number of threads to use during multithreaded
+                      processing. More threads==faster data export.
+                      0 = Use all available threads;
+                      <0 = Negative values will be subtracted from total available
+                        threads. i.e., -2 -> Total threads (8) - 2 == 6 threads.
+                      >0 = Number of threads to use, up to total available threads.
+        EXAMPLE -     threadCnt = 0
+
+    -------
+    Returns
+    -------
+    Project directory with following structure and outputs, pending parameter
+    selection:
+
+    |--projDir
+    |
+    |--|ds_highfreq (if B001.SON available) [wcp=True]
+    |  |--wcp
+    |     |--*.PNG : Down-looking sonar (ds) 200 kHz sonar tiles (non-rectified),
+    |     |          w/ water column present
+    |
+    |--|ds_lowfreq (if B000.SON available) [wcp=True]
+    |  |--wcp
+    |     |--*.PNG : Down-looking sonar (ds) 83 kHz sonar tiles (non-rectified),
+    |     |          w/ water column present
+    |
+    |--|ds_vhighfreq (if B004.SON available) [wcp=True]
+    |  |--wcp
+    |     |--*.PNG : Down-looking sonar (ds) 1.2 mHz sonar tiles (non-rectified),
+    |     |          w/ water column present
+    |
+    |--|meta
+    |  |--B000_ds_lowfreq_meta.csv : ping metadata for B000.SON (if present)
+    |  |--B000_ds_lowfreq_meta.meta : Pickled sonObj instance for B000.SON (if present)
+    |  |--B001_ds_highfreq_meta.csv : ping metadata for B001.SON (if present)
+    |  |--B001_ds_highfreq_meta.meta : Pickled sonObj instance for B001.SON (if present)
+    |  |--B002_ss_port_meta.csv : ping metadata for B002.SON (if present)
+    |  |--B002_ss_port_meta.meta : Pickled sonObj instance for B002.SON (if present)
+    |  |--B003_ss_star_meta.csv : ping metadata for B003.SON (if present)
+    |  |--B003_ss_star_meta.meta : Pickled sonObj instance for B003.SON (if present)
+    |  |--B004_ds_vhighfreq.csv : ping metadata for B004.SON (if present)
+    |  |--B004_ds_vhighfreq.meta : Pickled sonObj instance for B004.SON (if present)
+    |  |--DAT_meta.csv : Sonar recording metadata for *.DAT.
+    |
+    |--|ss_port (if B002.SON OR B003.SON [tranducer flipped] available)
+    |  |--wcr [wxr=True]
+    |     |--*.PNG : Portside side scan (ss) sonar tiles (non-rectified), w/
+    |     |          water column removed (wcr) & slant range corrected
+    |  |--wcp [wcp=True]
+    |     |--*.PNG : Portside side scan (ss) sonar tiles (non-rectified), w/
+    |     |          water column present (wcp)
+
+    |--|ss_star (if B003.SON OR B002.SON [tranducer flipped] available)
+    |  |--wcr [wcr=True]
+    |     |--*.PNG : Starboard side scan (ss) sonar tiles (non-rectified), w/
+    |     |          water column removed (wcr) & slant range corrected
+    |  |--wcp [wcp=True]
+    |     |--*.PNG : Starboard side scan (ss) sonar tiles (non-rectified), w/
+    |     |          water column present (wcp)
+    '''
+
+    #####################################
+    # Show version
+    from pingmapper.version import __version__
+    print("\nPING-Mapper v{}".format(__version__))
+
+
+    #####################################
+    # Download models if they don't exist
+    modelDir = get_segmentation_model_dir()
+    if not os.path.exists(modelDir):
+        downloadSegmentationModelsv1_0(modelDir)
+
+
+
+    ###############################################
+    # Specify multithreaded processing thread count
+    if threadCnt==0: # Use all threads
+        threadCnt=cpu_count()
+    elif threadCnt<0: # Use all threads except threadCnt; i.e., (cpu_count + (-threadCnt))
+        threadCnt=cpu_count()+threadCnt
+        if threadCnt<0: # Make sure not negative
+            threadCnt=1
+    elif threadCnt<1: # Use proportion of available threads
+        threadCnt = int(cpu_count()*threadCnt)
+        # Make even number
+        if threadCnt % 2 == 1:
+            threadCnt -= 1
+    else: # Use specified threadCnt if positive
+        pass
+
+    if threadCnt>cpu_count(): # If more than total avail. threads, make cpu_count()
+        threadCnt=cpu_count();
+        print("\nWARNING: Specified more process threads then available, \nusing {} threads instead.".format(threadCnt))
+
+
+    #######################################
+    # Use PINGVerter to read the sonar file
+    #######################################
+
+    instDepAvail = True
+    start_time = time.time()
+    # Determine sonar recording type
+    _, file_type = os.path.splitext(inFile)
+    file_type = file_type.lower()
+
+    # Prepare Humminbird file for PINGMapper
+    if file_type == '.dat':
+        sonar_obj = hum2pingmapper(inFile, projDir, nchunk, tempC, exportUnknown)
+
+    # Prepare Lowrance file for PINGMapper    
+    elif file_type == '.sl2' or file_type == '.sl3':
+        sonar_obj = low2pingmapper(inFile, projDir, nchunk, tempC, exportUnknown)
+
+    # Prepare Garmin file for PINGMapper
+    elif file_type == '.rsd':
+        sonar_obj = gar2pingmapper(inFile, projDir, nchunk, tempC, exportUnknown)
+
+    # Prepare Cerulean file for PINGMapper
+    elif file_type == '.svlog':
+        sonar_obj = cerul2pingmapper(inFile, projDir, nchunk, tempC, exportUnknown)
+        detectDep = 1 if DEPTH_DETECTION_AVAILABLE else 2
+        instDepAvail = False
+
+    # Prepare JSF file for PINGMapper
+    elif file_type == '.jsf':
+        sonar_obj = jsf2pingmapper(inFile, projDir, nchunk=nchunk, tempC=tempC, exportUnknown=exportUnknown)
+
+    # Prepare XTF file for PINGMapper
+    elif file_type == '.xtf':
+        sonar_obj = xtf2pingmapper(inFile, projDir, nchunk=nchunk, tempC=tempC, exportUnknown=exportUnknown)
+
+    # Prepare SDF file for PINGMapper
+    elif file_type == '.sdf':
+        sonar_obj = sdf2pingmapper(inFile, projDir, nchunk=nchunk, tempC=tempC, exportUnknown=exportUnknown)
+
+    # Unknown
+    else:
+        print('\n\nERROR!\n\nFile type {} not supported at this time.'.format(file_type))
+        sys.exit()
+
+    nav_available = bool(getattr(sonar_obj, 'has_position', True))
+    side_scan_only = bool(side_scan_only)
+
+    # Sonar-only fallback for sources without navigation fields (e.g., some Cerulean logs).
+    # Disable filters that rely on geospatial motion/position so processing can continue.
+    if getattr(sonar_obj, 'has_position', True) is False:
+        nav_filters_requested = (
+            (max_heading_deviation > 0) or
+            (min_speed > 0) or
+            (max_speed > 0) or
+            bool(aoi)
+        )
+
+        if nav_filters_requested:
+            print('\nWARNING: Navigation fields are unavailable for this recording (sonar-only mode).')
+            print('Disabling nav-dependent filters: max_heading_deviation, min_speed, max_speed, aoi.')
+
+        max_heading_deviation = 0
+        min_speed = 0
+        max_speed = 0
+        aoi = False
+
+    ####################
+    # Create son objects
+    ####################
+
+    # print(sonar_obj)
+
+    # Get available beams and metadata
+    beamMeta = sonar_obj.beamMeta
+
+    # Create son objects
+    sonObjs = []
+    for beam, meta in beamMeta.items():
+
+        # Create the sonObj
+        son = sonObj(meta['sonFile'], sonar_obj.humFile, projDir, sonar_obj.tempC, sonar_obj.nchunk)
+
+        son.flip_port = False
+        if str(beam).startswith('B002'):
+            if file_type in ['.sl2', '.sl3', '.xtf']:
+                son.flip_port = True
+        son.range_crop_after_flip = False
+
+        # Store other parameters as attributes
+        son.fixNotDat = fixNoDat
+        son.metaDir = sonar_obj.metaDir
+        son.beamName = meta['beamName']
+        if file_type == '.xtf':
+            is_xtf_sidescan = str(son.beamName).startswith('ss_port') or str(son.beamName).startswith('ss_star')
+            son.flip_port = str(son.beamName).startswith('ss_port')
+            son.range_crop_after_flip = is_xtf_sidescan
+        son.beam = beam
+        son.headBytes = sonar_obj.headBytes
+        # son.pixM = sonar_obj.pixM
+        son.isOnix = sonar_obj.isOnix
+        son.trans = sonar_obj.trans
+        son.humDat = sonar_obj.humDat
+        # if son.beamName == 'ss_port' or son.beamName == 'ss_star':
+        #     son.son8bit = sonar_obj.son8bit
+        # else:
+        son.son8bit = sonar_obj.son8bit
+        if hasattr(sonar_obj, 'sample_dtype'):
+            son.sample_dtype = sonar_obj.sample_dtype
+        elif file_type == '.svlog':
+            # Cerulean pwr_results are uint16 values in little-endian order.
+            son.sample_dtype = '<u2'
+        if hasattr(sonar_obj, 'export_raw_16bit'):
+            son.export_raw_16bit = sonar_obj.export_raw_16bit
+        if hasattr(son, 'sample_dtype'):
+            try:
+                son.output_bit_depth = 16 if np.dtype(son.sample_dtype).itemsize > 1 else 8
+            except Exception:
+                son.output_bit_depth = 8
+        son.export_16bit = bool(export_16bit) and (
+            (getattr(son, 'output_bit_depth', 8) > 8) or (not bool(getattr(son, 'son8bit', True)))
+        )
+        son.export_colormap_uint8 = bool(export_colormap_uint8)
+        son.export_beam = True
+        son.tvg = False
+        son.tvg_spreading_k = float(getattr(son, 'tvg_spreading_k', 40.0))
+        son.tvg_absorption_db_m = float(getattr(son, 'tvg_absorption_db_m', 0.035))
+        son.tvg_min_range = float(getattr(son, 'tvg_min_range', 0.2))
+        son.tvg_cap_db = float(getattr(son, 'tvg_cap_db', 50.0))
+
+        # print(son.beamName, son.son8bit)
+
+
+        if pix_res_son == 0:
+            son.pix_res_son = 0
+        else:
+            son.pix_res_son = pix_res_son
+        if pix_res_map == 0:
+            son.pix_res_map = 0
+        else:
+            son.pix_res_map = pix_res_map
+
+        son.sonMetaFile = meta['metaCSV']
+
+        if sonFiles:
+            if any(son.beam in s for s in sonFiles):
+                sonObjs.append(son)
+            else:
+                pass
+        else:
+            sonObjs.append(son)
+
+    # Both port and starboard are required for side scan workflows
+    ## Make copy of ss if both aren't available
+    ss_chan_avail = []
+    for son in sonObjs:
+        if _is_sidescan_beam(son.beamName):
+            ss_chan_avail.append(son)
+    if len(ss_chan_avail) == 0:
+        # print('\n\nNo side-scan channels available. Aborting!')
+        # sys.exit()
+
+        print('\n\nNo side-scan channels available!\nUpdating processing parameters as necessary...')
+        print('\nFiltering not avaialable...')
+        max_heading_deviation = 0
+        min_speed = 0
+        max_speed = 0
+        aoi = ''
+        time_table = ''
+
+        print('\nAuto depth picking not available...')
+        detectDep = 0
+        pltBedPick = False
+
+        print('\nShadow removal not available')
+        remShadow = 0
+        pred_sub = False
+
+        print('\nEGN not available...')
+        egn = False
+
+        print('\nWCO and WCM not available...')
+        wco = False
+        wcm = False
+
+
+
+    elif len(ss_chan_avail) == 1:
+        son = ss_chan_avail[0]
+        print('\n\nMaking copy of {} to ensure PINGMapper compatibility'.format(son.beamName))
+        origBeam = str(son.beamName)
+        print(son.beam, son.beamName)
+        son_copy = copy.deepcopy(ss_chan_avail[0])
+
+        if origBeam.startswith('ss_port'):
+            son_copy.beamName = origBeam.replace('ss_port', 'ss_star', 1)
+        elif origBeam.startswith('ss_star'):
+            son_copy.beamName = origBeam.replace('ss_star', 'ss_port', 1)
+        else:
+            son_copy.beamName = 'ss_star'
+
+        orig_beam_code = str(son.beam)
+        if orig_beam_code.startswith('B002'):
+            son_copy.beam = orig_beam_code.replace('B002', 'B003', 1)
+        elif orig_beam_code.startswith('B003'):
+            son_copy.beam = orig_beam_code.replace('B003', 'B002', 1)
+        else:
+            son_copy.beam = 'B003'
+
+        son_copy.export_beam = False
+
+        # Make copy of meta file
+        oldMeta = son.sonMetaFile
+        newMeta = '{}_{}_meta_copy.csv'.format(son_copy.beam, son_copy.beamName)
+        newMeta = os.path.join(os.path.dirname(oldMeta), newMeta)
+        shutil.copy(oldMeta, newMeta)
+        son_copy.sonMetaFile = newMeta
+        son_copy.outDir = os.path.join(os.path.dirname(oldMeta), son_copy.beamName)
+        sonObjs.append(son_copy)
+    else:
+        pass
+
+    if side_scan_only:
+        if len(ss_chan_avail) == 0:
+            print('\n\nSide-scan only mode enabled, but no side-scan channels were recognized. Skipping processing.')
+            if return_context:
+                return {
+                    'has_sidescan': False,
+                    'has_nav': nav_available,
+                }
+            return False
+
+        print('\n\nSide-scan only mode enabled. Skipping non-side-scan channels.')
+        sonObjs = [son for son in sonObjs if _is_sidescan_beam(getattr(son, 'beamName', ''))]
+
+    print(sonObjs)
+    ####
+    # OLD    
+
+    ############################################################################
+    # Decode DAT file (varies by model)                                        #
+    ############################################################################
+
+    wf_mode = str(waterfall_mode_selection).strip().lower()
+    wf_requested = bool(waterfall_ss_image) or bool(waterfall_ss_video) or bool(waterfall_di_image) or bool(waterfall_di_video)
+    if wf_requested:
+        if wf_mode == 'wcp':
+            wcp = True
+        elif wf_mode == 'src':
+            wcr = True
+        elif wf_mode == 'wcp+src':
+            wcp = True
+            wcr = True
+
+    if (project_mode != 2):
+
+        #####
+        ### 
+        # Save main script to metaDir
+        scriptDir = os.path.join(os.path.dirname(logfilename), 'processing_scripts')
+        if not os.path.exists(scriptDir):
+            os.mkdir(scriptDir)
+        outScript = os.path.join(scriptDir, script[1])
+        shutil.copy(script[0], outScript)
+        
+
+        ###
+        ####
+
+
+        # Store cropRange in object
+        for son in sonObjs:
+            son.cropRange = cropRange
+            son.tone_gamma = tone_gamma
+            son.tone_gain = tone_gain
+            son.sonar_db_transform = bool(sonar_db_transform)
+            son.sonar_clahe = bool(sonar_clahe)
+            son.sonar_clahe_global = bool(sonar_clahe_global)
+            son.sonar_clahe_clip_limit = float(sonar_clahe_clip_limit)
+            if son.sonar_clahe:
+                son._ensure_clahe_global_bounds()
+            # Do range crop, if necessary
+            if cropRange > 0.0:
+                if file_type == '.xtf' and _is_sidescan_beam(getattr(son, 'beamName', '')):
+                    continue
+
+                # # Convert to distance in pix
+                # d = round(cropRange / son.pixM, 0).astype(int)
+
+                # # Get sonMetaDF
+                # son._loadSonMeta()
+                # son.sonMetaDF.loc[son.sonMetaDF['ping_cnt'] > d, 'ping_cnt'] = d
+                # son._saveSonMetaCSV(son.sonMetaDF)
+
+                # Get sonMetaDF
+                son._loadSonMeta()
+                df = son.sonMetaDF
+
+                # Convert to distance in pixels
+                d = round(cropRange / df['pixM'], 0).astype(int)
+
+                # Filter df
+                df.loc[df['ping_cnt'] > d, 'ping_cnt'] = d
+                son._saveSonMetaCSV(df)
+
+        # Store flag to export un-rectified sonar tiles in each sonObj.
+        for son in sonObjs:
+            beam = son.beamName
+
+            son.wcp = wcp
+            son.wco = wco
+            son.wcm = wcm
+
+            if wcr:
+                if _is_sidescan_beam(beam):
+                    son.wcr_src = True
+                else:
+                    son.wcr_src = False
+
+            else:
+                son.wcr_src = False
+
+            del beam
+        del son
+
+
+        # # If Onix, need to store self._trans in object
+        # if sonObjs[0].isOnix:
+        #     for son in sonObjs:
+        #         son._loadSonMeta()
+        #         utm_e=son.sonMetaDF.iloc[0]['utm_e']
+        #         utm_n=son.sonMetaDF.iloc[0]['utm_n']
+        #         son._getEPSG(utm_e, utm_n)
+        #     del son
+
+
+    else:
+
+        ####################################################
+        # Check if sonObj pickle exists, append to metaFiles
+        metaDir = os.path.join(projDir, "meta")
+        if os.path.exists(metaDir):
+            metaFiles = sorted(glob(metaDir+os.sep+"*.meta"))
+
+            if len(metaFiles) == 0:
+                projectMode_2a_inval()
+
+        else:
+            projectMode_2a_inval()
+        del metaDir
+
+        ############################################
+        # Create a sonObj instance from pickle files
+        sonObjs=[]
+        for m in metaFiles:
+            # Initialize empty sonObj
+            son = sonObj(sonFile=None, humFile=None, projDir=None, tempC=None, nchunk=None)
+
+            # Open metafile
+            metaFile = pickle.load(open(m, 'rb'))
+
+            # Update sonObj with metadat items
+            for attr, value in metaFile.__dict__.items():
+                setattr(son, attr, value)
+
+            if not hasattr(son, 'tvg'):
+                son.tvg = False
+            if not hasattr(son, 'tvg_spreading_k'):
+                son.tvg_spreading_k = 40.0
+            if not hasattr(son, 'tvg_absorption_db_m'):
+                son.tvg_absorption_db_m = 0.035
+            if not hasattr(son, 'tvg_min_range'):
+                son.tvg_min_range = 0.2
+            if not hasattr(son, 'tvg_cap_db'):
+                son.tvg_cap_db = 50.0
+
+            son.tvg = False
+
+            sonObjs.append(son)
+
+        #################################################
+        # Gulf Sturgeon Project: Make sure paths match OS
+        if 'GulfSturgeonProject' in projDir:
+
+            toReplace = son.projDir.split('GulfSturgeonProject')[0]
+            replaceWith = projDir.split('GulfSturgeonProject')[0]
+            for son in sonObjs:
+                temp = vars(son)
+                for t in temp:
+                    if 'Dir' in t or 'File' in t or 'file' in t or 'Pickle' in t:
+                        dir = temp[t]
+                        dir = dir.replace(toReplace, replaceWith)
+                        dir = os.path.normpath(dir)
+                        setattr(son, t, dir)
+        
+
+        #############################
+        # Save main script to metaDir
+        scriptDir = os.path.join(projDir, 'meta', 'processing_scripts')
+        if not os.path.exists(scriptDir):
+            os.mkdir(scriptDir)
+        outScript = os.path.join(scriptDir, script[1])
+        shutil.copy(script[0], outScript)
+
+        ##########################################################
+        # Do some checks to see if additional processing is needed
+
+        # Output pixel resolution
+        if son.pix_res_son != pix_res_son:
+            print("\nSetting output pixel resolution to {}".format(pix_res_son))
+            for son in sonObjs:
+                if pix_res_son == 0:
+                    son.pix_res_son = son.pixM
+                else:
+                    son.pix_res_son = pix_res_son # Store output pixel resolution
+                if pix_res_map == 0:
+                    son.pix_res_map = son.pixM
+                else:
+                    son.pix_res_map = pix_res_map
+
+        # If missing pings already located, no need to reprocess.
+        if son.fixNoDat == True:
+            # Missing pings already located, set fixNoDat to False
+            fixNoDat = False
+            print("\nMissing pings detected previously.")
+            print("\tSetting fixNoDat to FALSE.")
+
+
+        if son.detectDep == detectDep:
+            detectDep = -1
+            print("\nUsing previously exported depths.")
+            print("\tSetting detectDep to -1.")
+            if detectDep > 0:
+                autoBed = True
+            else:
+                autoBed = False
+
+
+        if remShadow:
+            for son in sonObjs:
+                if str(son.beamName).startswith("ss_port"):
+                    if son.remShadow == remShadow:
+                        remShadow = -1*remShadow
+                        print("\nUsing previous shadow settings. No need to re-process.")
+                        print("\tSetting remShadow to {}.".format(remShadow))
+                else:
+                    pass
+
+
+        if egn:
+            for son in sonObjs:
+                if str(son.beamName).startswith("ss_port"):
+                    if son.egn == egn:
+                        egn = False
+                        print("\nUsing previous empiracal gain normalization settings. No need to re-process.")
+                        print("\tSetting egn to 0.")
+                else:
+                    pass
+
+        if pred_sub:
+            for son in sonObjs:
+                if str(son.beamName).startswith("ss_port"):
+                    if son.remShadow > 0:
+                        pred_sub = 0
+                        # remShadow = 0
+                        print("\nSetting pred_sub to 0 so shadow settings aren't effected.")
+                        print("\tDon't worry, substrate will still be predicted...")
+                else:
+                    pass
+
+        for son in sonObjs:
+            son.wcp = wcp
+            son.tone_gamma = tone_gamma
+            son.tone_gain = tone_gain
+            son.sonar_db_transform = bool(sonar_db_transform)
+            son.sonar_clahe = bool(sonar_clahe)
+            son.sonar_clahe_global = bool(sonar_clahe_global)
+            son.sonar_clahe_clip_limit = float(sonar_clahe_clip_limit)
+            if son.sonar_clahe:
+                son._ensure_clahe_global_bounds()
+
+            beam = son.beamName
+            if wcr:
+                if _is_sidescan_beam(beam):
+                    son.wcr_src = True
+                else:
+                    son.wcr_src = False
+            else:
+                son.wcr_src = False
+
+        for son in sonObjs:
+            son._pickleSon()
+        gc.collect()
+
+        del son
+
+
+    ############################################################################
+    # Locating missing pings                                                   #
+    ############################################################################
+
+    if fixNoDat:
+        # Open each beam df, store beam name in new field, then concatenate df's into one
+        print("\nLocating missing pings and adding NoData...")
+        frames = []
+        for son in sonObjs:
+            son._loadSonMeta()
+            df = son.sonMetaDF
+            df['beam'] = son.beam
+            frames.append(df)
+            son._cleanup()
+            del df
+
+        dfAll = pd.concat(frames)
+        del frames
+        # Sort by record_num
+        dfAll = dfAll.sort_values(by=['record_num'], ignore_index=True)
+        dfAll = dfAll.reset_index(drop=True)
+        beams = dfAll['beam'].unique()
+
+        # 'Evenly' allocate work to process threads.
+        # Future: Add workflow to balance workload (histogram). Determine total 'missing' pings
+        ## and divide by processors, then subsample until workload is balanced
+        rowCnt = len(dfAll)
+        rowsToProc = []
+        c = 0
+        r = 0
+        n = int(rowCnt/threadCnt)
+        startB = dfAll.iloc[0]['beam']
+
+        while (r < threadCnt) and (n < rowCnt):
+            if (dfAll.iloc[n]['beam']) != startB:
+                n+=1
+            else:
+                rowsToProc.append((c, n))
+                c = n
+                n = c+int(rowCnt/threadCnt)
+                r+=1
+        rowsToProc.append((rowsToProc[-1][-1], rowCnt))
+        del c, r, n, startB, rowCnt
+
+        # Fix no data in parallel
+        r = Parallel(n_jobs=safe_n_jobs(len(rowsToProc), threadCnt))(delayed(son._fixNoDat)(dfAll[r[0]:r[1]].copy().reset_index(drop=True), beams) for r in tqdm(rowsToProc))
+        gc.collect()
+
+        # Concatenate results from parallel processing
+        dfAll = pd.concat(r)
+        del r
+
+        # Store original record_num and update record_num with new index
+        dfAll = dfAll.sort_values(by=['record_num'], ignore_index=True)
+        dfAll['orig_record_num'] = dfAll['record_num']
+        dfAll['record_num'] = dfAll.index
+
+        # Slice dfAll by beam, update chunk_id, then save to file.
+        for son in sonObjs:
+            df = dfAll[dfAll['beam'] == son.beam].copy()
+
+            if (len(df)%nchunk) != 0:
+                rdr = nchunk-(len(df)%nchunk)
+                chunkCnt = int(len(df)/nchunk)
+                chunkCnt += 1
+            else:
+                rdr = False
+                chunkCnt = int(len(df)/nchunk)
+
+            chunks = np.arange(chunkCnt)
+            chunks = np.repeat(chunks, nchunk)
+            del chunkCnt
+
+            if rdr:
+                chunks = chunks[:-rdr]
+
+            df['chunk_id'] = chunks
+
+            # Make sure last chunk is long enough
+            c=df['chunk_id'].max() # Get last chunk value
+            lastChunk=df[df['chunk_id']==c] # Get last chunk rows
+            if len(lastChunk) <= (nchunk/2):
+                df.loc[df['chunk_id']==c, 'chunk_id'] = c-1
+
+            df = df.drop(columns = ['beam'])
+
+            # Check that last chunk has index anywhere in the chunk.
+            ## If not, a bunch of NoData was added to the end.
+            ## Trim off the NoData
+            maxIdx = df[['index']].idxmax().values[0]
+            maxIdxChunk = df.at[maxIdx, 'chunk_id']
+            maxChunk = df['chunk_id'].max()
+
+            if maxIdxChunk <= maxChunk:
+                df = df[df['chunk_id'] <= maxIdxChunk]
+
+            son._saveSonMetaCSV(df)
+            son._cleanup()
+        del df, rowsToProc, dfAll, son, chunks, rdr, beams
+
+        printUsage()
+
+    else:
+        if project_mode != 2:
+            for son in sonObjs:
+                son.fixNoDat = fixNoDat
+
+    ############################################################################
+    # Print Metadata Summary                                                   #
+    ############################################################################
+    # Print a summary of min/max/avg metadata values. At same time, do simple
+    ## check to make sure data are valid.
+
+    if project_mode != 2:
+        print("\nSummary of Ping Metadata:\n")
+
+        invalid = defaultdict() # store invalid values
+
+        for son in sonObjs: # Iterate each sonar object
+            print(son.beam, ":", son.beamName)
+            son._loadSonMeta()
+            df = son.sonMetaDF
+            print("Ping Count:", len(df))
+            print("______________________________________________________________________________")
+            print("{:<20s} | {:<15s} | {:<15s} | {:<15s} | {:<5s}".format("Attribute", "Minimum", "Maximum", "Average", "Valid"))
+            print("______________________________________________________________________________")
+            for att in df.columns:
+
+                # Find min/max/avg of each column
+                if (att == 'date') or (att == 'time'):
+                    attAvg = '-'
+                    attMin = df.at[0, att]
+                    attMax = df.at[df.tail(1).index.item(), att]
+                    if att == 'time':
+                        attMin = str(attMin).split('.')[0]
+                        attMax = str(attMax).split('.')[0]
+                else:
+                    col_numeric = pd.to_numeric(df[att], errors='coerce')
+                    col_vals = col_numeric.to_numpy(dtype=float)
+
+                    if np.isfinite(col_vals).any():
+                        attMin = np.round(np.nanmin(col_vals), 3)
+                        attMax = np.round(np.nanmax(col_vals), 3)
+                        attAvg = np.round(np.nanmean(col_vals), 3)
+
+                        # Store number of chunks
+                        if (att == 'chunk_id'):
+                            son.chunkMax = int(attMax)
+                    else:
+                        non_na = df[att].dropna()
+                        if len(non_na) > 0:
+                            attMin = str(non_na.iloc[0])
+                            attMax = str(non_na.iloc[-1])
+                        else:
+                            attMin = 'nan'
+                            attMax = 'nan'
+                        attAvg = '-'
+
+                # Check if data are valid.
+                if (att == "date") or (att == "time") or (att == "transect"):
+                    valid=True
+                elif (attMax != 0) or ("unknown" in att) or (att =="beam"):
+                    valid=True
+                elif att == "inst_dep_m":
+                    depth_values = pd.to_numeric(df[att], errors='coerce').to_numpy(dtype=float, copy=False)
+                    has_valid_instrument_depth = np.isfinite(depth_values).any() and np.nanmax(depth_values) > 0
+                    if not has_valid_instrument_depth: # Automatically detect depth if instrument depth is missing/empty
+                        valid=False
+                        invalid[son.beam+"."+att] = False
+                        detectDep = 1 if DEPTH_DETECTION_AVAILABLE else 2
+                    else:
+                        valid=True
+                else:
+                    valid=False
+                    invalid[son.beam+"."+att] = False
+
+                print("{:<15s} | {:<15s} | {:<15s} | {:<15s} | {:<5s}".format(att, str(attMin), str(attMax), str(attAvg), str(valid)))
+
+            son._cleanup()
+            print("\n")
+        del son, df, att, attAvg, attMin, attMax, valid
+
+        if len(invalid) > 0:
+            print("*******************************\n****WARNING: INVALID VALUES****\n*******************************")
+            print("_______________________________")
+            print("{:<15s} | {:<15s}".format("Sonar Channel", "Attribute"))
+            print("_______________________________")
+            for key, val in invalid.items():
+                print("{:<15s} | {:<15s}".format(key.split(".")[0], key.split(".")[1]))
+            print("\n*******************************\n****WARNING: INVALID VALUES****\n*******************************")
+            print("\nPING-Mapper detected issues with\nthe values stored in the above\nsonar channels and attributes.")
+        del invalid
+
+        print("\nDone!")
+        print("Time (s):", round(time.time() - start_time, ndigits=1))
+        printUsage()
+
+    for son in sonObjs:
+        son._pickleSon()
+
+    
+
+    ############################################################################
+    # For Filtering                                                            #
+    ############################################################################
+
+    if dq_table or max_heading_deviation > 0 or min_speed > 0 or max_speed > 0 or aoi or time_table or filter_coord_outliers:
+
+        start_time = time.time()
+
+        print('\n\nFiltering sonar log...')
+
+        # Do port/star and down beams seperately
+        downbeams = []
+        portstar = []
+        for son in sonObjs:
+            beam = son.beamName
+            if _is_sidescan_beam(beam):
+                portstar.append(son)
+            else:
+                # pass # Don't add non-port/star objects since they can't be rectified
+                downbeams.append(son)
+        del son, beam
+
+        # Find longest recording
+        minRec = 0
+        maxRec = 0 # Stores index of recording w/ most sonar records.
+        maxLen = 0 # Stores length of ping
+        for i, son in enumerate(portstar):
+            son._loadSonMeta() # Load ping metadata
+            sonLen = len(son.sonMetaDF) # Number of sonar records
+            if sonLen > maxLen:
+                maxLen = sonLen
+                maxRec = i
+            else:
+                minRec = i
+
+        # Do filtering on longest recording
+        son0 = portstar[maxRec]
+        df0 = son0._doSonarFiltering(max_heading_deviation, max_heading_distance, min_speed, max_speed, aoi, time_table,
+                                      dq_table, dq_time_field, dq_flag_field, dq_keep_values,
+                                      dq_src_utc_offset, dq_target_utc_offset, dq_time_offset,
+                                      filter_coord_outliers=filter_coord_outliers, coord_iqr_scale=coord_iqr_scale)
+
+        # Add filter to other beam
+        son1 = portstar[minRec]
+        son1._loadSonMeta()
+        df1 = son1.sonMetaDF
+        df1['filter'] = df0['filter']
+
+        # Apply the filter
+        df0 = df0[df0['filter'] == True]
+        df1 = df1[df1['filter'] == True]
+
+        # Remove transect shorter then nchunk
+        df0=son0._filterShortTran(df0)
+        df1['filter'] = df0['filter']
+
+        # Apply the filter
+        df0 = df0[df0['filter'] == True]
+        df1 = df1[df1['filter'] == True]
+
+        if df0.empty or df1.empty:
+            raise ValueError(
+                '\n\nFiltering removed all side-scan pings. No metadata remains to process. '\
+                'Adjust filtering parameters (dq_table, max_heading_deviation, min_speed, max_speed, aoi, time_table) '\
+                'or reduce nchunk.'
+            )
+
+        # Reasign the chunks
+        df0 = son0._reassignChunks(df0)
+        df1['chunk_id'] = df0['chunk_id']
+        df1['transect'] = df0['transect']
+
+        chunkMax = df0['chunk_id'].max()
+        son0.chunkMax = chunkMax
+
+        chunkMax = df1['chunk_id'].max()
+        son1.chunkMax = chunkMax
+
+        # Save the csvs
+        son0._saveSonMetaCSV(df0)
+        son1._saveSonMetaCSV(df1)
+
+        del df0, df1, #sDF0, sDF1
+        son0._cleanup()
+        son1._cleanup()
+
+        # Do filtering on downbeams
+        for son in downbeams:
+            df = son._doSonarFiltering(max_heading_deviation, max_heading_distance, min_speed, max_speed, aoi, time_table,
+                                        dq_table, dq_time_field, dq_flag_field, dq_keep_values,
+                                        dq_src_utc_offset, dq_target_utc_offset, dq_time_offset,
+                                        filter_coord_outliers=filter_coord_outliers, coord_iqr_scale=coord_iqr_scale)
+
+            df = df[df['filter'] == True]
+
+            df = son._reassignChunks(df)
+
+            son._saveSonMetaCSV(df)
+
+            chunkMax = df['chunk_id'].max()
+            son.chunkMax = chunkMax
+
+            del df
+            son._cleanup()
+
+        print("\nDone!")
+        print("Time (s):", round(time.time() - start_time, ndigits=1))
+        printUsage()
+
+
+    ############################################################################
+    # For Depth Detection                                                      #
+    ############################################################################
+    # Automatically detect depth from side scan channels. Two options are avail:
+    ## Method based on Zheng et al. 2021 using deep learning for segmenting
+    ## water-bed interface.
+    ## Second is rule's based binary segmentation (may be deprecated in future..)
+
+    start_time = time.time()
+
+    # Determine which sonObj pairs should be depth processed together.
+    sidescan_groups = {}
+    for son in sonObjs:
+        beam = str(son.beamName)
+        if not _is_sidescan_beam(beam):
+            continue
+
+        group_key = _sidescan_group_key(beam)
+        group = sidescan_groups.setdefault(group_key, {})
+        if beam.startswith('ss_port'):
+            group['port'] = son
+        elif beam.startswith('ss_star'):
+            group['star'] = son
+
+    ps_depth_jobs = []
+
+    if len(sidescan_groups) == 0:
+        print(
+            '\n\nNo recognized side-scan channels available for depth processing. '\
+            'Continuing with down-looking beams only.'
+        )
+        print('Disabling side-scan-only operations (auto depth, bedpick plot, shadow removal).')
+        detectDep = 0
+        pltBedPick = False
+        remShadow = 0
+    else:
+        for group_key, group in sorted(sidescan_groups.items()):
+            if 'port' not in group or 'star' not in group:
+                print(
+                    '\nSkipping side-scan depth group {} because a matching port/star pair was not found.'.format(group_key)
+                )
+                continue
+
+            psObj = portstarObj([group['port'], group['star']])
+
+            chunks = []
+            for son in [group['port'], group['star']]:
+                c = son._getChunkID()
+                chunks.extend(c)
+                del c
+
+            chunks = np.unique(chunks).astype(int)
+            if len(chunks) == 0:
+                continue
+
+            ps_depth_jobs.append((group_key, psObj, chunks))
+
+        if len(ps_depth_jobs) == 0:
+            print(
+                '\n\nNo valid side-scan chunks available for depth processing. '\
+                'Continuing with down-looking beams only.'
+            )
+            print('Disabling side-scan-only operations (auto depth, bedpick plot, shadow removal).')
+            detectDep = 0
+            pltBedPick = False
+            remShadow = 0
+
+    # # Automatically estimate depth
+    if detectDep > 0:
+        # Check if depth detection dependencies are available
+        if detectDep == 1 and not DEPTH_DETECTION_AVAILABLE:
+            print('\n\nML depth detection dependencies are unavailable.')
+            print('Falling back to binary-threshold depth detection...\n')
+            detectDep = 2
+
+        if detectDep == 1 and not DEPTH_DETECTION_AVAILABLE:
+            print('\n\nCannot estimate depth automatically:')
+            print('TensorFlow, Transformers, and/or Doodleverse Utils are not installed.')
+            print('These packages are required for automatic depth detection.')
+            print('Please install them using: pip install tensorflow transformers doodleverse-utils')
+            print('Skipping automatic depth estimation...\n')
+            detectDep = 0
+            autoBed = False
+            saveDepth = True
+        else:
+            total_chunks = sum(len(chunks) for _, _, chunks in ps_depth_jobs)
+            print('\n\nAutomatically estimating depth for', total_chunks, 'chunks across', len(ps_depth_jobs), 'side-scan group(s):')
+
+            for group_key, psObj, chunks in ps_depth_jobs:
+                psObj.portDepDetect = {}
+                psObj.starDepDetect = {}
+
+                if detectDep == 1:
+                    depthModelVer = 'Bedpick_Zheng2021_Segmentation_unet_v1.0'
+                    psObj.configfile = os.path.join(modelDir, depthModelVer, 'config', depthModelVer+'.json')
+                    psObj.weights = os.path.join(modelDir, depthModelVer, 'weights', depthModelVer+'_fullmodel.h5')
+                    print('\n\tGroup {}: Using Zheng et al. 2021 method. Loading model: {}'.format(group_key, os.path.basename(psObj.weights)))
+                elif detectDep == 2:
+                    print('\n\tGroup {}: Using binary thresholding...'.format(group_key))
+
+                r = Parallel(n_jobs=safe_n_jobs(len(chunks), threadCnt))(delayed(psObj._detectDepth)(detectDep, int(chunk), USE_GPU, tileFile) for chunk in tqdm(chunks))
+
+                for ret in r:
+                    psObj.portDepDetect[ret[2]] = ret[0]
+                    psObj.starDepDetect[ret[2]] = ret[1]
+                    del ret
+                del r
+
+            # Flag indicating depth autmatically estimated
+            autoBed = True
+
+            saveDepth = True
+
+    # Don't estimate depth, use instrument depth estimate (sonar derived)
+    elif detectDep == 0:
+        print('\n\nUsing instrument depth:')
+        autoBed = False
+        saveDepth = True
+
+    else:
+        saveDepth = False
+
+    if saveDepth:
+
+        if ss_chan_avail and len(ps_depth_jobs) > 0:
+            depDF = []
+            for _, psObj, chunks in ps_depth_jobs:
+                depDF.append(psObj._saveDepth(chunks, detectDep, smthDep, adjDep, instDepAvail))
+        else:
+            depDF = []
+
+        # Store depths in downlooking sonar files also
+        for son in sonObjs:
+            # Store detectDep
+            son.detectDep = detectDep
+
+            beam = son.beamName
+            if not _is_sidescan_beam(beam):
+                son._loadSonMeta()
+                sonDF = son.sonMetaDF
+                son.detectDep = 0
+
+                sonDF['dep_m_Method'] = 'Instrument Depth'
+                sonDF['dep_m_smth'] = False
+                sonDF['dep_m_adjBy'] = adjDep  
+
+                inst_dep = pd.to_numeric(sonDF['inst_dep_m'], errors='coerce').to_numpy(dtype=float, copy=True)
+                if 'dep_m' in sonDF.columns:
+                    meta_dep = pd.to_numeric(sonDF['dep_m'], errors='coerce').to_numpy(dtype=float, copy=True)
+                else:
+                    meta_dep = inst_dep.copy()
+                dep = np.where(np.isfinite(inst_dep) & (inst_dep > 0), inst_dep, meta_dep)
+
+                if smthDep:
+                    dep = savgol_filter(dep, 51, 3)
+
+                # Interpolate over nan's (and set zero's to nan)
+                dep[dep==0] = np.nan
+                dep = np.asarray(dep)
+                nans = np.isnan(dep)
+                
+                # Only interpolate if there are valid (non-NaN) values
+                if np.any(~nans):
+                    # There are some valid values, so we can interpolate
+                    dep[nans] = np.interp(np.flatnonzero(nans), np.flatnonzero(~nans), dep[~nans])
+
+                    sonDF['dep_m'] = dep + adjDep
+
+                    sonDF.to_csv(son.sonMetaFile, index=False, float_format='%.14f')
+                else:
+                    # All values are NaN - cannot interpolate
+                    print("\nWarning: All instrument depth values are NaN or zero. Cannot interpolate depth.")
+                    print("This may indicate missing depth data in the sonar file.")
+                    sonDF['dep_m_Method'] = 'Instrument/Metadata Depth'
+                
+                # sonDF['dep_m'] = dep + adjDep
+
+                # sonDF.to_csv(son.sonMetaFile, index=False, float_format='%.14f')
+                del sonDF, son.sonMetaDF
+                son._cleanup()
+
+        del depDF
+
+        # Cleanup
+        for _, psObj, _ in ps_depth_jobs:
+            psObj._cleanup()
+
+        print("\nDone!")
+        print("Time (s):", round(time.time() - start_time, ndigits=1))
+        printUsage()
+
+    # Plot sonar depth and auto depth estimate (if available) on sonogram
+    if pltBedPick and psObj is not None and len(chunks) > 0:
+        start_time = time.time()
+
+        print("\n\nExporting bedpick plots to {}...".format(tileFile))
+        Parallel(n_jobs=safe_n_jobs(len(chunks), threadCnt))(delayed(psObj._plotBedPick)(int(chunk), True, autoBed, tileFile) for chunk in tqdm(chunks))
+
+        print("\nDone!")
+        print("Time (s):", round(time.time() - start_time, ndigits=1))
+        printUsage()
+
+    # Cleanup
+    if psObj is not None:
+        psObj._cleanup()
+    if 'psObj' in locals():
+        del psObj
+    if 'portstar' in locals():
+        del portstar
+
+    for son in sonObjs:
+        son._cleanup()
+        son._pickleSon()
+    del son
+
+
+    ############################################################################
+    # For shadow removal                                                       #
+    ############################################################################
+    # Use deep learning segmentation algorithms to automatically detect shadows.
+    ## 1: Remove all shadows (those cause by boulders/objects)
+    ## 2: Remove only contiguous shadows touching max range extent. May be
+    ## useful for locating river banks...
+
+    if remShadow > 0:
+        keepShadow = False
+    else:
+        keepShadow = True
+        for son in sonObjs:
+            son.remShadow = 0
+
+    # Exporting banklines require shadows
+    if banklines and remShadow==0:
+        for son in sonObjs:
+            if str(son.beamName).startswith("ss_port"):
+                    if son.remShadow == 0:
+                        print('\n\nExporting banklines requires shadow removal')
+                        print('Setting remShadow==2...')
+                        remShadow = 2
+                        keepShadow = False            
+
+    # Need to detect shadows if mapping substrate
+    if pred_sub:
+        if remShadow == 0:
+            print('\n\nSubstrate mapping requires shadow removal')
+            print('Setting remShadow==2...')
+            remShadow = 2
+            keepShadow = True
+        else:
+            keepShadow = False
+
+    if remShadow > 0 and not DEPTH_DETECTION_AVAILABLE:
+        print('\n\nCannot detect shadows automatically:')
+        print('TensorFlow, Transformers, and/or Doodleverse Utils are not installed.')
+        print('These packages are required for automatic shadow detection.')
+        print('Please install them using: pip install tensorflow transformers doodleverse-utils')
+        print('Skipping automatic shadow detection...\n')
+        remShadow = 0
+        keepShadow = True
+        for son in sonObjs:
+            son.remShadow = 0
+
+    if pred_sub and not DEPTH_DETECTION_AVAILABLE:
+        print('\n\nCannot map substrate automatically:')
+        print('TensorFlow, Transformers, and/or Doodleverse Utils are not installed.')
+        print('These packages are required for substrate mapping.')
+        print('Please install them using: pip install tensorflow transformers doodleverse-utils')
+        print('Skipping substrate mapping...\n')
+        pred_sub = 0
+        map_sub = 0
+
+    if remShadow > 0:
+        start_time = time.time()
+        print('\n\nAutomatically detecting shadows for', len(chunks), 'chunks:')
+
+        if remShadow == 1:
+            print('MODE: 1 | Remove all shadows...')
+        elif remShadow == 2:
+            print('MODE: 2 | Remove shadows in far-field (river bankpick)...')
+
+        # Determine which sonObj is port/star
+        portstar = []
+        for son in sonObjs:
+            beam = son.beamName
+            if _is_sidescan_beam(beam):
+                if keepShadow:
+                    son.remShadow = False
+                else:
+                    son.remShadow = remShadow
+                portstar.append(son)
+            # Don't remove shadows from down scans
+            else:
+                son.remShadow = False
+        del son
+
+        # Create portstarObj
+        psObj = portstarObj(portstar)
+
+        # Model weights and config file
+        shadowModelVer = 'Shadow_Segmentation_unet_v1.0'
+        psObj.configfile = os.path.join(modelDir, shadowModelVer, 'config', shadowModelVer+'.json')
+        psObj.weights = os.path.join(modelDir, shadowModelVer, 'weights', shadowModelVer+'_fullmodel.h5')
+
+        psObj.port.shadow = defaultdict()
+        psObj.star.shadow = defaultdict()
+
+        r = Parallel(n_jobs=safe_n_jobs(len(chunks), threadCnt))(delayed(psObj._detectShadow)(remShadow, int(chunk), USE_GPU, False, tileFile) for chunk in tqdm(chunks))
+
+        for ret in r:
+            psObj.port.shadow[ret[0]] = ret[1]
+            psObj.star.shadow[ret[0]] = ret[2]
+            del ret
+
+        del r
+
+        print("\nDone!")
+        print("Time (s):", round(time.time() - start_time, ndigits=1))
+        printUsage()
+
+    else:
+        if project_mode != 2:
+            for son in sonObjs:
+                son.remShadow = False
+
+    if remShadow < 0:
+        for son in sonObjs:
+            son.remShadow = -1*son.remShadow
+
+    for son in sonObjs:
+        son._pickleSon()
+
+    # Cleanup
+    try:
+        psObj._cleanup()
+    except Exception:
+        pass
+    if 'psObj' in locals():
+        del psObj
+    if 'portstar' in locals():
+        del portstar
+
+
+    ############################################################################
+    # For sonar intensity corrections/normalization                            #
+    ############################################################################
+
+    if egn:
+        start_time = time.time()
+        print("\nPerforming empirical gain normalization (EGN) on sonar intensities:\n")
+        for son in sonObjs:
+            if _is_sidescan_beam(son.beamName):
+                print('\n\tCalculating EGN for', son.beamName)
+                son.egn = True
+                son.egn_stretch = egn_stretch
+                son.tvg = False
+
+                # Determine what chunks to process
+                chunks = son._getChunkID()
+                chunks = chunks[:-1] # remove last chunk
+
+                # Load sonMetaDF
+                son._loadSonMeta()
+
+                # Calculate range-wise mean intensity for each chunk
+                print('\n\tCalculating range-wise mean intensity for each chunk...')
+                chunk_means = Parallel(n_jobs=safe_n_jobs(len(chunks), threadCnt))(delayed(son._egnCalcChunkMeans)(i) for i in tqdm(chunks))
+
+                # Calculate global means
+                print('\n\tCalculating range-wise global means...')
+                son._egnCalcGlobalMeans(chunk_means)
+                del chunk_means
+
+                # Calculate egn min and max for each chunk
+                print('\n\tCalculating EGN min and max values for each chunk...')
+                min_max = Parallel(n_jobs=safe_n_jobs(len(chunks), threadCnt))(delayed(son._egnCalcMinMax)(i) for i in tqdm(chunks))
+
+                # Calculate global min max for each channel
+                son._egnCalcGlobalMinMax(min_max)
+                del min_max
+
+                son._cleanup()
+                son._pickleSon()
+
+                gc.collect()
+                printUsage()
+
+            else:
+                son.egn = False # Dont bother with down-facing beams
+                son.tvg = False
+
+        # Get true global min and max
+
+        bed_mins = []
+        bed_maxs = []
+        wc_mins = []
+        wc_maxs = []
+        for son in sonObjs:
+            if _is_sidescan_beam(son.beamName):
+                bed_mins.append(son.egn_bed_min)
+                bed_maxs.append(son.egn_bed_max)
+                wc_mins.append(son.egn_wc_min)
+                wc_maxs.append(son.egn_wc_max)
+        bed_min = np.min(bed_mins)
+        bed_max = np.max(bed_maxs)
+        wc_min = np.min(wc_mins)
+        wc_max = np.max(wc_maxs)
+        for son in sonObjs:
+            if _is_sidescan_beam(son.beamName):
+                son.egn_bed_min = bed_min
+                son.egn_bed_max = bed_max
+                son.egn_wc_min = wc_min
+                son.egn_wc_max = wc_max
+
+            # Tidy up
+            son._cleanup()
+            son._pickleSon()
+            gc.collect()
+
+        # Need to calculate histogram if egn_stretch is greater then 0
+        if egn_stretch > 0:
+            for son in sonObjs:
+                if _is_sidescan_beam(son.beamName):
+                    # Determine what chunks to process
+                    chunks = son._getChunkID()
+                    chunks = chunks[:-1] # remove last chunk
+                    son.tvg = False
+
+                    print('\n\tCalculating EGN corrected histogram for', son.beamName)
+                    hist = Parallel(n_jobs=safe_n_jobs(len(chunks), threadCnt))(delayed(son._egnCalcHist)(i) for i in tqdm(chunks))
+
+                    print('\n\tCalculating global EGN corrected histogram')
+                    son._egnCalcGlobalHist(hist)
+
+            # Now calculate true global histogram
+            egn_wcp_hist = np.zeros((255))
+            egn_wcr_hist = np.zeros((255))
+
+            for son in sonObjs:
+                if _is_sidescan_beam(son.beamName):
+                    egn_wcp_hist += son.egn_wcp_hist
+                    egn_wcr_hist += son.egn_wcr_hist
+
+            for son in sonObjs:
+                if _is_sidescan_beam(son.beamName):
+                    son.egn_wcp_hist = egn_wcp_hist
+                    son.egn_wcr_hist = egn_wcr_hist
+
+            # Calculate global percentages and standard deviation
+            wcp_pcnt = np.zeros((egn_wcp_hist.shape))
+            wcr_pcnt = np.zeros((egn_wcr_hist.shape))
+
+            # Calculate total pixels
+            wcp_sum = np.sum(egn_wcp_hist)
+            wcr_sum = np.sum(egn_wcr_hist)
+
+            # Caclulate percentages
+            for i, v in enumerate(egn_wcp_hist):
+                wcp_pcnt[i] = egn_wcp_hist[i] / wcp_sum
+
+            for i, v in enumerate(egn_wcr_hist):
+                wcr_pcnt[i] = egn_wcr_hist[i] / wcr_sum
+
+            for son in sonObjs:
+                if _is_sidescan_beam(son.beamName):
+                    son.egn_wcp_hist_pcnt = wcp_pcnt
+                    son.egn_wcr_hist_pcnt = wcr_pcnt
+
+
+            del egn_wcp_hist, egn_wcr_hist, wcp_pcnt, wcr_pcnt
+            # del egn_wcr_hist, wcr_pcnt
+
+            # Calculate min and max for rescale
+            for son in sonObjs:
+                if str(son.beamName).startswith('ss_port'):
+                    wcp_stretch, wcr_stretch = son._egnCalcStretch(egn_stretch, egn_stretch_factor)
+                    # wcr_stretch = son._egnCalcStretch(egn_stretch, egn_stretch_factor)
+
+                    # Tidy up
+                    son._cleanup()
+                    son._pickleSon()
+                    gc.collect()
+
+            for son in sonObjs:
+                if str(son.beamName).startswith('ss_star'):
+                    son.egn_stretch = egn_stretch
+                    son.egn_stretch_factor = egn_stretch_factor
+
+                    son.egn_wcp_stretch_min = wcp_stretch[0]
+                    son.egn_wcp_stretch_max = wcp_stretch[1]
+
+                    son.egn_wcr_stretch_min = wcr_stretch[0]
+                    son.egn_wcr_stretch_max = wcr_stretch[1]
+
+                    print('\n\n\nMinMax Global Stretch Vals')
+                    print('wcr', son.egn_wcr_stretch_min, son.egn_wcr_stretch_max)
+                    print('wcp', son.egn_wcp_stretch_min, son.egn_wcp_stretch_max)
+
+                    # Tidy up
+                    son._cleanup()
+                    son._pickleSon()
+                    gc.collect()
+
+
+        print("\nDone!")
+        print("Time (s):", round(time.time() - start_time, ndigits=1))
+        printUsage()
+    else:
+        if project_mode != 2:
+            for son in sonObjs:
+                son.egn=False
+
+
+
+
+    ############################################################################
+    # Export un-rectified sonar tiles                                          #
+    ############################################################################
+
+    # moving_window = True
+    # window_stride = 0.1
+    # tileFile = '.mp4'
+    # frameRate = 5
+    if bool(export_16bit):
+        imgType = '.tif'
+    elif tileFile == '.mp4':
+        imgType = '.png'
+    else:
+        imgType = tileFile
+
+    if wcp or wcr or wco or wcm:
+        start_time = time.time()
+        print("\nExporting sonogram tiles:\n")
+        for son in sonObjs:
+            if (son.wcp or son.wcr_src or son.wco or son.wcm) and son.export_beam:
+                # Set outDir
+                son.outDir = os.path.join(son.projDir, son.beamName)
+
+                # Set colormap
+                son.sonogram_colorMap = sonogram_colorMap
+
+                # Determine what chunks to process
+                chunkCnt = 0
+                chunks = son._getChunkID()
+                if son.wcp:
+                    chunkCnt += len(chunks)
+                if son.wcm:
+                    chunkCnt += len(chunks)
+                if son.wcr_src:
+                    chunkCnt += len(chunks)
+                if son.wco:
+                    chunkCnt += len(chunks)
+
+                print('\n\tExporting', chunkCnt, 'sonograms for', son.beamName)
+
+                # Load sonMetaDF
+                son._loadSonMeta()
+
+                Parallel(n_jobs=safe_n_jobs(len(chunks), threadCnt))(delayed(son._exportTilesSpd)(i, tileFile=imgType, spdCor=spdCor, mask_shdw=mask_shdw, maxCrop=maxCrop) for i in tqdm(chunks))
+                # for i in tqdm(chunks):
+                #     son._exportTilesSpd(i, tileFile=imgType, spdCor=spdCor, mask_shdw=mask_shdw, maxCrop=maxCrop)
+                #     sys.exit()
+
+                son._pickleSon()
+
+
+
+            # Tidy up
+            son._cleanup()
+            gc.collect()
+
+        del son
+        print("\nDone!")
+        print("Time (s):", round(time.time() - start_time, ndigits=1))
+        printUsage()
+
+    if bool(waterfall_ss_image) or bool(waterfall_ss_video) or bool(waterfall_di_image) or bool(waterfall_di_video):
+        start_time = time.time()
+        print("\nGenerating waterfall image/video exports...")
+        try:
+            _export_waterfall_products(
+                sonObjs,
+                wcp=wcp,
+                wcm=wcm,
+                wcr=wcr,
+                wco=wco,
+                mode_selection=waterfall_mode_selection,
+                ss_image=bool(waterfall_ss_image),
+                ss_video=bool(waterfall_ss_video),
+                di_image=bool(waterfall_di_image),
+                di_video=bool(waterfall_di_video),
+                fps=int(waterfall_video_fps),
+                video_resolution=str(waterfall_video_resolution),
+                stride=int(waterfall_window_stride),
+            )
+        except Exception as e:
+            print(f"\nWaterfall export failed: {e}")
+
+        print("Done!")
+        print("Time (s):", round(time.time() - start_time, ndigits=1))
+        printUsage()
+
+    ##############################################
+    # Let's pickle sonObj so we can reload later #
+    ##############################################
+
+    for son in sonObjs:
+        son._pickleSon()
+    gc.collect()
+    printUsage()
+
+    has_sidescan = len(ss_chan_avail) > 0
+
+    if return_context:
+        return {
+            'has_sidescan': has_sidescan,
+            'has_nav': nav_available,
+        }
+
+    return has_sidescan
+

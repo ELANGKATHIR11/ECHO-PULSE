@@ -1,0 +1,35 @@
+name: ghostvision
+channels:
+  - conda-forge
+dependencies:
+  - python < 3.13
+  - gdal
+  - numpy
+  - git
+  - pandas
+  - geopandas
+  - pyproj
+  - scikit-image
+  - joblib
+  - matplotlib
+  - rasterio
+  - h5py
+  - pip
+  - pip:
+      - pingverter
+      - pingmapper
+      - pingwizard
+      - pinginstaller
+      - pingdetect
+      - pingtile
+      - ghostvision
+      - doodleverse_utils
+      - psutil
+      - tensorflow
+      - tf-keras
+      - transformers
+      - inference-gpu<1.0
+      - supervision
+      - opencv-python
+      - rsa
+      - freesimplegui

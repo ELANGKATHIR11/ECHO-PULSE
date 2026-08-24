@@ -1,0 +1,7 @@
+{
+  "name": "EchoPulseNet - Marine Sonar Intelligence Platform",
+  "description": "Deep Ocean Sonar Intelligence, Real-Time Acoustic Inference, GIS Bathymetry, 3D Ocean Scanning and Anomaly Detection Platform",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

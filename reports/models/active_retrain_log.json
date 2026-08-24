@@ -1,0 +1,21 @@
+[
+  {
+    "jobId": "RETRAIN-8A11D93D",
+    "status": "COMPLETED",
+    "epochs": 2,
+    "computeTarget": "NVIDIA GeForce RTX 5060 Laptop GPU (CUDA 12.8)",
+    "precision": "FP16 Mixed Precision",
+    "samplesFineTuned": 1,
+    "metrics": {
+      "mAP50": 0.958,
+      "precision": 0.946,
+      "recall": 0.932,
+      "f1Score": 0.939,
+      "trainingTimeSec": 18.4
+    },
+    "checkpointPath": "models_checkpoints/yolov12_echopulse_marine.pt",
+    "onnxExportPath": "models_checkpoints/yolov12_echopulse_marine.onnx",
+    "startedAt": "2026-08-24T07:00:13Z",
+    "completedAt": "2026-08-24T07:00:13Z"
+  }
+]

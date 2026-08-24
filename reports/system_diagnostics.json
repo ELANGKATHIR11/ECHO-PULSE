@@ -1,0 +1,23 @@
+{
+  "python_version": "3.12.13 | packaged by Anaconda, Inc. | (main, Mar 19 2026, 20:16:45) [MSC v.1942 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "os": "nt",
+  "cuda_available": false,
+  "torch_version": "2.11.0+cu128",
+  "cuda_version": "12.8",
+  "device_count": 0,
+  "device_names": [],
+  "packages": {
+    "numpy": "2.5.2",
+    "scipy": "1.17.1",
+    "cv2": "4.13.0",
+    "fastapi": "0.141.1",
+    "uvicorn": "0.40.0",
+    "pydantic": "2.12.5",
+    "geopandas": "1.1.4",
+    "shapely": "2.1.2",
+    "pyproj": "3.7.2",
+    "onnxruntime": "1.27.0",
+    "pyxtf": "NOT_INSTALLED"
+  }
+}

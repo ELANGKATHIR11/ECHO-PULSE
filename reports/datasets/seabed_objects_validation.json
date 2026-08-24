@@ -1,0 +1,208 @@
+{
+  "dataset": "SeabedObjects",
+  "total_extracted": 447,
+  "valid_images": 447,
+  "corrupt_images": 0,
+  "sample_records": [
+    {
+      "id": "IMG-0000",
+      "filename": "ship-001.png",
+      "dimensions": {
+        "width": 160,
+        "height": 122
+      },
+      "class": "shipwreck",
+      "source": "SeabedObjects"
+    },
+    {
+      "id": "IMG-0001",
+      "filename": "ship-002.png",
+      "dimensions": {
+        "width": 72,
+        "height": 52
+      },
+      "class": "shipwreck",
+      "source": "SeabedObjects"
+    },
+    {
+      "id": "IMG-0002",
+      "filename": "ship-003.png",
+      "dimensions": {
+        "width": 254,
+        "height": 284
+      },
+      "class": "shipwreck",
+      "source": "SeabedObjects"
+    },
+    {
+      "id": "IMG-0003",
+      "filename": "ship-004.png",
+      "dimensions": {
+        "width": 657,
+        "height": 555
+      },
+      "class": "shipwreck",
+      "source": "SeabedObjects"
+    },
+    {
+      "id": "IMG-0004",
+      "filename": "ship-005-1.png",
+      "dimensions": {
+        "width": 299,
+        "height": 204
+      },
+      "class": "shipwreck",
+      "source": "SeabedObjects"
+    },
+    {
+      "id": "IMG-0005",
+      "filename": "ship-005.png",
+      "dimensions": {
+        "width": 812,
+        "height": 450
+      },
+      "class": "shipwreck",
+      "source": "SeabedObjects"
+    },
+    {
+      "id": "IMG-0006",
+      "filename": "ship-006.png",
+      "dimensions": {
+        "width": 323,
+        "height": 525
+      },
+      "class": "shipwreck",
+      "source": "SeabedObjects"
+    },
+    {
+      "id": "IMG-0007",
+      "filename": "ship-007.png",
+      "dimensions": {
+        "width": 253,
+        "height": 176
+      },
+      "class": "shipwreck",
+      "source": "SeabedObjects"
+    },
+    {
+      "id": "IMG-0008",
+      "filename": "ship-008.png",
+      "dimensions": {
+        "width": 290,
+        "height": 157
+      },
+      "class": "shipwreck",
+      "source": "SeabedObjects"
+    },
+    {
+      "id": "IMG-0009",
+      "filename": "ship-009.png",
+      "dimensions": {
+        "width": 354,
+        "height": 182
+      },
+      "class": "shipwreck",
+      "source": "SeabedObjects"
+    },
+    {
+      "id": "IMG-0010",
+      "filename": "ship-010.png",
+      "dimensions": {
+        "width": 380,
+        "height": 184
+      },
+      "class": "shipwreck",
+      "source": "SeabedObjects"
+    },
+    {
+      "id": "IMG-0011",
+      "filename": "ship-011.png",
+      "dimensions": {
+        "width": 732,
+        "height": 1108
+      },
+      "class": "shipwreck",
+      "source": "SeabedObjects"
+    },
+    {
+      "id": "IMG-0012",
+      "filename": "ship-012.png",
+      "dimensions": {
+        "width": 402,
+        "height": 443
+      },
+      "class": "shipwreck",
+      "source": "SeabedObjects"
+    },
+    {
+      "id": "IMG-0013",
+      "filename": "ship-013-1.png",
+      "dimensions": {
+        "width": 301,
+        "height": 480
+      },
+      "class": "shipwreck",
+      "source": "SeabedObjects"
+    },
+    {
+      "id": "IMG-0014",
+      "filename": "ship-013.png",
+      "dimensions": {
+        "width": 218,
+        "height": 429
+      },
+      "class": "shipwreck",
+      "source": "SeabedObjects"
+    },
+    {
+      "id": "IMG-0015",
+      "filename": "ship-014.png",
+      "dimensions": {
+        "width": 256,
+        "height": 406
+      },
+      "class": "shipwreck",
+      "source": "SeabedObjects"
+    },
+    {
+      "id": "IMG-0016",
+      "filename": "ship-015.png",
+      "dimensions": {
+        "width": 438,
+        "height": 269
+      },
+      "class": "shipwreck",
+      "source": "SeabedObjects"
+    },
+    {
+      "id": "IMG-0017",
+      "filename": "ship-016.png",
+      "dimensions": {
+        "width": 199,
+        "height": 220
+      },
+      "class": "shipwreck",
+      "source": "SeabedObjects"
+    },
+    {
+      "id": "IMG-0018",
+      "filename": "ship-017.png",
+      "dimensions": {
+        "width": 465,
+        "height": 937
+      },
+      "class": "shipwreck",
+      "source": "SeabedObjects"
+    },
+    {
+      "id": "IMG-0019",
+      "filename": "ship-018.png",
+      "dimensions": {
+        "width": 512,
+        "height": 536
+      },
+      "class": "shipwreck",
+      "source": "SeabedObjects"
+    }
+  ]
+}

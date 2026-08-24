@@ -1,0 +1,496 @@
+{
+  "platform": "EchoPulseNet Marine Sonar Intelligence Platform",
+  "total_unified_records": 457,
+  "class_distribution": {
+    "shipwreck": 385,
+    "marine_debris": 62,
+    "geological_formation": 10
+  },
+  "datasets_ingested": [
+    "SeabedObjects-Ship-and-Airplane (FOSS GitHub)",
+    "NNSSS-Acoustic-Seabed-Segmentation (FOSS GitHub)",
+    "OpenSonarDatasets (Registry FOSS)"
+  ],
+  "sample_provenance": [
+    {
+      "id": "REC-0001",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-001.png",
+      "target_class": "shipwreck",
+      "resolution": "160x122",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0002",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-002.png",
+      "target_class": "shipwreck",
+      "resolution": "72x52",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0003",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-003-1.jpg",
+      "target_class": "shipwreck",
+      "resolution": "224x224",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0004",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-003.png",
+      "target_class": "shipwreck",
+      "resolution": "254x284",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0005",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-004.png",
+      "target_class": "shipwreck",
+      "resolution": "657x555",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0006",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-005-1.png",
+      "target_class": "shipwreck",
+      "resolution": "299x204",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0007",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-005.png",
+      "target_class": "shipwreck",
+      "resolution": "812x450",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0008",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-006.png",
+      "target_class": "shipwreck",
+      "resolution": "323x525",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0009",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-007.png",
+      "target_class": "shipwreck",
+      "resolution": "253x176",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0010",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-008.png",
+      "target_class": "shipwreck",
+      "resolution": "290x157",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0011",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-009.png",
+      "target_class": "shipwreck",
+      "resolution": "354x182",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0012",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-010.png",
+      "target_class": "shipwreck",
+      "resolution": "380x184",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0013",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-011.png",
+      "target_class": "shipwreck",
+      "resolution": "732x1108",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0014",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-012.png",
+      "target_class": "shipwreck",
+      "resolution": "402x443",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0015",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-013-1.png",
+      "target_class": "shipwreck",
+      "resolution": "301x480",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0016",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-013.png",
+      "target_class": "shipwreck",
+      "resolution": "218x429",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0017",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-014.png",
+      "target_class": "shipwreck",
+      "resolution": "256x406",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0018",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-015.png",
+      "target_class": "shipwreck",
+      "resolution": "438x269",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0019",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-016.png",
+      "target_class": "shipwreck",
+      "resolution": "199x220",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0020",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-017.png",
+      "target_class": "shipwreck",
+      "resolution": "465x937",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0021",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-018.png",
+      "target_class": "shipwreck",
+      "resolution": "512x536",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0022",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-019-1.png",
+      "target_class": "shipwreck",
+      "resolution": "339x276",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0023",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-019-2.png",
+      "target_class": "shipwreck",
+      "resolution": "137x112",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0024",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-019.png",
+      "target_class": "shipwreck",
+      "resolution": "125x105",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0025",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-020.png",
+      "target_class": "shipwreck",
+      "resolution": "276x132",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0026",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-021-1.png",
+      "target_class": "shipwreck",
+      "resolution": "232x193",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0027",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-021-2.png",
+      "target_class": "shipwreck",
+      "resolution": "367x306",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0028",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-021.png",
+      "target_class": "shipwreck",
+      "resolution": "254x215",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0029",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-022-1.png",
+      "target_class": "shipwreck",
+      "resolution": "328x289",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0030",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-022.png",
+      "target_class": "shipwreck",
+      "resolution": "188x134",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0031",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-023-1.png",
+      "target_class": "shipwreck",
+      "resolution": "241x202",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0032",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-023-2.png",
+      "target_class": "shipwreck",
+      "resolution": "226x155",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0033",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-023.png",
+      "target_class": "shipwreck",
+      "resolution": "333x316",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0034",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-024-1.png",
+      "target_class": "shipwreck",
+      "resolution": "150x145",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0035",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-024-2.png",
+      "target_class": "shipwreck",
+      "resolution": "138x139",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0036",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-024.png",
+      "target_class": "shipwreck",
+      "resolution": "259x224",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0037",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-025-1.png",
+      "target_class": "shipwreck",
+      "resolution": "253x241",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0038",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-025-2.png",
+      "target_class": "shipwreck",
+      "resolution": "172x197",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0039",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-025.png",
+      "target_class": "shipwreck",
+      "resolution": "313x283",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0040",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-026-1.png",
+      "target_class": "shipwreck",
+      "resolution": "159x140",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0041",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-026-2.png",
+      "target_class": "shipwreck",
+      "resolution": "150x139",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0042",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-026.png",
+      "target_class": "shipwreck",
+      "resolution": "326x224",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0043",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-027-1.png",
+      "target_class": "shipwreck",
+      "resolution": "148x147",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0044",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-027-2.png",
+      "target_class": "shipwreck",
+      "resolution": "147x168",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0045",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-027.png",
+      "target_class": "shipwreck",
+      "resolution": "268x211",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0046",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-028.png",
+      "target_class": "shipwreck",
+      "resolution": "937x448",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0047",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-029.png",
+      "target_class": "shipwreck",
+      "resolution": "518x354",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0048",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-030.png",
+      "target_class": "shipwreck",
+      "resolution": "446x286",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0049",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-031.png",
+      "target_class": "shipwreck",
+      "resolution": "462x483",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0050",
+      "source_dataset": "SeabedObjects-FOSS",
+      "file_name": "ship-032.png",
+      "target_class": "shipwreck",
+      "resolution": "747x731",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0448",
+      "source_dataset": "NNSSS-Acoustic-Survey-FOSS",
+      "file_name": "TRAN00.png",
+      "target_class": "geological_formation",
+      "resolution": "5764x83",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0449",
+      "source_dataset": "NNSSS-Acoustic-Survey-FOSS",
+      "file_name": "TRAN01.png",
+      "target_class": "geological_formation",
+      "resolution": "5764x83",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0450",
+      "source_dataset": "NNSSS-Acoustic-Survey-FOSS",
+      "file_name": "TRAN02.png",
+      "target_class": "geological_formation",
+      "resolution": "6800x83",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0451",
+      "source_dataset": "NNSSS-Acoustic-Survey-FOSS",
+      "file_name": "TRAN03.png",
+      "target_class": "geological_formation",
+      "resolution": "6800x83",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0452",
+      "source_dataset": "NNSSS-Acoustic-Survey-FOSS",
+      "file_name": "TRAN04.png",
+      "target_class": "geological_formation",
+      "resolution": "3825x83",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0453",
+      "source_dataset": "NNSSS-Acoustic-Survey-FOSS",
+      "file_name": "TRAN05.png",
+      "target_class": "geological_formation",
+      "resolution": "3825x83",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0454",
+      "source_dataset": "NNSSS-Acoustic-Survey-FOSS",
+      "file_name": "TRAN06.png",
+      "target_class": "geological_formation",
+      "resolution": "3517x83",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0455",
+      "source_dataset": "NNSSS-Acoustic-Survey-FOSS",
+      "file_name": "TRAN07.png",
+      "target_class": "geological_formation",
+      "resolution": "3517x83",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0456",
+      "source_dataset": "NNSSS-Acoustic-Survey-FOSS",
+      "file_name": "TRAN08.png",
+      "target_class": "geological_formation",
+      "resolution": "2532x83",
+      "synthetic": false
+    },
+    {
+      "id": "REC-0457",
+      "source_dataset": "NNSSS-Acoustic-Survey-FOSS",
+      "file_name": "TRAN09.png",
+      "target_class": "geological_formation",
+      "resolution": "2532x83",
+      "synthetic": false
+    }
+  ]
+}

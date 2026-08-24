@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+dist/
+build/
+
+# Python cache & environments
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+*.venv
+venv/
+ENV/
+
+# Large ZIP archives & temporary logs
+*.zip
+*.log
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
+!.env.example
+
+# Temporary uploads and cache
+uploads/raw_sonar/*
+!uploads/raw_sonar/.gitkeep
+
+# Windows reserved filename in third-party submodule
+**/aux.py

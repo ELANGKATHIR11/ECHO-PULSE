@@ -1,0 +1,353 @@
+# Part of PING-Mapper software
+#
+# GitHub: https://github.com/CameronBodine/PINGMapper
+# Website: https://cameronbodine.github.io/PINGMapper/ 
+#
+# Co-Developed by Cameron S. Bodine and Dr. Daniel Buscombe
+#
+# Inspired by PyHum: https://github.com/dbuscombe-usgs/PyHum
+#
+# MIT License
+#
+# Copyright (c) 2025 Cameron S. Bodine
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+
+# Imports
+import sys, os
+
+# Add 'pingmapper' to the path, may not need after pypi package...
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PACKAGE_DIR = os.path.dirname(SCRIPT_DIR)
+sys.path.append(PACKAGE_DIR)
+
+from pingmapper.funcs_common import *
+quiet_tensorflow_warnings()
+import json
+import numpy as np
+
+# Prevent the transformers/huggingface_hub libraries from making network calls
+# to huggingface.co to check for model updates. The model weights are stored
+# locally, so no internet access is needed. These flags can also be set as
+# system environment variables (TRANSFORMERS_OFFLINE=1, HF_HUB_OFFLINE=1)
+# before launching PINGMapper to achieve the same effect without a code change.
+os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+os.environ.setdefault("HF_HUB_OFFLINE", "1")
+# import tensorflow as tf
+# import tensorflow.keras.backend as K
+# from tensorflow.python.client import device_lib
+
+import itertools
+
+# from transformers import TFSegformerForSemanticSegmentation
+# from transformers import logging
+# logging.set_verbosity_error()
+
+# # Fixes depth detection warning
+# tf.get_logger().setLevel('ERROR')
+
+# from doodleverse_utils.imports import *
+# from doodleverse_utils.model_imports import *
+# from doodleverse_utils.prediction_imports import *
+
+# Flag to track if depth detection dependencies are available
+DEPTH_DETECTION_AVAILABLE = False
+
+try:
+    import tensorflow as tf
+    import tensorflow.keras.backend as K
+    from tensorflow.python.client import device_lib
+
+    from transformers import TFSegformerForSemanticSegmentation
+    from transformers import logging
+    logging.set_verbosity_error()
+
+    # Fixes depth detection warning
+    quiet_tensorflow_warnings()
+
+    with suppress_stdout_stderr():
+        from doodleverse_utils.imports import *
+        from doodleverse_utils.model_imports import *
+        from doodleverse_utils.prediction_imports import *
+    
+    DEPTH_DETECTION_AVAILABLE = True
+except ImportError as e:
+    import traceback
+    print('\n' + '='*80)
+    print('Could not import Tensorflow and/or Transformers. Please install these packages to use PING-Mapper.')
+    print('They are not needed for GhostVision. Trying to continue...')
+    print('\nDetailed error information:')
+    print('-'*80)
+    print(f'Error Type: {type(e).__name__}')
+    print(f'Error Message: {str(e)}')
+    print('-'*80)
+    traceback.print_exc()
+    print('='*80 + '\n')
+    DEPTH_DETECTION_AVAILABLE = False
+except Exception as e:
+    import traceback
+    print('\n' + '='*80)
+    print('Unexpected error while importing depth detection dependencies.')
+    print('Detailed error information:')
+    print('-'*80)
+    print(f'Error Type: {type(e).__name__}')
+    print(f'Error Message: {str(e)}')
+    print('-'*80)
+    traceback.print_exc()
+    print('='*80 + '\n')
+    DEPTH_DETECTION_AVAILABLE = False
+
+################################################################################
+# model_imports.py from segmentation_gym                                       #
+################################################################################
+'''
+Utilities provided courtesy Dr. Dan Buscombe from segmentation_gym
+https://github.com/Doodleverse/segmentation_gym
+'''
+
+#=======================================================================
+def _build_segformer_from_config(id2label, num_classes, num_channels=3):
+    '''
+    Construct a SegFormer model (nvidia/mit-b0 backbone architecture) entirely
+    from a hardcoded local config, without contacting HuggingFace Hub.
+
+    The config values below are the canonical mit-b0 architecture spec.
+    The backbone weights loaded here are random initialisation — they are
+    immediately overwritten by model.load_weights() with the Zenodo-hosted
+    fine-tuned weights, so no HF-sourced weights are ever used.
+    '''
+    from transformers import TFSegformerForSemanticSegmentation, SegformerConfig
+
+    label2id = {label: id for id, label in id2label.items()}
+
+    config = SegformerConfig(
+        num_channels=num_channels,
+        num_encoder_blocks=4,
+        depths=[2, 2, 2, 2],
+        sr_ratios=[8, 4, 2, 1],
+        hidden_sizes=[32, 64, 160, 256],
+        patch_sizes=[7, 3, 3, 3],
+        strides=[4, 2, 2, 2],
+        num_attention_heads=[1, 2, 5, 8],
+        mlp_ratios=[4, 4, 4, 4],
+        hidden_act='gelu',
+        hidden_dropout_prob=0.0,
+        attention_probs_dropout_prob=0.0,
+        classifier_dropout_prob=0.1,
+        initializer_range=0.02,
+        drop_path_rate=0.1,
+        layer_norm_eps=1e-06,
+        decoder_hidden_size=256,
+        semantic_loss_ignore_index=255,
+        num_labels=num_classes,
+        id2label=id2label,
+        label2id=label2id,
+    )
+
+    return TFSegformerForSemanticSegmentation(config)
+
+#=======================================================================
+def initModel(weights, configfile, USE_GPU=False):
+    '''
+    Compiles a Tensorflow model for segmentation. Developed following:
+    https://github.com/Doodleverse/segmentation_gym
+
+    ----------
+    Parameters
+    ----------
+    None
+
+    ----------------------------
+    Required Pre-processing step
+    ----------------------------
+    self.__init__()
+
+    -------
+    Returns
+    -------
+    Compiled model.
+
+    --------------------
+    Next Processing Step
+    --------------------
+    self._detectDepth()
+    '''
+    
+    if not DEPTH_DETECTION_AVAILABLE:
+        raise ImportError(
+            "TensorFlow, Transformers, and/or Doodleverse Utils are not installed. "
+            "These packages are required for automatic depth detection. "
+            "Please install them using: pip install tensorflow transformers doodleverse-utils"
+        )
+
+    SEED=42
+    np.random.seed(SEED)
+    AUTO = tf.data.experimental.AUTOTUNE # used in tf.data.Dataset API
+
+    tf.random.set_seed(SEED)
+
+    if USE_GPU == True:
+        os.environ['CUDA_VISIBLE_DEVICES'] = '0' # Use GPU
+    else:
+
+        os.environ['CUDA_VISIBLE_DEVICES'] = '-1' # Use CPU
+
+    #suppress tensorflow warnings
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+    #suppress tensorflow warnings
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+    # Open model configuration file
+    with open(configfile) as f:
+        config = json.load(f)
+    globals().update(config)
+
+
+    ########################################################################
+    ########################################################################
+
+    # Get model architecture
+    if MODEL == 'resunet':
+        model =  custom_resunet((TARGET_SIZE[0], TARGET_SIZE[1], N_DATA_BANDS),
+                        FILTERS,
+                        nclasses=[NCLASSES+1 if NCLASSES==1 else NCLASSES][0],
+                        kernel_size=(KERNEL,KERNEL),
+                        strides=STRIDE,
+                        dropout=DROPOUT,#0.1,
+                        dropout_change_per_layer=DROPOUT_CHANGE_PER_LAYER,#0.0,
+                        dropout_type=DROPOUT_TYPE,#"standard",
+                        use_dropout_on_upsampling=USE_DROPOUT_ON_UPSAMPLING,#False,
+                        )
+
+    elif MODEL == 'segformer':
+        id2label = {}
+        for k in range(NCLASSES):
+            id2label[k]=str(k)
+        # SegFormer always uses 3 input channels: seg_file2tensor() converts
+        # single-channel images to 3-channel via np.dstack before inference,
+        # so the Zenodo weights are always saved with num_channels=3.
+        model = _build_segformer_from_config(id2label, NCLASSES, num_channels=3)
+        # Subclassed Keras models are lazy — variables don't exist until the
+        # first forward pass. Do a dummy call to build them so load_weights()
+        # can match the saved HDF5 file's variable names.
+        # Input to TFSegformer is NCHW: (batch, channels, height, width)
+        dummy = tf.zeros((1, 3, TARGET_SIZE[0], TARGET_SIZE[1]))
+        model(dummy, training=False)
+
+    model.load_weights(weights)
+    # Compile once here so doPredict never needs to recompile between chunks.
+    # compile_models mutates the model in-place; we discard the returned list.
+    compile_models([model], MODEL)
+
+    return model, MODEL, N_DATA_BANDS
+
+################################################
+# prediction_imports.py from doodleverse_utils #
+################################################
+
+#=======================================================================
+def doPredict(model, MODEL, arr, N_DATA_BANDS, NCLASSES, TARGET_SIZE, OTSU_THRESHOLD, shadow=False):
+
+    '''
+    '''
+
+    # Model is compiled once in initModel; just normalise to a list here.
+    model = [model[0]]
+
+    # Read array into a cropped and resized tensor
+    image, w, h, bigimage = seg_file2tensor(arr, N_DATA_BANDS, TARGET_SIZE, MODEL)
+
+    image = standardize(image.numpy()).squeeze()
+
+    # Kludge to fix error noted in Issue #128
+    if shadow:
+        image = image[:,:,0]
+        image = tf.expand_dims(image, 2)
+
+    if NCLASSES == 2:
+
+        E0, E1 = est_label_binary(image, model, MODEL, False, NCLASSES, TARGET_SIZE, w, h)
+
+        e0 = np.average(np.dstack(E0), axis=-1)
+
+        e1 = np.average(np.dstack(E1), axis=-1)
+
+        est_label = (e1 + (1 - e0)) / 2
+
+        softmax_scores = np.dstack((e0,e1))
+
+        if OTSU_THRESHOLD:
+            thres = threshold_otsu(est_label)
+            est_label = (est_label > thres).astype('uint8')
+        else:
+            est_label = (est_label > 0.5).astype('uint8')
+
+    else: # NCLASSES>2
+        est_label, counter = est_label_multiclass(image, model, MODEL, False, NCLASSES, TARGET_SIZE)
+
+        est_label /= counter + 1
+        # est_label cannot be float16 so convert to float32
+        est_label = est_label.numpy().astype('float32')
+
+        if MODEL=='segformer':
+            est_label = resize(est_label, (1, NCLASSES, TARGET_SIZE[0],TARGET_SIZE[1]), preserve_range=True, clip=True).squeeze()
+            est_label = np.transpose(est_label, (1,2,0))
+            est_label = resize(est_label, (w, h))
+        else:
+            est_label = resize(est_label, (w, h))
+
+        softmax_scores = est_label.copy()
+
+        est_label = np.argmax(softmax_scores, -1)
+
+
+    return est_label, softmax_scores
+
+
+#=======================================================================
+def seg_file2tensor(bigimage, N_DATA_BANDS, TARGET_SIZE, MODEL):#, resize):
+    """
+    "seg_file2tensor(f)"
+    This function reads a jpeg image from file into a cropped and resized tensor,
+    for use in prediction with a trained segmentation model
+    INPUTS:
+        * f [string] file name of jpeg
+    OPTIONAL INPUTS: None
+    OUTPUTS:
+        * image [tensor array]: unstandardized image
+    GLOBAL INPUTS: TARGET_SIZE
+    """
+
+    image = resize(bigimage,(TARGET_SIZE[0], TARGET_SIZE[1]), preserve_range=True, clip=True)
+    image = np.array(image)
+    image = tf.cast(image, tf.uint8)
+
+    w = tf.shape(bigimage)[0]
+    h = tf.shape(bigimage)[1]
+
+    if MODEL=='segformer':
+        if np.ndim(image)==2:
+            image = np.dstack((image, image, image))
+        image = tf.transpose(image, (2, 0, 1))
+
+    return image, w, h, bigimage
+
+

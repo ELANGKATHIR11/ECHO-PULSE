@@ -1,0 +1,29 @@
+[
+  {
+    "name": "SeabedObjects",
+    "url": "https://github.com/huoguanying/SeabedObjects-Ship-and-Airplane-dataset.git",
+    "description": "Real side-scan sonar seabed targets: ships, airplanes, and seafloor anomalies.",
+    "status": "READY",
+    "local_path": "data/downloaded/SeabedObjects",
+    "files_count": 5,
+    "total_bytes": 50101029
+  },
+  {
+    "name": "NNSSS_Acoustic_Seabed",
+    "url": "https://github.com/aburguera/NNSSS.git",
+    "description": "Real side-scan sonar acoustic survey data for seabed segmentation (rock, sand, ripple fields).",
+    "status": "READY",
+    "local_path": "data/downloaded/NNSSS",
+    "files_count": 34,
+    "total_bytes": 3552752
+  },
+  {
+    "name": "OpenSonarDatasets_Registry",
+    "url": "https://github.com/remaro-network/OpenSonarDatasets.git",
+    "description": "Comprehensive open-source underwater sonar benchmark dataset repository and sensor logs.",
+    "status": "READY",
+    "local_path": "data/downloaded/OpenSonarDatasets",
+    "files_count": 2,
+    "total_bytes": 113625
+  }
+]

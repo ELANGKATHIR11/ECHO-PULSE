@@ -1,0 +1,14 @@
+path: F:\echopulsenet---marine-sonar-intelligence-platform (1)\data\yolo_sonar_dataset
+train: images/train
+val: images/val
+test: images/test
+names:
+  0: ghost_gear
+  1: shipwreck
+  2: unexploded_ordnance
+  3: pipeline_anomaly
+  4: marine_debris
+  5: subsea_cable
+  6: biological_cluster
+  7: geological_formation
+nc: 8

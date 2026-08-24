@@ -1,0 +1,599 @@
+@import "tailwindcss";
+
+@custom-variant light (&:where(.light, .light *));
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    
+    /* Standardized KPI Card Geometry Variables for 12-Column Grid Alignment */
+    --kpi-card-padding: 1rem;
+    --kpi-card-padding-x: 1.125rem;
+    --kpi-card-padding-y: 1rem;
+    --kpi-card-margin: 0;
+    --kpi-card-radius: 1rem;
+    --kpi-card-gap: 1rem;
+    --kpi-card-min-height: 110px;
+
+    /* Dark Theme (Default Ocean Abyss Liquid Glass) */
+    --bg-page: #020712;
+    --bg-page-secondary: #030a17;
+    --bg-surface: rgba(5, 14, 30, 0.72);
+    --bg-surface-elevated: rgba(7, 20, 44, 0.85);
+    --bg-surface-inset: rgba(2, 8, 20, 0.65);
+    --border-main: rgba(34, 211, 238, 0.25);
+    --border-subtle: rgba(34, 211, 238, 0.12);
+    --border-hover: rgba(34, 211, 238, 0.55);
+    --border-liquid: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, rgba(34, 211, 238, 0.4) 30%, rgba(6, 182, 212, 0.08) 70%, rgba(255, 255, 255, 0.15) 100%);
+    --text-main: #f1f5f9;
+    --text-sub: #94a3b8;
+    --text-muted: #64748b;
+    --accent-cyan: #22d3ee;
+    --accent-emerald: #34d399;
+    --accent-amber: #fbbf24;
+    --accent-glow: rgba(34, 211, 238, 0.22);
+    --liquid-sheen: rgba(255, 255, 255, 0.28);
+  }
+
+  html.light, :root[data-theme="light"] {
+    /* Luminous Coastal Light Sea-Blue Liquid Glass Theme */
+    --bg-page: #d2ecf9;
+    --bg-page-secondary: #c4e4f6;
+    --bg-surface: rgba(255, 255, 255, 0.88);
+    --bg-surface-elevated: rgba(255, 255, 255, 0.96);
+    --bg-surface-inset: rgba(210, 236, 249, 0.9);
+    --border-main: rgba(2, 132, 199, 0.30);
+    --border-subtle: rgba(2, 132, 199, 0.16);
+    --border-hover: rgba(2, 106, 162, 0.70);
+    --border-liquid: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(2, 132, 199, 0.40) 30%, rgba(56, 189, 248, 0.20) 70%, rgba(255, 255, 255, 0.8) 100%);
+    
+    /* Maximum Legibility & Deep High-Contrast Maritime Typography */
+    --text-main: #061930;
+    --text-sub: #163252;
+    --text-muted: #334e68;
+    --accent-cyan: #00639b;
+    --accent-emerald: #03624c;
+    --accent-amber: #8a3b00;
+    --accent-glow: rgba(2, 132, 199, 0.22);
+    --liquid-sheen: rgba(255, 255, 255, 0.85);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--bg-page);
+    color: var(--text-main);
+    overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Dark mode background ambient with liquid caustics */
+  html.dark body {
+    background-color: #020712;
+    background-image: 
+      radial-gradient(ellipse 90% 60% at 50% -20%, rgba(6, 182, 212, 0.20), transparent 75%),
+      radial-gradient(circle 700px at 10% 80%, rgba(14, 116, 144, 0.12), transparent 70%),
+      radial-gradient(circle 600px at 90% 70%, rgba(56, 189, 248, 0.09), transparent 70%),
+      radial-gradient(circle 400px at 50% 50%, rgba(3, 105, 161, 0.06), transparent 70%);
+    background-attachment: fixed;
+  }
+
+  /* Light mode background ambient with luminous sea blue refraction */
+  html.light body, :root[data-theme="light"] body {
+    background-color: #d2ecf9;
+    background-image: 
+      radial-gradient(ellipse 95% 65% at 50% -15%, rgba(125, 211, 252, 0.80), transparent 75%),
+      radial-gradient(circle 850px at 10% 85%, rgba(186, 230, 253, 0.95), transparent 70%),
+      radial-gradient(circle 750px at 90% 75%, rgba(199, 242, 254, 0.85), transparent 70%),
+      radial-gradient(circle 500px at 50% 50%, rgba(147, 197, 253, 0.40), transparent 70%);
+    background-attachment: fixed;
+  }
+
+  code, kbd, samp, pre, .font-mono {
+    font-family: var(--font-mono);
+  }
+}
+
+/* ----------------------------------------------------
+   Strict Stacking Context & Z-Index Hierarchy
+   ---------------------------------------------------- */
+.digital-twin-hud {
+  position: relative;
+  z-index: 100 !important;
+  isolation: isolate;
+}
+
+.sonar-beam-engine {
+  position: relative;
+  z-index: 10 !important;
+  isolation: isolate;
+}
+
+.digital-twin-viewport {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+}
+
+.digital-twin-overlay-left {
+  position: absolute;
+  z-index: 10 !important;
+  isolation: isolate;
+}
+
+.digital-twin-overlay-right {
+  position: absolute;
+  z-index: 20 !important;
+  isolation: isolate;
+}
+
+.digital-twin-overlay-bottom {
+  position: absolute;
+  z-index: 20 !important;
+  isolation: isolate;
+}
+
+.kpi-card {
+  padding: var(--kpi-card-padding-y) var(--kpi-card-padding-x);
+  margin: var(--kpi-card-margin);
+  border-radius: var(--kpi-card-radius);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-main);
+  backdrop-filter: blur(24px) saturate(190%) contrast(105%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%) contrast(105%);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  min-height: var(--kpi-card-min-height);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html.dark .kpi-card {
+  box-shadow: 
+    0 16px 40px -10px rgba(0, 8, 20, 0.75),
+    0 0 20px -2px rgba(34, 211, 238, 0.12),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+html.light .kpi-card {
+  background: rgba(255, 255, 255, 0.90);
+  border-color: rgba(2, 132, 199, 0.28);
+  box-shadow: 
+    0 10px 30px -6px rgba(15, 23, 42, 0.08),
+    0 0 18px -2px rgba(2, 132, 199, 0.14),
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.98),
+    inset 0 -1px 2px 0 rgba(203, 213, 225, 0.4);
+}
+
+.kpi-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+}
+
+.kpi-card-interactive {
+  cursor: pointer;
+}
+
+.kpi-card-interactive:active {
+  transform: scale(0.99);
+}
+
+.kpi-card-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--kpi-card-gap);
+  width: 100%;
+}
+
+.kpi-card .kpi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.kpi-card .kpi-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  justify-content: center;
+  margin: 0.25rem 0;
+}
+
+.kpi-card .kpi-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.5rem;
+  margin-top: 0.25rem;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+/* ----------------------------------------------------
+   Liquid Glass Texture & Caustic Animations
+   ---------------------------------------------------- */
+@keyframes liquidFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes liquidCausticDrift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translate3d(1.5%, 1%, 0) scale(1.03);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.35;
+  }
+}
+
+@keyframes liquidShimmer {
+  0% {
+    transform: translateX(-100%) rotate(25deg);
+  }
+  100% {
+    transform: translateX(200%) rotate(25deg);
+  }
+}
+
+/* Liquid Caustic Background Layer */
+.liquid-caustic-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle at 20% 30%, rgba(34, 211, 238, 0.08) 0%, transparent 40%),
+                    radial-gradient(circle at 80% 70%, rgba(6, 182, 212, 0.08) 0%, transparent 40%),
+                    radial-gradient(circle at 50% 90%, rgba(56, 189, 248, 0.06) 0%, transparent 50%);
+  filter: blur(30px);
+  animation: liquidCausticDrift 14s ease-in-out infinite;
+}
+
+html.light .liquid-caustic-layer {
+  background-image: radial-gradient(circle at 20% 30%, rgba(2, 132, 199, 0.14) 0%, transparent 40%),
+                    radial-gradient(circle at 80% 70%, rgba(14, 165, 233, 0.14) 0%, transparent 40%),
+                    radial-gradient(circle at 50% 90%, rgba(56, 189, 248, 0.12) 0%, transparent 50%);
+}
+
+/* Liquid Glass Cards & Surfaces */
+.liquid-glass-surface {
+  background: var(--bg-surface);
+  backdrop-filter: blur(24px) saturate(190%) contrast(105%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%) contrast(105%);
+  border: 1px solid var(--border-main);
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html.dark .liquid-glass-surface {
+  box-shadow: 
+    0 16px 40px -10px rgba(0, 8, 20, 0.75),
+    0 0 20px -2px rgba(34, 211, 238, 0.12),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+html.light .liquid-glass-surface {
+  background: rgba(255, 255, 255, 0.90);
+  border-color: rgba(2, 132, 199, 0.28);
+  box-shadow: 
+    0 10px 30px -6px rgba(15, 23, 42, 0.08),
+    0 0 18px -2px rgba(2, 132, 199, 0.14),
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.98),
+    inset 0 -1px 2px 0 rgba(203, 213, 225, 0.4);
+}
+
+/* Liquid Prism Edge Reflection Line */
+.liquid-sheen-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.2) 15%, 
+    rgba(34, 211, 238, 0.65) 50%, 
+    rgba(255, 255, 255, 0.2) 85%, 
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+html.light .liquid-sheen-top {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.7) 15%, 
+    rgba(2, 132, 199, 0.65) 50%, 
+    rgba(255, 255, 255, 0.7) 85%, 
+    transparent 100%
+  );
+}
+
+/* Liquid Subtle Radial Reflection at Top Left (Convex Glare) */
+.liquid-convex-glare {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 140px;
+  height: 90px;
+  background: radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.09), transparent 75%);
+  pointer-events: none;
+  border-top-left-radius: inherit;
+}
+
+html.light .liquid-convex-glare {
+  background: radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.65), transparent 75%);
+}
+
+/* Liquid Texture Water Wave Grid */
+.bg-liquid-grid {
+  background-size: 28px 28px;
+}
+
+html.dark .bg-liquid-grid {
+  background-image: 
+    linear-gradient(to right, rgba(34, 211, 238, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(34, 211, 238, 0.05) 1px, transparent 1px);
+}
+
+html.light .bg-liquid-grid {
+  background-image: 
+    linear-gradient(to right, rgba(2, 132, 199, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(2, 132, 199, 0.08) 1px, transparent 1px);
+}
+
+/* Custom Liquid Scrollbars */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+html.dark ::-webkit-scrollbar-track {
+  background: rgba(2, 7, 18, 0.7);
+}
+
+html.light ::-webkit-scrollbar-track {
+  background: rgba(210, 236, 249, 0.8);
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(34, 211, 238, 0.4), rgba(6, 182, 212, 0.25));
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.3);
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(2, 132, 199, 0.55), rgba(56, 189, 248, 0.45));
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(34, 211, 238, 0.75), rgba(6, 182, 212, 0.6));
+}
+
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(2, 132, 199, 0.80), rgba(56, 189, 248, 0.70));
+}
+
+/* Leaflet Nautical Map Theming with Liquid Glass Popups */
+html.dark .leaflet-container {
+  background: #020712 !important;
+  font-family: inherit;
+}
+
+html.light .leaflet-container {
+  background: #d8ecf8 !important;
+  font-family: inherit;
+}
+
+html.dark .leaflet-tile {
+  filter: brightness(0.65) invert(1) contrast(3) hue-rotate(195deg) saturate(0.4) brightness(0.7) !important;
+}
+
+html.light .leaflet-tile {
+  filter: contrast(1.08) saturate(1.20) brightness(1.02) !important;
+}
+
+html.dark .leaflet-control-zoom a {
+  background: rgba(5, 14, 30, 0.85) !important;
+  backdrop-filter: blur(16px) !important;
+  color: #22D3EE !important;
+  border: 1px solid rgba(34, 211, 238, 0.35) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
+  transition: all 0.2s ease;
+}
+
+html.light .leaflet-control-zoom a {
+  background: rgba(255, 255, 255, 0.94) !important;
+  backdrop-filter: blur(16px) !important;
+  color: #00639b !important;
+  border: 1px solid rgba(2, 132, 199, 0.30) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.95) !important;
+  transition: all 0.2s ease;
+}
+
+html.dark .leaflet-popup-content-wrapper {
+  background: rgba(5, 14, 30, 0.92) !important;
+  backdrop-filter: blur(24px) saturate(190%) !important;
+  color: #f1f5f9 !important;
+  border: 1px solid rgba(34, 211, 238, 0.45) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 20px 50px -5px rgba(0, 0, 0, 0.85), 0 0 25px -2px rgba(34, 211, 238, 0.3), inset 0 1px 1.5px rgba(255, 255, 255, 0.25) !important;
+}
+
+html.light .leaflet-popup-content-wrapper {
+  background: rgba(255, 255, 255, 0.96) !important;
+  backdrop-filter: blur(24px) saturate(190%) !important;
+  color: #061930 !important;
+  border: 1px solid rgba(2, 132, 199, 0.35) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.15), 0 0 20px -2px rgba(2, 132, 199, 0.2), inset 0 1px 1.5px rgba(255, 255, 255, 0.95) !important;
+}
+
+html.dark .leaflet-popup-tip {
+  background: rgba(5, 14, 30, 0.92) !important;
+  border: 1px solid rgba(34, 211, 238, 0.45) !important;
+}
+
+html.light .leaflet-popup-tip {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border: 1px solid rgba(2, 132, 199, 0.35) !important;
+}
+
+/* ----------------------------------------------------
+   LIGHT MODE HIGH-CONTRAST TYPOGRAPHY & SURFACE OVERRIDES
+   Guarantees 100% visible text, crisp inputs & bright ocean styling
+   ---------------------------------------------------- */
+html.light {
+  color-scheme: light;
+}
+
+html.light .text-white {
+  color: #061930 !important;
+}
+
+html.light .text-slate-100 {
+  color: #09203c !important;
+}
+
+html.light .text-slate-200 {
+  color: #0e2948 !important;
+}
+
+html.light .text-slate-300 {
+  color: #163252 !important;
+}
+
+html.light .text-slate-400 {
+  color: #2b4562 !important;
+}
+
+html.light .text-slate-500 {
+  color: #435b75 !important;
+}
+
+html.light .text-cyan-200,
+html.light .text-cyan-300,
+html.light .text-cyan-400 {
+  color: #00639b !important;
+}
+
+html.light .text-emerald-300,
+html.light .text-emerald-400 {
+  color: #03624c !important;
+}
+
+html.light .text-amber-300,
+html.light .text-amber-400 {
+  color: #8a3b00 !important;
+}
+
+html.light .text-pink-300,
+html.light .text-pink-400,
+html.light .text-rose-300,
+html.light .text-rose-400 {
+  color: #9e1030 !important;
+}
+
+html.light .text-purple-300,
+html.light .text-purple-400 {
+  color: #60259e !important;
+}
+
+/* Light mode dark background elements transform into crisp translucent white glass */
+html.light .bg-\[\#01040a\],
+html.light .bg-\[\#020610\],
+html.light .bg-\[\#020712\],
+html.light .bg-\[\#020814\],
+html.light .bg-\[\#030710\],
+html.light .bg-\[\#030914\],
+html.light .bg-\[\#030A17\],
+html.light .bg-\[\#040B18\],
+html.light .bg-\[\#040D1B\],
+html.light .bg-\[\#040E1E\],
+html.light .bg-\[\#050b14\],
+html.light .bg-\[\#050B14\],
+html.light .bg-\[\#050E1F\],
+html.light .bg-\[\#051124\],
+html.light .bg-\[\#061322\],
+html.light .bg-\[\#061426\],
+html.light .bg-\[\#061528\],
+html.light .bg-\[\#08121e\],
+html.light .bg-\[\#091522\],
+html.light .bg-\[\#0b1624\] {
+  background-color: rgba(255, 255, 255, 0.88) !important;
+  color: #061930;
+}
+
+/* Light mode hover states */
+html.light .hover\:bg-cyan-950\/20:hover,
+html.light .hover\:bg-cyan-950\/30:hover,
+html.light .hover\:bg-cyan-950\/40:hover,
+html.light .hover\:bg-cyan-950\/50:hover,
+html.light .hover\:bg-cyan-950\/60:hover {
+  background-color: rgba(224, 242, 254, 0.8) !important;
+}
+
+/* Light mode borders */
+html.light .border-cyan-900\/20,
+html.light .border-cyan-900\/30,
+html.light .border-cyan-900\/35,
+html.light .border-cyan-900\/40,
+html.light .border-cyan-900\/45,
+html.light .border-cyan-900\/50,
+html.light .border-cyan-900\/60,
+html.light .border-cyan-500\/20,
+html.light .border-cyan-500\/25,
+html.light .border-cyan-500\/30,
+html.light .border-cyan-500\/35,
+html.light .border-cyan-500\/40 {
+  border-color: rgba(2, 132, 199, 0.28) !important;
+}
+
+/* Inputs, selects, and textareas in light mode */
+html.light input,
+html.light select,
+html.light textarea {
+  color: #061930 !important;
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #64748b !important;
+}
+
+html.light select option {
+  background-color: #ffffff !important;
+  color: #061930 !important;
+}
