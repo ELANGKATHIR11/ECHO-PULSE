@@ -25,5 +25,23 @@
     "local_path": "data/downloaded/OpenSonarDatasets",
     "files_count": 2,
     "total_bytes": 113625
+  },
+  {
+    "name": "PINGEcosystem_GhostPots",
+    "url": "https://github.com/cameronbodine/GhostVision.git",
+    "description": "HuggingFace/GitHub PINGEcosystem side-scan sonar derelict fishing gear (ghost pots) annotations and models.",
+    "status": "READY",
+    "local_path": "data/downloaded/GhostVision",
+    "files_count": 13,
+    "total_bytes": 114510
+  },
+  {
+    "name": "Awesome_Sonar_Resources",
+    "url": "https://github.com/Jorwnpay/Awesome-Sonar-Image-Resources.git",
+    "description": "Curated repository of side-scan, forward-looking, and synthetic aperture sonar datasets.",
+    "status": "READY",
+    "local_path": "data/downloaded/AwesomeSonarResources",
+    "files_count": 2,
+    "total_bytes": 7698
   }
 ]

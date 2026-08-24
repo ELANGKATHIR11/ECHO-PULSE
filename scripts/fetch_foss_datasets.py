@@ -24,6 +24,18 @@ FOSS_DATASETS = {
         "description": "Comprehensive open-source underwater sonar benchmark dataset repository and sensor logs.",
         "type": "git",
         "target_dir": "data/downloaded/OpenSonarDatasets"
+    },
+    "PINGEcosystem_GhostPots": {
+        "url": "https://github.com/cameronbodine/GhostVision.git",
+        "description": "HuggingFace/GitHub PINGEcosystem side-scan sonar derelict fishing gear (ghost pots) annotations and models.",
+        "type": "git",
+        "target_dir": "data/downloaded/GhostVision"
+    },
+    "Awesome_Sonar_Resources": {
+        "url": "https://github.com/Jorwnpay/Awesome-Sonar-Image-Resources.git",
+        "description": "Curated repository of side-scan, forward-looking, and synthetic aperture sonar datasets.",
+        "type": "git",
+        "target_dir": "data/downloaded/AwesomeSonarResources"
     }
 }
 
