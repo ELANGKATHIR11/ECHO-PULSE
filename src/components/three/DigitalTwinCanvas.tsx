@@ -129,7 +129,18 @@ const seabedFragmentShader = `
     // Directional lighting & acoustic grazing angle calculations
     vec3 lightDir = normalize(vec3(0.35, 0.85, 0.45));
     float diff = max(dot(vNormal, lightDir), 0.22);
-    vec3 finalColor = baseColor * (diff * 0.65 + 0.35);
+    
+    // Dynamic Subsea Underwater Caustic Ripples from surface waves
+    float caustic1 = sin(vWorldPosition.x * 1.4 + uTime * 0.9) * sin(vWorldPosition.z * 1.4 + uTime * 0.7);
+    float caustic2 = sin(vWorldPosition.x * 2.8 - uTime * 1.2) * cos(vWorldPosition.z * 2.8 + uTime * 1.1);
+    float caustics = clamp((caustic1 + caustic2) * 0.5 + 0.5, 0.0, 1.0);
+    caustics = pow(caustics, 3.0) * 0.28;
+    
+    // Water Depth Color Absorption (Deep Rayleigh scattering)
+    vec3 waterFogColor = vec3(0.01, 0.06, 0.16);
+    float depthAbsorption = clamp(abs(vWorldPosition.y) / 10.0, 0.0, 0.85);
+    vec3 illuminatedColor = (baseColor + vec3(0.12, 0.75, 0.95) * caustics) * (diff * 0.75 + 0.25);
+    vec3 finalColor = mix(illuminatedColor, waterFogColor, depthAbsorption * 0.35);
 
     // 2. Depth Contour Isolines (Anti-aliased Analytical Derivatives)
     if (uContoursEnabled > 0.5) {
@@ -670,23 +681,36 @@ function SubseaAnomalyMarker({
   );
 }
 
-// Suspended Marine Snow Particle Cloud
-function SuspendedMarineSnow({ count = 280, enabled = true }: { count?: number; enabled?: boolean }) {
+// Suspended Marine Snow Particle Cloud with organic Brownian drift & turbulence
+function SuspendedMarineSnow({ count = 360, enabled = true }: { count?: number; enabled?: boolean }) {
   const particles = useMemo(() => {
     const pos = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 34;
-      pos[i * 3 + 1] = Math.random() * 8.5;
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 34;
+      pos[i * 3] = (Math.random() - 0.5) * 36;
+      pos[i * 3 + 1] = Math.random() * 9.5;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 36;
     }
     return pos;
   }, [count]);
 
   const pointsRef = useRef<THREE.Points>(null);
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     if (pointsRef.current && enabled) {
-      pointsRef.current.rotation.y += delta * 0.015;
+      // Organic ocean current drift
+      pointsRef.current.rotation.y += delta * 0.012;
+      const positions = pointsRef.current.geometry.attributes.position.array as Float32Array;
+      const time = state.clock.elapsedTime;
+      for (let i = 0; i < count; i++) {
+        const yIdx = i * 3 + 1;
+        positions[yIdx] -= delta * 0.15; // Slow settling drift
+        if (positions[yIdx] < 0.1) {
+          positions[yIdx] = 9.0; // Wrap back to surface
+        }
+        // Micro horizontal turbulence
+        positions[i * 3] += Math.sin(time * 0.5 + i) * 0.003;
+      }
+      pointsRef.current.geometry.attributes.position.needsUpdate = true;
     }
   });
 
@@ -702,23 +726,57 @@ function SuspendedMarineSnow({ count = 280, enabled = true }: { count?: number; 
           itemSize={3}
         />
       </bufferGeometry>
-      <pointsMaterial size={0.06} color="#38bdf8" transparent opacity={0.35} />
+      <pointsMaterial size={0.08} color="#7dd3fc" transparent opacity={0.45} sizeAttenuation />
     </points>
+  );
+}
+
+// Realistic Animated Ocean Surface Mesh (Viewed from underneath)
+function RealisticOceanWaterSurface() {
+  const waterRef = useRef<THREE.Mesh>(null);
+  
+  useFrame((state) => {
+    if (waterRef.current) {
+      waterRef.current.position.y = 8.8 + Math.sin(state.clock.elapsedTime * 0.8) * 0.06;
+    }
+  });
+
+  return (
+    <mesh ref={waterRef} position={[0, 8.8, 0]} rotation={[Math.PI / 2, 0, 0]}>
+      <planeGeometry args={[44, 44, 32, 32]} />
+      <meshStandardMaterial
+        color="#0369a1"
+        roughness={0.1}
+        metalness={0.85}
+        transparent
+        opacity={0.35}
+        side={THREE.DoubleSide}
+      />
+    </mesh>
   );
 }
 
 // Volumetric Sunbeams / Caustic Light Rays filtering down from surface
 function VolumetricCausticLightRays() {
+  const raysRef = useRef<THREE.Group>(null);
+  
+  useFrame((state) => {
+    if (raysRef.current) {
+      raysRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.2) * 0.08;
+    }
+  });
+
   return (
-    <group position={[0, 9, 0]}>
-      {[-6, 0, 6].map((x, i) => (
-        <mesh key={i} position={[x, -4, 0]} rotation={[0.1, 0, -0.05 * x]}>
-          <cylinderGeometry args={[0.4, 2.8, 8, 16, 1, true]} />
+    <group ref={raysRef} position={[0, 9, 0]}>
+      {[-8, -4, 0, 4, 8].map((x, i) => (
+        <mesh key={i} position={[x, -4.5, (i % 2 === 0 ? 2 : -2)]} rotation={[0.08, 0, -0.04 * x]}>
+          <cylinderGeometry args={[0.3, 3.2, 9.5, 16, 1, true]} />
           <meshBasicMaterial
             color="#38bdf8"
             transparent
-            opacity={0.06}
+            opacity={0.05}
             side={THREE.DoubleSide}
+            depthWrite={false}
           />
         </mesh>
       ))}
@@ -852,7 +910,8 @@ export const DigitalTwinCanvas: React.FC<DigitalTwinCanvasProps> = ({
           color={isLight ? '#0284c7' : '#00f0ff'}
         />
 
-        {/* Volumetric Sunlight Rays from surface */}
+        {/* Volumetric Sunlight Rays & Ocean Surface Mesh */}
+        <RealisticOceanWaterSurface />
         <VolumetricCausticLightRays />
 
         {/* Surface Survey Vessel */}
