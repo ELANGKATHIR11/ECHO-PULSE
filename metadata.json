@@ -3,5 +3,5 @@
   "version": "2.6.0",
   "description": "Deep Ocean Sonar Intelligence, Real-Time Acoustic Inference, GIS Bathymetry, 3D Ocean Scanning and Anomaly Detection Platform",
   "architecture": "Native Edge PyTorch + CUDA + WebGPU",
-  "license": "MIT"
+  "license": "GPL-3.0"
 }
