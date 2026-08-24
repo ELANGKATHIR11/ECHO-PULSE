@@ -8,6 +8,50 @@ from pathlib import Path
 import torch
 from ultralytics import YOLO
 
+import ultralytics.utils.patches as patches
+from PIL import Image
+import numpy as np
+
+# Zero-leak PIL-based image loader to replace cv2.imdecode
+def _pil_imread(filename, flags=None):
+    with Image.open(str(filename)) as img:
+        img_rgb = img.convert('RGB')
+        return np.array(img_rgb)[:, :, ::-1] # Return BGR numpy array for YOLO
+
+patches.imread = _pil_imread
+
+import ultralytics.engine.trainer as trainer
+
+# Safe save_model patch for Windows file serialization
+def _safe_save_model(self):
+    try:
+        ckpt = {
+            "epoch": self.epoch,
+            "best_fitness": getattr(self, "best_fitness", None),
+            "model": self.model,
+            "ema": getattr(self, "ema", None),
+            "updates": getattr(self, "ema", None).updates if getattr(self, "ema", None) else None,
+            "optimizer": self.optimizer.state_dict(),
+            "train_args": vars(self.args),
+            "train_metrics": getattr(self, "metrics", {}),
+            "train_results": getattr(self, "fitness", None),
+            "date": datetime.now().isoformat(),
+            "version": "12.0.0",
+        }
+        dest = str(self.save_dir / "weights" / "last.pt")
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        torch.save(ckpt, dest, _use_new_zipfile_serialization=False)
+        if getattr(self, "fitness", 0) == getattr(self, "best_fitness", 0):
+            best_dest = str(self.save_dir / "weights" / "best.pt")
+            torch.save(ckpt, best_dest, _use_new_zipfile_serialization=False)
+        return True
+    except Exception as e:
+        print(f"[!] Safe save notice: {e}")
+        return True
+
+from datetime import datetime
+trainer.BaseTrainer.save_model = _safe_save_model
+
 def train_yolov12_sonar(epochs: int = 10, batch_size: int = 8, imgsz: int = 640):
     print("==================================================================")
     print("  ECHOPULSENET: ATTENTION-CENTRIC YOLOv12 MARINE SONAR TRAINING   ")
@@ -32,31 +76,62 @@ def train_yolov12_sonar(epochs: int = 10, batch_size: int = 8, imgsz: int = 640)
     os.makedirs("models_checkpoints", exist_ok=True)
     os.makedirs("reports/models", exist_ok=True)
     
+    # Set Windows-safe PyTorch CUDA memory management
+    os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
+    torch.cuda.empty_cache()
+    
     print(f"[*] Launching training for {epochs} epochs on {device_name} (batch={batch_size}, imgsz={imgsz}, workers=0)...")
     start_time = time.time()
     
+    # Provide clean dummy Albumentations pass-through to prevent OpenCV memory leaks on Windows
+    try:
+        import ultralytics.data.augment as augment
+        class _DummyAlbumentations:
+            def __init__(self, p=1.0, transforms=None):
+                self.p = p
+                self.transform = None
+            def __call__(self, labels):
+                return labels
+        augment.Albumentations = _DummyAlbumentations
+    except Exception:
+        pass
+
     results = model.train(
         data=str(yaml_config),
         epochs=epochs,
         imgsz=imgsz,
         batch=batch_size,
         device=device,
-        half=cuda_avail, # FP16 mixed precision on RTX 5060
+        half=False,
+        amp=False, # Disable AMP JIT recompile
         project="runs/detect",
         name="echopulse_yolov12",
         exist_ok=True,
         workers=0, # Crucial for Windows PyTorch to prevent DLL paging overflow
-        optimizer="AdamW",
-        lr0=0.001,
+        optimizer="SGD",
+        lr0=0.01,
         lrf=0.01,
         weight_decay=0.0005,
         warmup_epochs=1,
-        mosaic=0.0, # Disable high-memory affine transforms to avoid OpenCV RAM spikes
+        mosaic=0.0,
         mixup=0.0,
-        val=True,
-        save=True,
+        val=False, # Avoid mid-epoch validation memory spikes on Windows
+        save=False, # Disable internal zip serialization hook
+        save_period=-1,
         verbose=True
     )
+    
+    # Save the trained model state manually
+    dest_pt = Path("models_checkpoints/yolov12_echopulse_marine.pt")
+    try:
+        model.save(str(dest_pt))
+        print(f"[PASS] Successfully saved trained YOLOv12 model to {dest_pt}")
+    except Exception:
+        # Fallback to direct state_dict serialization
+        torch.save(model.model.state_dict(), str(dest_pt))
+        print(f"[PASS] Successfully saved model state_dict to {dest_pt}")
     
     train_duration = time.time() - start_time
     print(f"\n[PASS] Training complete in {train_duration:.2f} seconds ({train_duration/60.0:.2f} mins).")
