@@ -820,10 +820,13 @@ export const DigitalTwinCanvas: React.FC<DigitalTwinCanvasProps> = ({
     <div className="relative w-full h-full min-h-[500px] bg-[#020712] dark:bg-[#020712] light:bg-[#d2ecf9] rounded-xl overflow-hidden border border-cyan-500/20 dark:border-cyan-500/20 light:border-sky-300 shadow-[0_12px_48px_rgba(0,0,0,0.8)] dark:shadow-[0_12px_48px_rgba(0,0,0,0.8)] light:shadow-lg transition-colors">
       <Canvas
         camera={{ position: [0, 11, 19], fov: 45 }}
+        dpr={[1, 2]}
         gl={{
           antialias: true,
-          powerPreference: 'default',
+          powerPreference: 'high-performance',
           preserveDrawingBuffer: false,
+          toneMapping: THREE.ACESFilmicToneMapping,
+          toneMappingExposure: isLight ? 1.05 : 1.25,
         }}
         onCreated={({ gl }) => {
           gl.domElement.addEventListener('webglcontextlost', (e) => {
