@@ -14,6 +14,7 @@ import { AnalyticsPage } from './pages/AnalyticsPage';
 import { DemoPage } from './pages/DemoPage';
 import { WebcamTrackerPage } from './pages/WebcamTrackerPage';
 import { ActiveLearningStudio } from './pages/ActiveLearningStudio';
+import { RawSonarUploadPage } from './pages/RawSonarUploadPage';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 const PageFallback = () => (
@@ -117,6 +118,14 @@ export default function App() {
                 element={
                   <Suspense fallback={<PageFallback />}>
                     <ActiveLearningStudio />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/upload"
+                element={
+                  <Suspense fallback={<PageFallback />}>
+                    <RawSonarUploadPage />
                   </Suspense>
                 }
               />

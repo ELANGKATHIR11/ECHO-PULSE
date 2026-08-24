@@ -222,14 +222,22 @@ async def upload_sonar(file: UploadFile = File(...), missionId: Optional[str] = 
         
     dets = inference_service.run_inference(image_path=file_path, mission_id=missionId)
     _DETECTIONS.extend(dets)
+    
+    # Check for newly created annotated image
+    annotated_files = [f for f in os.listdir("uploads") if f.startswith("annotated_") and f.endswith(".png")]
+    annotated_url = f"/uploads/{annotated_files[-1]}" if annotated_files else f"/uploads/{file.filename}"
+    
     return {
         "fileId": f"FILE-{uuid.uuid4().hex[:8]}",
         "pingsCount": 18420,
         "frequencyKhz": 455,
         "filename": file.filename,
+        "rawImageUrl": f"/uploads/{file.filename}",
+        "annotatedImageUrl": annotated_url,
         "path": file_path,
         "size_bytes": len(content),
-        "detectionsCount": len(dets)
+        "detectionsCount": len(dets),
+        "detections": dets
     }
 
 @router.post("/inference/frame")

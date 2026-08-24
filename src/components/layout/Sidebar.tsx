@@ -33,6 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
   const navItems: NavItem[] = [
     { to: '/', icon: Home, label: 'OVERVIEW' },
     { to: '/dashboard', icon: LayoutDashboard, label: 'DASHBOARD' },
+    { to: '/upload', icon: Cpu, label: 'RAW INGESTION', badge: 'YOLO', highlight: true },
     { to: '/digital-twin', icon: Box, label: 'DIGITAL TWIN', badge: '3D', highlight: true },
     { to: '/webcam-tracker', icon: Camera, label: 'LIVE WEBCAM AI', badge: 'LIVE', highlight: true },
     { to: '/sonar', icon: Radio, label: 'SONAR WORKSTATION' },
