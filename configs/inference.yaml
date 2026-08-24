@@ -1,0 +1,34 @@
+# EchoPulseNet Multi-Factor Confidence Fusion Weights
+fusion:
+  weights:
+    detector: 0.40
+    shadow: 0.25
+    geometry: 0.15
+    anomaly: 0.10
+    quality: 0.10
+  thresholds:
+    confirmed_detection: 0.70
+    triage_review: 0.45
+    min_viable_confidence: 0.30
+
+# Hydrographic DSP Parameters
+dsp:
+  bottom_line_detection:
+    sobel_kernel: 3
+    median_blur: 5
+    default_altitude_ratio: 0.15
+  slant_range_correction:
+    interpolation: linear
+  destripe_filter:
+    notch_width: 4
+    notch_cutoff: 0.05
+  tvg_gain:
+    gain_db_per_sample: 0.08
+    exponent: 1.35
+
+# Hardware & Inference
+hardware:
+  device: "cuda:0"
+  fallback: "cpu"
+  precision: "fp16"
+  batch_size: 8
