@@ -2,11 +2,13 @@
   "python_version": "3.12.13 | packaged by Anaconda, Inc. | (main, Mar 19 2026, 20:16:45) [MSC v.1942 64 bit (AMD64)]",
   "platform": "Windows-11-10.0.26200-SP0",
   "os": "nt",
-  "cuda_available": false,
+  "cuda_available": true,
   "torch_version": "2.11.0+cu128",
   "cuda_version": "12.8",
-  "device_count": 0,
-  "device_names": [],
+  "device_count": 1,
+  "device_names": [
+    "NVIDIA GeForce RTX 5060 Laptop GPU"
+  ],
   "packages": {
     "numpy": "2.5.2",
     "scipy": "1.17.1",
@@ -18,6 +20,14 @@
     "shapely": "2.1.2",
     "pyproj": "3.7.2",
     "onnxruntime": "1.27.0",
-    "pyxtf": "NOT_INSTALLED"
+    "pyxtf": "installed"
+  },
+  "current_device_properties": {
+    "name": "NVIDIA GeForce RTX 5060 Laptop GPU",
+    "total_memory_gb": 7.96,
+    "capability": [
+      12,
+      0
+    ]
   }
 }

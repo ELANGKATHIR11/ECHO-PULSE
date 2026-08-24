@@ -72,7 +72,7 @@ def test_geotagging_interpolation():
     assert conf >= 0.80
 
 def test_models_forward():
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cpu")
     unet = LightweightSonarUNet(in_channels=1, out_channels=2).to(device)
     ae = SonarAutoencoder().to(device)
     
