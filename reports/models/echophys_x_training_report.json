@@ -1,0 +1,17 @@
+{
+  "model": "EchoPhys-X V2 (Physics-Informed SSS Detector)",
+  "device": "NVIDIA GeForce RTX 5060 Laptop GPU",
+  "parameters": 1110875,
+  "parameters_m": 1.11,
+  "latency_ms": 4.1,
+  "fps": 243.8,
+  "training_time_sec": 173.65,
+  "epochs": 10,
+  "metrics": {
+    "val_loss": 9.9109,
+    "precision": 0.65,
+    "recall": 0.6,
+    "mAP50": 0.6275,
+    "mAP50_95": 0.4895
+  }
+}

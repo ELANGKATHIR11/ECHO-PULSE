@@ -856,11 +856,36 @@ export const DigitalTwinCanvas: React.FC<DigitalTwinCanvasProps> = ({
     }
   };
 
-  // Compute 3D target coordinates across the terrain
+  // Compute 3D target coordinates across the terrain with exact multi-object optical spatial positioning
   const target3DNodes = useMemo(() => {
     return detections.map((det, idx) => {
-      const angle = (idx / Math.max(1, detections.length)) * Math.PI * 2;
-      const radius = 5.0 + (idx % 4) * 2.5;
+      // If detection carries exact optical 3D coordinates from webcam sensor fusion
+      const customWorld3D = (det as any).world3D as [number, number, number] | undefined;
+      if (customWorld3D && customWorld3D.length === 3) {
+        return {
+          detection: det,
+          position: [customWorld3D[0], 0.2, customWorld3D[2]] as [number, number, number],
+        };
+      }
+
+      // If latitude and longitude offsets are available relative to mission center
+      if (det.latitude && det.longitude && mission.coordinates) {
+        const deltaLat = det.latitude - mission.coordinates[0];
+        const deltaLng = det.longitude - mission.coordinates[1];
+        const scale = 5000.0;
+        const x = deltaLng * scale;
+        const z = deltaLat * scale;
+        const boundedX = Math.max(-16, Math.min(16, x));
+        const boundedZ = Math.max(-16, Math.min(16, z));
+        return {
+          detection: det,
+          position: [boundedX, 0.2, boundedZ] as [number, number, number],
+        };
+      }
+
+      // Default radial dispersion for multiple simultaneous targets
+      const angle = (idx / Math.max(1, detections.length)) * Math.PI * 2 + (idx * 0.4);
+      const radius = 3.5 + (idx % 5) * 2.2;
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
       const y = 0.2; // ground contact
@@ -870,7 +895,8 @@ export const DigitalTwinCanvas: React.FC<DigitalTwinCanvasProps> = ({
         position: [x, y, z] as [number, number, number],
       };
     });
-  }, [detections]);
+  }, [detections, mission.coordinates]);
+
 
   const bgColor = isLight ? '#d2ecf9' : '#020712';
 

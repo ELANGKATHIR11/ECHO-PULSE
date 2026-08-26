@@ -87,7 +87,8 @@ export const SonarViewer: React.FC<SonarViewerProps> = ({
   const renderCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
     if (!ctx) return;
 
     const width = 1024;

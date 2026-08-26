@@ -19,8 +19,8 @@ interface TriageSample {
   id: string;
   imageUrl: string;
   predictedClass: string;
-  predictedConfidence: float;
-  uncertaintyScore: float;
+  predictedConfidence: number;
+  uncertaintyScore: number;
   status: string;
   boundingBox: { x: number; y: number; width: number; height: number };
   correctedClass?: string;

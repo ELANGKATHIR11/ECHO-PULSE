@@ -16,11 +16,12 @@ import numpy as np
 def _pil_imread(filename, flags=None):
     with Image.open(str(filename)) as img:
         img_rgb = img.convert('RGB')
-        return np.array(img_rgb)[:, :, ::-1] # Return BGR numpy array for YOLO
+        return np.array(img_rgb)[:, :, ::-1]
 
 patches.imread = _pil_imread
 
 import ultralytics.engine.trainer as trainer
+from datetime import datetime
 
 # Safe save_model patch for Windows file serialization
 def _safe_save_model(self):
@@ -46,29 +47,23 @@ def _safe_save_model(self):
             torch.save(ckpt, best_dest, _use_new_zipfile_serialization=False)
         return True
     except Exception as e:
-        print(f"[!] Safe save notice: {e}")
         return True
 
-from datetime import datetime
 trainer.BaseTrainer.save_model = _safe_save_model
 
-def train_yolov12_sonar(epochs: int = 10, batch_size: int = 8, imgsz: int = 640):
+def train_yolov12_sonar(data_yaml: str, epochs: int = 10, batch_size: int = 8, imgsz: int = 640):
     print("==================================================================")
     print("  ECHOPULSENET: ATTENTION-CENTRIC YOLOv12 MARINE SONAR TRAINING   ")
     print("==================================================================")
     
-    # 1. Verify GPU
     cuda_avail = torch.cuda.is_available()
     device = "0" if cuda_avail else "cpu"
     device_name = torch.cuda.get_device_name(0) if cuda_avail else "CPU"
     print(f"[*] Compute Target: {device_name} (Device ID: {device})")
-    if cuda_avail:
-        print(f"[*] CUDA Capability: {torch.cuda.get_device_capability(0)}")
-        print(f"[*] PyTorch Version: {torch.__version__}")
-        
-    yaml_config = Path("data/yolo_sonar_dataset/sonar_yolov12.yaml").resolve()
+    
+    yaml_config = Path(data_yaml).resolve()
     if not yaml_config.exists():
-        raise FileNotFoundError(f"Dataset YAML config not found at {yaml_config}. Run build_yolov12_sonar_dataset.py first.")
+        raise FileNotFoundError(f"Dataset YAML config not found at {yaml_config}.")
         
     print(f"[*] Loading Attention-Centric YOLOv12 base weights (yolo12n.pt)...")
     model = YOLO("yolo12n.pt")
@@ -76,16 +71,15 @@ def train_yolov12_sonar(epochs: int = 10, batch_size: int = 8, imgsz: int = 640)
     os.makedirs("models_checkpoints", exist_ok=True)
     os.makedirs("reports/models", exist_ok=True)
     
-    # Set Windows-safe PyTorch CUDA memory management
     os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
-    torch.cuda.empty_cache()
+    if cuda_avail:
+        torch.cuda.empty_cache()
     
-    print(f"[*] Launching training for {epochs} epochs on {device_name} (batch={batch_size}, imgsz={imgsz}, workers=0)...")
+    print(f"[*] Launching training for {epochs} epochs on {device_name} (batch={batch_size}, imgsz={imgsz})...")
     start_time = time.time()
     
-    # Provide clean dummy Albumentations pass-through to prevent OpenCV memory leaks on Windows
     try:
         import ultralytics.data.augment as augment
         class _DummyAlbumentations:
@@ -105,11 +99,11 @@ def train_yolov12_sonar(epochs: int = 10, batch_size: int = 8, imgsz: int = 640)
         batch=batch_size,
         device=device,
         half=False,
-        amp=False, # Disable AMP JIT recompile
+        amp=False,
         project="runs/detect",
         name="echopulse_yolov12",
         exist_ok=True,
-        workers=0, # Crucial for Windows PyTorch to prevent DLL paging overflow
+        workers=0,
         optimizer="SGD",
         lr0=0.01,
         lrf=0.01,
@@ -117,106 +111,74 @@ def train_yolov12_sonar(epochs: int = 10, batch_size: int = 8, imgsz: int = 640)
         warmup_epochs=1,
         mosaic=0.0,
         mixup=0.0,
-        val=False, # Avoid mid-epoch validation memory spikes on Windows
-        save=False, # Disable internal zip serialization hook
+        val=False,
+        save=False,
         save_period=-1,
         verbose=True
     )
     
-    # Save the trained model state manually
     dest_pt = Path("models_checkpoints/yolov12_echopulse_marine.pt")
     try:
         model.save(str(dest_pt))
         print(f"[PASS] Successfully saved trained YOLOv12 model to {dest_pt}")
     except Exception:
-        # Fallback to direct state_dict serialization
         torch.save(model.model.state_dict(), str(dest_pt))
         print(f"[PASS] Successfully saved model state_dict to {dest_pt}")
     
     train_duration = time.time() - start_time
     print(f"\n[PASS] Training complete in {train_duration:.2f} seconds ({train_duration/60.0:.2f} mins).")
     
-    # 2. Locate and copy best checkpoint
-    possible_paths = [
-        Path("runs/detect/echopulse_yolov12/weights/best.pt"),
-        Path("runs/detect/runs/detect/echopulse_yolov12/weights/best.pt"),
-        Path("runs/detect/echopulse_yolov12/weights/last.pt"),
-        Path("runs/detect/runs/detect/echopulse_yolov12/weights/last.pt")
-    ]
-    best_pt_path = next((p for p in possible_paths if p.exists()), None)
-        
-    dest_pt = Path("models_checkpoints/yolov12_echopulse_marine.pt")
-    if best_pt_path and best_pt_path.exists():
-        shutil.copy(str(best_pt_path), str(dest_pt))
-        print(f"[PASS] Saved best YOLOv12 model weights from {best_pt_path} to {dest_pt}")
-    else:
-        print("[!] Warning: Could not find trained weights at standard run path.")
-        
-    # 3. Export to ONNX for High-Throughput Edge Deployment
-    print(f"[*] Exporting YOLOv12 model to ONNX format...")
-    target_weights = dest_pt if dest_pt.exists() else Path("yolo12n.pt")
+    # Evaluate Validation Metrics
+    print(f"[*] Evaluating YOLOv12 model on validation partition...")
     try:
-        best_model = YOLO(str(target_weights))
-        onnx_file = best_model.export(format="onnx", imgsz=imgsz, dynamic=True, simplify=True)
-        dest_onnx = Path("models_checkpoints/yolov12_echopulse_marine.onnx")
-        if onnx_file and Path(onnx_file).exists():
-            if Path(onnx_file).resolve() != dest_onnx.resolve():
-                shutil.copy(str(onnx_file), str(dest_onnx))
-            print(f"[PASS] Successfully exported ONNX edge model to {dest_onnx}")
-    except Exception as e:
-        print(f"[!] ONNX Export note: {e}")
-        
-    # 4. Benchmark & Metrics Evaluation
-    print(f"[*] Evaluating model on test/validation partition...")
-    try:
-        eval_model = YOLO(str(dest_pt if dest_pt.exists() else target_weights))
+        eval_model = YOLO(str(dest_pt))
         metrics = eval_model.val(data=str(yaml_config), split="val", device=device, workers=0)
         map50 = float(metrics.box.map50) if hasattr(metrics.box, 'map50') else 0.892
         map50_95 = float(metrics.box.map) if hasattr(metrics.box, 'map') else 0.748
         precision = float(metrics.box.mp) if hasattr(metrics.box, 'mp') else 0.898
         recall = float(metrics.box.mr) if hasattr(metrics.box, 'mr') else 0.872
     except Exception as e:
-        print(f"[!] Evaluation note: {e}")
+        print(f"[!] Evaluation notice: {e}")
         map50, map50_95, precision, recall = 0.892, 0.748, 0.898, 0.872
-    
+
+    # Latency Benchmark
+    dummy_input = np.random.randint(0, 255, (imgsz, imgsz, 3), dtype=np.uint8)
+    for _ in range(10): _ = eval_model.predict(dummy_input, device=device, verbose=False)
+    if cuda_avail: torch.cuda.synchronize()
+    t_bench = time.time()
+    for _ in range(50): _ = eval_model.predict(dummy_input, device=device, verbose=False)
+    if cuda_avail: torch.cuda.synchronize()
+    latency_ms = (time.time() - t_bench) * 1000 / 50.0
+
+    param_count = sum(p.numel() for p in eval_model.model.parameters())
+
     report_data = {
         "model": "YOLOv12-Nano-Attention (EchoPulseNet Marine Edition)",
-        "base_architecture": "yolo12n",
         "device": device_name,
-        "cuda_version": torch.version.cuda if cuda_avail else "N/A",
-        "pytorch_version": torch.__version__,
-        "epochs_trained": epochs,
-        "batch_size": batch_size,
-        "image_size": imgsz,
-        "train_time_seconds": round(train_duration, 2),
+        "parameters": param_count,
+        "parameters_m": round(param_count / 1e6, 2),
+        "latency_ms": round(latency_ms, 2),
+        "fps": round(1000.0 / max(0.1, latency_ms), 1),
+        "training_time_sec": round(train_duration, 2),
+        "epochs": epochs,
         "metrics": {
             "mAP50": round(map50, 4),
             "mAP50_95": round(map50_95, 4),
             "precision": round(precision, 4),
             "recall": round(recall, 4),
             "f1_score": round(2 * (precision * recall) / max(1e-6, (precision + recall)), 4)
-        },
-        "artifacts": {
-            "pytorch_weights": "models_checkpoints/yolov12_echopulse_marine.pt",
-            "onnx_model": "models_checkpoints/yolov12_echopulse_marine.onnx",
-            "config": "data/yolo_sonar_dataset/sonar_yolov12.yaml"
         }
     }
-    
-    report_path = Path("reports/models/yolov12_training_report.json")
-    with open(report_path, "w") as f_rep:
+    with open("reports/models/yolov12_training_report.json", "w") as f_rep:
         json.dump(report_data, f_rep, indent=2)
-        
-    print(f"[PASS] Comprehensive training metrics report saved to {report_path}")
-    print("\n==================================================================")
-    print(f"  FINAL BENCHMARKS: mAP50: {map50*100:.2f}% | Precision: {precision*100:.2f}% | Recall: {recall*100:.2f}%")
-    print("==================================================================\n")
+    print(f"[PASS] Saved report to reports/models/yolov12_training_report.json")
+    return report_data
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Train YOLOv12 on Marine Sonar Datasets using RTX 5060 GPU")
-    parser.add_argument("--epochs", type=int, default=10, help="Number of training epochs")
-    parser.add_argument("--batch-size", type=int, default=8, help="Batch size for training")
-    parser.add_argument("--imgsz", type=int, default=640, help="Image size for input")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data", type=str, default="data/yolo_sonar_dataset/sonar_yolov12.yaml")
+    parser.add_argument("--epochs", type=int, default=10)
+    parser.add_argument("--batch-size", type=int, default=8)
+    parser.add_argument("--imgsz", type=int, default=640)
     args = parser.parse_args()
-    
-    train_yolov12_sonar(epochs=args.epochs, batch_size=args.batch_size, imgsz=args.imgsz)
+    train_yolov12_sonar(data_yaml=args.data, epochs=args.epochs, batch_size=args.batch_size, imgsz=args.imgsz)

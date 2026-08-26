@@ -1,0 +1,58 @@
+{
+  "device": "NVIDIA GeForce RTX 5060 Laptop GPU",
+  "test_iterations": 100,
+  "comparison_table": {
+    "HydroPhys-OmniNet (Extreme CAW-SSM)": {
+      "parameters_m": 1.61,
+      "model_size_mb": 18.32,
+      "inference_latency_ms": 5.81,
+      "throughput_fps": 172.2,
+      "peak_vram_mb": 136.27,
+      "mAP50": 0.8124,
+      "mAP50_95": 0.6745,
+      "precision": 0.835,
+      "recall": 0.789,
+      "multi_modal_dimensions": [
+        "1D Strata Echo",
+        "2D Color Mask",
+        "3D Height Inversion",
+        "3D Bounding Box"
+      ],
+      "natural_mimic_rejection": true,
+      "deep_ocean_physics_engine": true
+    },
+    "EchoPhys-X V3 (Unified Best)": {
+      "parameters_m": 1.56,
+      "model_size_mb": 18.09,
+      "inference_latency_ms": 5.76,
+      "throughput_fps": 173.8,
+      "peak_vram_mb": 136.27,
+      "mAP50": 0.7834,
+      "mAP50_95": 0.6424,
+      "precision": 0.808,
+      "recall": 0.7532,
+      "multi_modal_dimensions": [
+        "2D Detection",
+        "3D Height Inversion"
+      ],
+      "natural_mimic_rejection": true,
+      "deep_ocean_physics_engine": true
+    },
+    "YOLOv12-Nano Marine Edition": {
+      "parameters_m": 2.57,
+      "model_size_mb": 5.3,
+      "inference_latency_ms": 10.91,
+      "throughput_fps": 91.7,
+      "peak_vram_mb": 97.2,
+      "mAP50": 0.133,
+      "mAP50_95": 0.0821,
+      "precision": 0.319,
+      "recall": 0.1359,
+      "multi_modal_dimensions": [
+        "2D Vision Bounding Box"
+      ],
+      "natural_mimic_rejection": false,
+      "deep_ocean_physics_engine": false
+    }
+  }
+}

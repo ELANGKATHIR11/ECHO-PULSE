@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List, Dict, Any
 from enum import Enum
+
 
 class ResponseStatus(str, Enum):
     LIVE = "live"
@@ -63,18 +64,19 @@ class DetectionSchema(BaseModel):
     slantRangeMeters: float
     altitudeMeters: Optional[float] = None
     geotagConfidence: float
-    timestamp: str
-    pingIndex: int
-    modelVersion: str
-    imageCropUrl: str
+    timestamp: str = "2026-08-26T10:00:00Z"
+    pingIndex: int = 0
+    modelVersion: str = "YOLOv12-Sonar Attention"
+    imageCropUrl: str = ""
     rawCropUrl: Optional[str] = None
     notes: Optional[str] = None
     verifiedStatus: str = "UNVERIFIED"
     source: str = "backend"
     synthetic: bool = False
 
-    class Config:
-        populate_by_name = True
+
+    model_config = ConfigDict(populate_by_name=True)
+
 
 class MissionTrackPoint(BaseModel):
     latitude: float

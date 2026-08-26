@@ -158,6 +158,17 @@ export const Navbar: React.FC = () => {
           )}
         </button>
 
+        {/* Tactical Defense Command Center Button */}
+        <GlassButton
+          variant={location.pathname === '/command-center' ? 'primary' : 'secondary'}
+          size="sm"
+          icon={<Radio className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />}
+          onClick={() => navigate('/command-center')}
+          className="text-[11px] font-bold px-2.5 py-1 shrink-0 bg-cyan-950/50 border-cyan-400/60 text-cyan-300"
+        >
+          <span>COMMAND HUD</span>
+        </GlassButton>
+
         {/* 3D Digital Twin Quick Access */}
         <GlassButton
           variant={location.pathname === '/digital-twin' ? 'primary' : 'secondary'}
@@ -179,6 +190,7 @@ export const Navbar: React.FC = () => {
         >
           <span>JUDGE DEMO</span>
         </GlassButton>
+
       </div>
     </header>
   );

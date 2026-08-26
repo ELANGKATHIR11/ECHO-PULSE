@@ -1,0 +1,38 @@
+{
+  "device": "NVIDIA GeForce RTX 5060 Laptop GPU",
+  "total_corpus_images": 2856,
+  "models": {
+    "HydroPhys-OmniNet": {
+      "checkpoint": "models_checkpoints\\hydrophys_omninet_extreme_best.pt",
+      "mAP50": 0.8315,
+      "mAP50_95": 0.694,
+      "precision": 0.852,
+      "recall": 0.804,
+      "latency_ms": 7.51,
+      "fps": 133.2,
+      "parameters_m": 1.61,
+      "capabilities": [
+        "1D Strata Echo",
+        "2D Color Masks",
+        "3D Bounding Boxes",
+        "3D PLY Cloud",
+        "Natural Mimic Rejection"
+      ]
+    },
+    "EchoPhys-X V3": {
+      "checkpoint": "models_checkpoints\\echophys_x_v3_unified_best.pt",
+      "mAP50": 0.8045,
+      "mAP50_95": 0.661,
+      "precision": 0.826,
+      "recall": 0.778,
+      "latency_ms": 7.0,
+      "fps": 142.9,
+      "parameters_m": 1.56,
+      "capabilities": [
+        "2D Detection",
+        "3D Height Inversion",
+        "Natural Mimic Rejection"
+      ]
+    }
+  }
+}

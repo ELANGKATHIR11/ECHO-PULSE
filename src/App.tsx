@@ -15,6 +15,7 @@ import { DemoPage } from './pages/DemoPage';
 import { WebcamTrackerPage } from './pages/WebcamTrackerPage';
 import { ActiveLearningStudio } from './pages/ActiveLearningStudio';
 import { RawSonarUploadPage } from './pages/RawSonarUploadPage';
+import { CommandCenterPage } from './pages/CommandCenterPage';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 const PageFallback = () => (
@@ -42,6 +43,14 @@ export default function App() {
                 }
               />
               <Route
+                path="/command-center"
+                element={
+                  <Suspense fallback={<PageFallback />}>
+                    <CommandCenterPage />
+                  </Suspense>
+                }
+              />
+              <Route
                 path="/dashboard"
                 element={
                   <Suspense fallback={<PageFallback />}>
@@ -49,6 +58,7 @@ export default function App() {
                   </Suspense>
                 }
               />
+
               <Route
                 path="/digital-twin"
                 element={

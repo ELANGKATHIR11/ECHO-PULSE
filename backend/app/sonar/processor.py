@@ -85,13 +85,18 @@ class OpenCVProcessor:
         3. CLAHE Contrast Enhancement
         4. Quality metric (SNR & Entropy) calculation
         """
-        if len(img.shape) == 3:
+        if len(img.shape) == 3 and img.shape[2] == 3:
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        elif len(img.shape) == 3 and img.shape[2] == 4:
+            gray = cv2.cvtColor(img, cv2.COLOR_BGRA2GRAY)
+        elif len(img.shape) == 3 and img.shape[2] == 1:
+            gray = img[:, :, 0].copy()
         else:
             gray = img.copy()
             
         # Normalize
         norm = cv2.normalize(gray, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
+
         
         # Despeckle / Bilateral Filter (preserves acoustic shadow edges while removing acoustic reverberation speckle)
         denoised = cv2.bilateralFilter(norm, d=7, sigmaColor=50, sigmaSpace=50)
@@ -139,3 +144,30 @@ class OpenCVProcessor:
                 "polygon": polygon
             })
         return shadow_candidates
+
+    @staticmethod
+    def apply_rayleigh_speckle(image: np.ndarray, scale: float = 0.25) -> np.ndarray:
+        """
+        Synthesizes Multiplicative Rayleigh Speckle Noise typical of high-frequency subsea sonar:
+        I_noisy = I_clean * eta,  eta ~ Gamma(alpha, beta) or Rayleigh(scale)
+        """
+        img_float = image.astype(np.float32) / 255.0
+        # Rayleigh distribution: R = sigma * sqrt(-2 * ln(U))
+        u = np.random.uniform(1e-6, 1.0, size=image.shape).astype(np.float32)
+        rayleigh_noise = scale * np.sqrt(-2.0 * np.log(u))
+        noisy_float = np.clip(img_float * (1.0 + rayleigh_noise), 0.0, 1.0)
+        return (noisy_float * 255.0).astype(np.uint8)
+
+    @staticmethod
+    def apply_thermocline_distortion(image: np.ndarray, amplitude: float = 3.5, wavelength: float = 40.0) -> np.ndarray:
+        """
+        Simulates Acoustic Ray Refraction through stratified oceanic thermoclines (S-curve warp).
+        """
+        h, w = image.shape[:2]
+        x_indices, y_indices = np.meshgrid(np.arange(w), np.arange(h))
+        # Warp along the horizontal acoustic wavefront
+        dx = (amplitude * np.sin(2.0 * np.pi * y_indices / wavelength)).astype(np.float32)
+        map_x = (x_indices + dx).astype(np.float32)
+        map_y = y_indices.astype(np.float32)
+        return cv2.remap(image, map_x, map_y, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
+

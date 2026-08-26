@@ -2,6 +2,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
+import 'leaflet/dist/leaflet.css';
+
 
 // Silence upstream Three.js r185 Clock deprecation warnings from third-party libraries & suppress context lost log spam
 if (typeof window !== 'undefined') {

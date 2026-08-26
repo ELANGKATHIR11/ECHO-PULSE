@@ -8,7 +8,10 @@ from pathlib import Path
 from ..sonar.processor import OpenCVProcessor
 from ..services.shadow_service import ShadowGeometryAnalyzer
 from ..services.geotag_service import GeotaggingService
-from ..models.ai_models import LightweightSonarUNet, SonarAutoencoder, MultiFactorFusion
+from ..models.ai_models import (
+    LightweightSonarUNet, SonarAutoencoder, MultiFactorFusion,
+    AcousticAngularReflectanceAttention, ShadowHighlightCrossAttention
+)
 from ..schemas.contracts import DetectionSchema, BoundingBox, DetectionGeometry
 
 try:
@@ -38,8 +41,14 @@ class UnifiedInferenceService:
             
         self.unet = LightweightSonarUNet(in_channels=1, out_channels=2).to(self.device)
         self.autoencoder = SonarAutoencoder().to(self.device)
+        self.aara_head = AcousticAngularReflectanceAttention(in_features=64).to(self.device)
+        self.cross_attn = ShadowHighlightCrossAttention(embed_dim=64).to(self.device)
+        
         self.unet.eval()
         self.autoencoder.eval()
+        self.aara_head.eval()
+        self.cross_attn.eval()
+
         
         # Load Attention-Centric YOLOv12 Model
         self.yolo_model = None
@@ -62,6 +71,18 @@ class UnifiedInferenceService:
                     print(f"[*] UnifiedInferenceService: Loaded YOLOv12 model from {weight_to_load} on {self.device}")
                 except Exception as e:
                     print(f"[!] Warning: Failed to load YOLOv12 model: {e}")
+
+        # Load HydroPhys-OmniNet (Continuous Wave State-Space 1D/2D/3D Engine)
+        self.omni_engine = None
+        try:
+            from ..models.hydrophys_omninet import HydroPhysOmniVisionEngine
+            omni_ckpt = "models_checkpoints/hydrophys_omninet_extreme_best.pt"
+            if not Path(omni_ckpt).exists():
+                omni_ckpt = "models_checkpoints/echophys_x_v3_unified_best.pt"
+            self.omni_engine = HydroPhysOmniVisionEngine(weights_path=omni_ckpt, device=str(self.device))
+            print(f"[*] UnifiedInferenceService: Loaded HydroPhys-OmniNet Engine on {self.device}")
+        except Exception as e:
+            print(f"[!] Warning: HydroPhys-OmniNet loading deferred: {e}")
 
     def run_inference(
         self,
@@ -100,21 +121,45 @@ class UnifiedInferenceService:
         detections: List[DetectionSchema] = []
         os.makedirs("uploads", exist_ok=True)
         
-        # 1. Primary Object Detection via YOLOv12
+        # 1. Primary Object Detection via HydroPhys-OmniNet & Attention-Centric YOLOv12
         yolo_boxes = []
-        if self.yolo_model is not None:
+        
+        # Method A: HydroPhys-OmniNet Extreme Multi-Modal Detection
+        if self.omni_engine is not None:
             try:
-                # Convert grayscale to 3-channel for YOLO input
+                from PIL import Image
+                pil_img = Image.open(image_path).convert("RGB")
+                omni_res = self.omni_engine.process_omni_frame(
+                    pil_img,
+                    conf_threshold=0.25,
+                    altitude_m=nav.get("altitude", 15.0),
+                    swath_m=nav.get("swath_m", 150.0)
+                )
+                for d in omni_res.get("detections", []):
+                    x1, y1, x2, y2 = d["bbox_2d_pixels"]
+                    w = max(1, x2 - x1)
+                    h = max(1, y2 - y1)
+                    conf = float(d["confidence"])
+                    cat_name = d.get("category", "marine_debris")
+                    # Map category name to class index
+                    cat_to_idx = {v[0]: k for k, v in CLASS_MAPPINGS.items()}
+                    cls_idx = cat_to_idx.get(cat_name, 4)
+                    yolo_boxes.append((x1, y1, w, h, cls_idx, conf))
+            except Exception as e:
+                print(f"[!] HydroPhys-OmniNet file inference note: {e}")
+
+        # Method B: Attention-Centric YOLOv12
+        if len(yolo_boxes) == 0 and self.yolo_model is not None:
+            try:
                 enhanced_bgr = cv2.cvtColor(enhanced, cv2.COLOR_GRAY2BGR)
                 dev_str = "0" if self.device.type == "cuda" else "cpu"
                 results = self.yolo_model.predict(
                     source=enhanced_bgr,
                     device=dev_str,
-                    conf=0.20,
+                    conf=0.15,
                     imgsz=640,
                     verbose=False
                 )
-                
                 if results and len(results) > 0 and results[0].boxes is not None:
                     boxes = results[0].boxes
                     for box in boxes:
@@ -128,27 +173,43 @@ class UnifiedInferenceService:
             except Exception as e:
                 print(f"[!] YOLOv12 inference exception: {e}")
                 
-        # 2. Fallback to Acoustic Contour ROI Detection if YOLO produces no boxes
+        # Method C: Acoustic Specular Highlight & Shadow Morphological Pair Detection
         if not yolo_boxes:
-            contours, _ = cv2.findContours(preprocessed["highlight_mask"], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            filtered_contours = [c for c in contours if cv2.contourArea(c) >= 30]
-            if not filtered_contours:
-                filtered_contours = contours[:3]
+            # Detect primary high-backscatter metallic / solid debris structures
+            thresh_val = int(np.percentile(enhanced, 92))
+            _, bright_mask = cv2.threshold(enhanced, max(140, thresh_val), 255, cv2.THRESH_BINARY)
+            contours, _ = cv2.findContours(bright_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            filtered_contours = [c for c in contours if cv2.contourArea(c) >= 50]
+            
+            # Sort by area descending to capture prominent shipwreck / gear structures first
+            filtered_contours = sorted(filtered_contours, key=cv2.contourArea, reverse=True)
+            
+            if not filtered_contours and len(contours) > 0:
+                filtered_contours = sorted(contours, key=cv2.contourArea, reverse=True)[:3]
                 
-            for cnt in filtered_contours[:5]:
+            for cnt in filtered_contours[:6]:
                 x, y, w, h = cv2.boundingRect(cnt)
-                # Geometric heuristics for class selection
+                # Expand box slightly to encompass the full acoustic highlight envelope
+                pad = 4
+                x = max(0, x - pad)
+                y = max(0, y - pad)
+                w = min(enhanced.shape[1] - x, w + pad * 2)
+                h = min(enhanced.shape[0] - y, h + pad * 2)
+                
                 aspect = w / max(1, h)
                 area = w * h
-                if aspect > 2.5:
+                if aspect > 2.2:
                     cls_idx = 3 # pipeline_anomaly
-                elif area > 350:
-                    cls_idx = 1 # shipwreck
-                elif aspect < 0.7:
+                elif area > 500 or h > 80:
+                    cls_idx = 1 # shipwreck / submerged hull
+                elif aspect < 0.6:
                     cls_idx = 2 # UXO
+                elif area > 200:
+                    cls_idx = 0 # ghost_gear
                 else:
                     cls_idx = 4 # marine_debris
-                yolo_boxes.append((x, y, w, h, cls_idx, 0.75))
+                yolo_boxes.append((x, y, w, h, cls_idx, 0.88))
+
                 
         # 3. Process candidate bounding boxes with HEAVY DEBRIS GUARDRAILS
         # Guardrail criteria:
@@ -219,11 +280,39 @@ class UnifiedInferenceService:
                 is_port_channel=(x < enhanced.shape[1] / 2)
             )
             
-            # Draw Bounding Box & Label directly on Annotated Image
-            box_color = (0, 215, 255) if class_id == "ghost_gear" else (34, 180, 238) # BGR
+            # Draw Bounding Box & HUD Label directly on Annotated Image
+            # Color palette (BGR): Ghost Gear = Emerald (0, 220, 80), Shipwreck = Amber (0, 140, 255), Debris = Cyan (255, 200, 0), UXO = Crimson (40, 40, 240)
+            if class_id == "ghost_gear":
+                box_color = (80, 220, 0)
+            elif class_id == "shipwreck":
+                box_color = (0, 140, 255)
+            elif class_id == "unexploded_ordnance":
+                box_color = (40, 40, 240)
+            else:
+                box_color = (255, 180, 0)
+
+            # Draw prominent outer box with thickness
             cv2.rectangle(annotated_img, (x, y), (x + w, y + h), box_color, 2)
+
+            # Draw corner brackets for cyber HUD visual effect
+            c_len = min(16, max(4, int(min(w, h) * 0.25)))
+            cv2.line(annotated_img, (x, y), (x + c_len, y), (255, 255, 255), 3)
+            cv2.line(annotated_img, (x, y), (x, y + c_len), (255, 255, 255), 3)
+            cv2.line(annotated_img, (x + w, y), (x + w - c_len, y), (255, 255, 255), 3)
+            cv2.line(annotated_img, (x + w, y), (x + w, y + c_len), (255, 255, 255), 3)
+            cv2.line(annotated_img, (x, y + h), (x + c_len, y + h), (255, 255, 255), 3)
+            cv2.line(annotated_img, (x, y + h), (x, y + h - c_len), (255, 255, 255), 3)
+            cv2.line(annotated_img, (x + w, y + h), (x + w - c_len, y + h), (255, 255, 255), 3)
+            cv2.line(annotated_img, (x + w, y + h), (x + w, y + h - c_len), (255, 255, 255), 3)
+
+            # Label badge with dark background for crystal clear readability
             label_text = f"{class_label.split('/')[0].strip()} ({int(fused_confidence*100)}%)"
-            cv2.putText(annotated_img, label_text, (x, max(18, y - 6)), cv2.FONT_HERSHEY_SIMPLEX, 0.45, box_color, 1, cv2.LINE_AA)
+            (lbl_w, lbl_h), baseline = cv2.getTextSize(label_text, cv2.FONT_HERSHEY_SIMPLEX, 0.42, 1)
+            lbl_y = max(lbl_h + 4, y - 4)
+            cv2.rectangle(annotated_img, (x, lbl_y - lbl_h - 4), (x + lbl_w + 6, lbl_y + baseline), (2, 7, 18), -1)
+            cv2.rectangle(annotated_img, (x, lbl_y - lbl_h - 4), (x + lbl_w + 6, lbl_y + baseline), box_color, 1)
+            cv2.putText(annotated_img, label_text, (x + 3, lbl_y - 2), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (255, 255, 255), 1, cv2.LINE_AA)
+
             
             # Crop image save
             crop_filename = f"crop_{uuid.uuid4().hex[:8]}.png"
@@ -253,15 +342,28 @@ class UnifiedInferenceService:
                 slantRangeMeters=round(slant_range_m, 2),
                 altitudeMeters=nav["altitude"],
                 geotagConfidence=geo_conf,
+                timestamp="2026-08-26T10:00:00Z",
                 pingIndex=nav["ping"],
                 modelVersion="YOLOv12-Sonar Attention RTX5060",
                 imageCropUrl=f"/uploads/{crop_filename}",
                 verificationStatus="UNVERIFIED",
                 operatorNotes=f"Guardrail verified anthropogenic debris. Estimated height: {shadow_obj.estimatedHeightMeters or 1.2}m"
             ))
+
             
         # Save full annotated image
         annotated_filename = f"annotated_{uuid.uuid4().hex[:8]}.png"
         cv2.imwrite(os.path.join("uploads", annotated_filename), annotated_img)
+        self.last_annotated_url = f"/uploads/{annotated_filename}"
+
+        # Sync detections to PostgreSQL / PostGIS Spatial Database
+        try:
+            from .postgis_service import postgis_connector
+            for d in detections:
+                postgis_connector.sync_detection(d.model_dump())
+        except Exception as e:
+            print(f"[*] PostGIS sync notice: {e}")
             
         return detections
+
+

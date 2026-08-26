@@ -102,7 +102,14 @@ export const RawSonarUploadPage: React.FC = () => {
       const res = await fetch(url);
       const blob = await res.blob();
       const filename = `EchoPulseNet_Debris_Report_MSN-2026-0884.${format}`;
-      downloadBlobFile(blob, filename);
+      const downloadUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
     } catch (e) {
       console.error('Download error:', e);
     }
@@ -376,7 +383,7 @@ export const RawSonarUploadPage: React.FC = () => {
                   <div className="space-y-3">
                     <div className="relative rounded-2xl overflow-hidden border border-cyan-500/30 bg-black max-h-[460px] flex items-center justify-center">
                       <img
-                        src={result.annotatedImageUrl || result.rawImageUrl}
+                        src={`${result.annotatedImageUrl || result.rawImageUrl}?t=${Date.now()}`}
                         alt="YOLOv12 Annotated Sonar Swath"
                         className="w-full object-contain max-h-[460px]"
                       />
@@ -385,7 +392,9 @@ export const RawSonarUploadPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
+
                 )}
+
 
                 {activeTab === 'METRICS' && (
                   <div className="space-y-2.5 max-h-[460px] overflow-y-auto pr-1">

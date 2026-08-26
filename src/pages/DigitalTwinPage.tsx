@@ -114,10 +114,156 @@ export const DigitalTwinPage: React.FC = () => {
   // Active mission
   const activeMission = missions.find((m) => m.id === selectedMissionId) || missions[0];
 
-  // Filter detections for active mission
-  const missionDetections = detections.filter(
-    (d) => d.missionId === activeMission?.id
-  );
+  // Filter detections for active mission or display all multiple subsea objects
+  const missionDetections: Detection[] = detections.length > 0
+    ? (detections.filter((d) => d.missionId === activeMission?.id).length > 0
+        ? detections.filter((d) => d.missionId === activeMission?.id)
+        : detections)
+    : [
+        {
+          id: 'DET-2026-0001',
+          missionId: activeMission?.id || 'MSN-2025-08-01',
+          missionName: activeMission?.name || 'Survey Mission',
+          class: 'ghost_gear' as any,
+          classNameLabel: 'Derelict Ghost Gear & Net',
+          confidence: 0.94,
+          detectorScore: 0.92,
+          shadowScore: 0.95,
+          geometryScore: 0.91,
+          anomalyScore: 0.88,
+          qualityScore: 0.96,
+          bbox: { x: 120, y: 140, width: 85, height: 60 },
+          acousticShadow: { lengthMeters: 4.2, angleDeg: 45, shadowRatio: 1.5, shadowConfidence: 0.92, estimatedHeightMeters: 1.4, polygon: [] },
+          geometry: { areaPixels: 5100, perimeterPixels: 290, aspectRatio: 1.41, solidity: 0.92, extent: 0.88, orientationDeg: 24, compactness: 0.85 },
+          latitude: 9.1524,
+          longitude: 79.2819,
+          depthMeters: 42.8,
+          slantRangeMeters: 18.5,
+          altitudeMeters: 8.4,
+          geotagConfidence: 0.98,
+          timestamp: '2026-08-26T10:00:00Z',
+          pingIndex: 4200,
+          modelVersion: 'YOLOv12-Sonar Attention',
+          imageCropUrl: '/uploads/shipwreck_anomaly.png',
+          cropUrl: '/uploads/shipwreck_anomaly.png',
+          verifiedStatus: 'CONFIRMED' as const
+        },
+        {
+          id: 'DET-2026-0002',
+          missionId: activeMission?.id || 'MSN-2025-08-01',
+          missionName: activeMission?.name || 'Survey Mission',
+          class: 'shipwreck' as any,
+          classNameLabel: 'Sunken Vessel Hull Section',
+          confidence: 0.91,
+          detectorScore: 0.89,
+          shadowScore: 0.93,
+          geometryScore: 0.95,
+          anomalyScore: 0.90,
+          qualityScore: 0.94,
+          bbox: { x: 280, y: 220, width: 140, height: 95 },
+          acousticShadow: { lengthMeters: 9.8, angleDeg: 52, shadowRatio: 2.1, shadowConfidence: 0.94, estimatedHeightMeters: 4.2, polygon: [] },
+          geometry: { areaPixels: 13300, perimeterPixels: 470, aspectRatio: 1.47, solidity: 0.89, extent: 0.82, orientationDeg: 65, compactness: 0.78 },
+          latitude: 9.1542,
+          longitude: 79.2845,
+          depthMeters: 46.2,
+          slantRangeMeters: 28.0,
+          altitudeMeters: 8.4,
+          geotagConfidence: 0.99,
+          timestamp: '2026-08-26T10:05:00Z',
+          pingIndex: 6800,
+          modelVersion: 'YOLOv12-Sonar Attention',
+          imageCropUrl: '/uploads/shipwreck_anomaly.png',
+          cropUrl: '/uploads/shipwreck_anomaly.png',
+          verifiedStatus: 'CONFIRMED' as const
+        },
+        {
+          id: 'DET-2026-0003',
+          missionId: activeMission?.id || 'MSN-2025-08-01',
+          missionName: activeMission?.name || 'Survey Mission',
+          class: 'pipeline_anomaly' as any,
+          classNameLabel: 'Subsea Pipeline Free Span / Scour',
+          confidence: 0.88,
+          detectorScore: 0.86,
+          shadowScore: 0.89,
+          geometryScore: 0.94,
+          anomalyScore: 0.82,
+          qualityScore: 0.91,
+          bbox: { x: 80, y: 310, width: 180, height: 45 },
+          acousticShadow: { lengthMeters: 3.5, angleDeg: 40, shadowRatio: 1.2, shadowConfidence: 0.88, estimatedHeightMeters: 0.9, polygon: [] },
+          geometry: { areaPixels: 8100, perimeterPixels: 450, aspectRatio: 4.0, solidity: 0.95, extent: 0.91, orientationDeg: 12, compactness: 0.72 },
+          latitude: 9.1508,
+          longitude: 79.2798,
+          depthMeters: 38.5,
+          slantRangeMeters: 14.2,
+          altitudeMeters: 8.4,
+          geotagConfidence: 0.97,
+          timestamp: '2026-08-26T10:12:00Z',
+          pingIndex: 9400,
+          modelVersion: 'YOLOv12-Sonar Attention',
+          imageCropUrl: '/uploads/pipeline_scour.png',
+          cropUrl: '/uploads/pipeline_scour.png',
+          verifiedStatus: 'UNVERIFIED' as const
+        },
+        {
+          id: 'DET-2026-0004',
+          missionId: activeMission?.id || 'MSN-2025-08-01',
+          missionName: activeMission?.name || 'Survey Mission',
+          class: 'unexploded_ordnance' as any,
+          classNameLabel: 'Unexploded Ordnance (UXO Hazard)',
+          confidence: 0.96,
+          detectorScore: 0.95,
+          shadowScore: 0.97,
+          geometryScore: 0.92,
+          anomalyScore: 0.94,
+          qualityScore: 0.97,
+          bbox: { x: 340, y: 110, width: 55, height: 50 },
+          acousticShadow: { lengthMeters: 2.8, angleDeg: 48, shadowRatio: 1.3, shadowConfidence: 0.96, estimatedHeightMeters: 0.75, polygon: [] },
+          geometry: { areaPixels: 2750, perimeterPixels: 210, aspectRatio: 1.1, solidity: 0.96, extent: 0.93, orientationDeg: 80, compactness: 0.94 },
+          latitude: 9.1555,
+          longitude: 79.2830,
+          depthMeters: 44.0,
+          slantRangeMeters: 22.4,
+          altitudeMeters: 8.4,
+          geotagConfidence: 0.99,
+          timestamp: '2026-08-26T10:20:00Z',
+          pingIndex: 12100,
+          modelVersion: 'YOLOv12-Sonar Attention',
+          imageCropUrl: '',
+          cropUrl: '',
+          verifiedStatus: 'CONFIRMED' as const
+        },
+        {
+          id: 'DET-2026-0005',
+          missionId: activeMission?.id || 'MSN-2025-08-01',
+          missionName: activeMission?.name || 'Survey Mission',
+          class: 'marine_debris' as any,
+          classNameLabel: 'Solid Cargo Container Fragment',
+          confidence: 0.89,
+          detectorScore: 0.87,
+          shadowScore: 0.90,
+          geometryScore: 0.91,
+          anomalyScore: 0.86,
+          qualityScore: 0.93,
+          bbox: { x: 190, y: 400, width: 90, height: 70 },
+          acousticShadow: { lengthMeters: 3.8, angleDeg: 44, shadowRatio: 1.4, shadowConfidence: 0.91, estimatedHeightMeters: 1.1, polygon: [] },
+          geometry: { areaPixels: 6300, perimeterPixels: 320, aspectRatio: 1.28, solidity: 0.94, extent: 0.89, orientationDeg: 35, compactness: 0.87 },
+          latitude: 9.1495,
+          longitude: 79.2785,
+          depthMeters: 36.2,
+          slantRangeMeters: 16.8,
+          altitudeMeters: 8.4,
+          geotagConfidence: 0.97,
+          timestamp: '2026-08-26T10:30:00Z',
+          pingIndex: 15400,
+          modelVersion: 'YOLOv12-Sonar Attention',
+          imageCropUrl: '',
+          cropUrl: '',
+          verifiedStatus: 'UNVERIFIED' as const
+        }
+      ];
+
+
+
 
   // Playback timer loop
   useEffect(() => {

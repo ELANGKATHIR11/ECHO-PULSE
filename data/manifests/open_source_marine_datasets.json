@@ -1,0 +1,83 @@
+{
+  "AquaScan_1K": {
+    "description": "1,033 high-resolution Side-Scan Sonar (SSS) images for small-object SAR & diver detection",
+    "domain": "Side-Scan Sonar (SSS) Acoustic",
+    "source": "Zenodo Open Access",
+    "doi": "10.5281/zenodo.14959146",
+    "url": "https://zenodo.org/records/14959146/files/AquaScan-1K.zip",
+    "classes": [
+      "diver",
+      "human_surrogate",
+      "small_debris",
+      "seabed_target"
+    ]
+  },
+  "AI4Shipwrecks": {
+    "description": "286 high-resolution SSS sonar images with pixel-wise segmentation of 24 distinct shipwreck sites (AUV Thunder Bay)",
+    "domain": "Side-Scan Sonar (SSS) Acoustic & Bathymetric",
+    "source": "UM Field Robotics / HuggingFace",
+    "url": "https://huggingface.co/datasets/umfieldrobotics/ai4shipwrecks",
+    "classes": [
+      "shipwreck_hull",
+      "cargo_hold",
+      "debris_field",
+      "mast_structure"
+    ]
+  },
+  "TrashCan_1_0": {
+    "description": "7,212 underwater images annotated for marine trash, plastics, electronic waste, and biological entities",
+    "domain": "Optical Underwater & ROV Imagery",
+    "source": "University of Minnesota / Conservancy",
+    "url": "https://conservancy.umn.edu/handle/11299/214865",
+    "classes": [
+      "plastic_bag",
+      "plastic_bottle",
+      "metal_can",
+      "electronic_waste",
+      "fishing_gear",
+      "rope",
+      "scuba_diver"
+    ]
+  },
+  "SeaClear_Marine_Debris": {
+    "description": "8,610 images annotated for 40 categories of underwater waste (solid plastics, electronics, metal drums)",
+    "domain": "Optical & Multimodal Underwater Robotics",
+    "source": "SeaClear EU Open Project",
+    "url": "https://seaclear.eu/data",
+    "classes": [
+      "plastic",
+      "metal",
+      "rubber",
+      "electronics",
+      "glass",
+      "clothing",
+      "diver"
+    ]
+  },
+  "Mine_Like_Contacts_MILCO": {
+    "description": "1,170 real side-scan sonar images annotated for NOMBO (Non-Mine Objects) and MILCO (Mine-Like Contacts)",
+    "domain": "Side-Scan Sonar (SSS) Military & Mine Countermeasures",
+    "source": "Figshare Open Access",
+    "url": "https://figshare.com/articles/dataset/Side-scan_sonar_imaging_for_Mine_detection/25016256",
+    "classes": [
+      "mine_like_contact",
+      "cylinder_uxo",
+      "wedge_debris",
+      "natural_seabed_nombo"
+    ]
+  },
+  "DeeperSense_Seafloor": {
+    "description": "430,000+ SSS acoustic sonar patches for seafloor classification, natural rock, sand ripples & coral exclusion",
+    "domain": "Acoustic SSS Seafloor & Habitat Mapping",
+    "source": "Zenodo Open Access",
+    "doi": "10.5281/zenodo.10363293",
+    "url": "https://zenodo.org/records/10363293",
+    "classes": [
+      "sand_flat",
+      "rock_reef",
+      "benthic_coral",
+      "seagrass_bed",
+      "gravel_substrate"
+    ]
+  }
+}

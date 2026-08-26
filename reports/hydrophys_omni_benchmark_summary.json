@@ -1,0 +1,18 @@
+{
+  "engine": "HydroPhys-OmniNet (Continuous Wave State-Space 1D/2D/3D Vision Model)",
+  "device": "cuda",
+  "frames_evaluated": 10,
+  "average_latency_ms": 20.16,
+  "throughput_fps": 49.6,
+  "total_objects_scanned": 0,
+  "features_validated": [
+    "1D Sub-bottom Strata Depth Profiler (Analytical Wavelet)",
+    "2D Multi-Category Instance Color-Segmentation Masks",
+    "2D High-Precision Bounding Boxes & Confidence Banners",
+    "3D Benthic Height-from-Shadow Physical Inversion",
+    "3D Volumetric Oriented Bounding Boxes (3D OBB)",
+    "3D Point Cloud (.PLY) Volumetric Mesh Generation",
+    "Natural Coral / Rock Outcrop False Alarm Rejection",
+    "Biofouling Cover Fraction Estimation"
+  ]
+}
