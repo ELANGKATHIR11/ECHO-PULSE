@@ -4,7 +4,6 @@ import {
   Activity,
   Cpu,
   Radio,
-  Sparkles,
   Zap,
   Box,
   Compass,
@@ -178,17 +177,6 @@ export const Navbar: React.FC = () => {
           className="text-[11px] px-2.5 py-1 shrink-0"
         >
           <span>DIGITAL TWIN</span>
-        </GlassButton>
-
-        {/* SIH Showcase Live Demo Button */}
-        <GlassButton
-          variant={location.pathname === '/demo' ? 'amber' : 'primary'}
-          size="sm"
-          icon={<Sparkles className="w-3.5 h-3.5 animate-pulse" />}
-          onClick={() => navigate('/demo')}
-          className="text-[11px] font-bold px-2.5 py-1 shrink-0"
-        >
-          <span>JUDGE DEMO</span>
         </GlassButton>
 
       </div>

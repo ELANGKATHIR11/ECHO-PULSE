@@ -7,7 +7,6 @@ import {
   Radio,
   Crosshair,
   BarChart3,
-  Sparkles,
   ChevronLeft,
   ChevronRight,
   Cpu,
@@ -103,31 +102,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
             );
           })}
         </div>
-
-        <div className="my-3 border-t border-cyan-900/40 dark:border-cyan-900/40 light:border-slate-200/80" />
-
-        {/* High-priority SIH Judge Showcase Demo */}
-        <NavLink
-          to="/demo"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-3 py-2.5 text-xs font-bold rounded-xl transition-all border relative overflow-hidden backdrop-blur-xl ${
-              isActive
-                ? 'bg-gradient-to-b from-amber-500/30 to-amber-600/15 dark:from-amber-500/30 dark:to-amber-600/15 light:from-amber-100 light:to-amber-200 text-amber-200 dark:text-amber-200 light:text-amber-950 border-amber-400/60 dark:border-amber-400/60 light:border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.3),inset_0_1px_1px_rgba(255,255,255,0.4)]'
-                : 'bg-amber-500/10 dark:bg-amber-500/10 light:bg-amber-50/90 text-amber-400 dark:text-amber-400 light:text-amber-800 border-amber-500/35 dark:border-amber-500/35 light:border-amber-300 hover:bg-amber-500/20 dark:hover:bg-amber-500/20 light:hover:bg-amber-100/90'
-            } ${collapsed ? 'justify-center px-0' : ''}`
-          }
-          title={collapsed ? 'SIH Judge Demo (30s Showcase)' : undefined}
-        >
-          <Sparkles className="w-4 h-4 shrink-0 animate-pulse text-amber-400 dark:text-amber-400 light:text-amber-600" />
-          {!collapsed && (
-            <div className="flex items-center justify-between flex-1 truncate font-mono">
-              <span className="tracking-widest uppercase text-[11px]">JUDGE DEMO</span>
-              <span className="text-[8px] px-2 py-0.5 bg-amber-400 dark:bg-amber-400 light:bg-amber-600 text-slate-950 dark:text-slate-950 light:text-white rounded-full font-black uppercase shadow-[0_0_6px_rgba(245,158,11,0.4)]">
-                30s
-              </span>
-            </div>
-          )}
-        </NavLink>
       </div>
 
       {/* Engine Status & Footer Collapse Toggle */}

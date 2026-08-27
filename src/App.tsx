@@ -11,7 +11,6 @@ import { SonarWorkstationPage } from './pages/SonarWorkstationPage';
 import { DetectionsPage } from './pages/DetectionsPage';
 import { DetectionDetailPage } from './pages/DetectionDetailPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
-import { DemoPage } from './pages/DemoPage';
 import { WebcamTrackerPage } from './pages/WebcamTrackerPage';
 import { ActiveLearningStudio } from './pages/ActiveLearningStudio';
 import { RawSonarUploadPage } from './pages/RawSonarUploadPage';
@@ -136,14 +135,6 @@ export default function App() {
                 element={
                   <Suspense fallback={<PageFallback />}>
                     <RawSonarUploadPage />
-                  </Suspense>
-                }
-              />
-              <Route
-                path="/demo"
-                element={
-                  <Suspense fallback={<PageFallback />}>
-                    <DemoPage />
                   </Suspense>
                 }
               />
