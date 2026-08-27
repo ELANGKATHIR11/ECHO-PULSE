@@ -13,42 +13,105 @@ Built for **Smart India Hackathon (SIH 2026)** under Problem Statement **ID: 260
 
 ---
 
-## 🏛️ System Architecture
+## 🏛️ System Architecture & Block Diagram
+
+> 📖 **Full Architectural Specification**: See [ARCHITECTURE_AND_BLOCK_DIAGRAM.md](file:///f:/echopulsenet---marine-sonar-intelligence-platform%20%281%29/ARCHITECTURE_AND_BLOCK_DIAGRAM.md) for the exhaustive hardware/software breakdown, PostGIS spatial schemas, and Fernet security models.
 
 ```mermaid
-graph TD
-    subgraph SENSOR_INGESTION["1. Marine & Optical Sensor Ingestion"]
-        RawSonar["Acoustic Sonar Files (.XTF / .JSF / .SL2 / .DAT)"]
-        WebcamFeed["Live Optical Environmental Camera Stream"]
-        HardwareGps["System WGS84 GPS Telemetry + Gyro Heading"]
-        HardwareIR["Hardware IR / ToF Laser Distance Calibrator"]
+graph LR
+    %% Data Ingestion & Sensors Block
+    subgraph BLOCK_1 ["1. SONAR & SENSOR INGESTION LAYER"]
+        direction TB
+        B1_1["Side-Scan Sonar (SSS) / SAS\n(100 kHz – 900 kHz)"]
+        B1_2["Raw Sonar Files\n(.XTF / .JSF / .SEGY / Binary Matrices)"]
+        B1_3["AUV / Vessel INS Telemetry\n(GPS, Heading, Speed, Depth, Altitude)"]
+        B1_4["Edge Optical / Optical-Acoustic Camera Feed"]
     end
 
-    subgraph EDGE_DSP["2. Hydrographic Digital Signal Processing (DSP)"]
-        RawSonar --> BLD["Bottom-Line Detection (BLD) & Water-Column Removal"]
-        BLD --> SRC["Slant-Range to Ground-Range Geometric Transform"]
-        SRC --> FFT["2D-FFT Notch De-striping & Empirical Gain Normalization (EGN)"]
+    %% Presentation / Frontend UI Block
+    subgraph BLOCK_2 ["2. CLIENT & PRESENTATION (React 18 + Vite)"]
+        direction TB
+        subgraph FE_VIEWS ["Interactive Workspaces & HUDs"]
+            B2_1["Sonar Waterfall & Ingestion Viewer"]
+            B2_2["Interactive MPA & Hazard Map (MapLibre)"]
+            B2_3["3D Bathymetric Digital Twin (Three.js)"]
+            B2_4["Telemetry & Active Learning Studio"]
+        end
+        subgraph FE_SVC ["Network Client (src/services/api.ts)"]
+            B2_5["Unified API Dispatcher (fetchWithTimeout)"]
+        end
+        FE_VIEWS --> B2_5
     end
 
-    subgraph AI_CORE["3. Deep Learning Inference Core (Proprietary Models)"]
-        FFT --> HydroPhys["HydroPhys-OmniNet v4 (Attention-Centric YOLOv12 Detector)"]
-        FFT --> EchoPhys["EchoPhys-X (Dual-Head U-Net Shadow & Seabed Autoencoder)"]
-        WebcamFeed & HardwareIR --> SensorFusion["Sensor Fusion & 3D Optical Ray Triangulation Engine"]
-        HydroPhys & EchoPhys --> MultiFusion["Homoscedastic Multi-Task Uncertainty Loss & Fusion"]
+    %% Desktop Edge Runtime Wrapper
+    subgraph BLOCK_WRAPPER ["NATIVE DESKTOP EDGE RUNTIME"]
+        direction TB
+        W1["Tauri Native Rust Shell (src-tauri)"]
+        W2["Electron Process (electron_main.js)"]
+        W3["PyInstaller Executable (desktop_app.py)"]
     end
 
-    subgraph POSTGIS_DB["4. Spatial Geospatial Intelligence Database"]
-        MultiFusion & SensorFusion --> PostGIS["PostgreSQL 16 / PostGIS (Encrypted Connection)"]
-        PostGIS --> GeoJSON["Spatial Hazard Matrix & Coastal Geofencing"]
+    %% API Gateway & Server Core
+    subgraph BLOCK_3 ["3. API GATEWAY & ROUTING (FastAPI)"]
+        direction TB
+        B3_1["FastAPI Application (:8000)\n(backend/app/main.py)"]
+        B3_2["CORS Middleware & Static SPA Serving"]
+        B3_3["API Routes: /api/v1 & /api\n(backend/app/api/routes.py)"]
+        B3_1 --> B3_2
+        B3_1 --> B3_3
     end
 
-    subgraph MISSION_CONTROL["5. Interactive Mission Control HUD & Digital Twin"]
-        MultiFusion --> Waterfall["60 FPS Cascading Sonar Waterfall & Calipers"]
-        SensorFusion & GeoJSON --> Twin3D["3D Bathymetric Subsea Digital Twin Mesh (Three.js)"]
-        SensorFusion --> WebcamHUD["Webcam Real-Time 3D Multi-Object Projector"]
-        MultiFusion --> CommandCenter["Defense Command Center HUD (4-Quadrant)"]
-        MultiFusion --> HITL["Active Learning & Local GPU Retrain Studio"]
+    %% Intelligence & Physics Processing Pipeline
+    subgraph BLOCK_4 ["4. AI & ACOUSTIC PHYSICS ENGINE"]
+        direction TB
+        B4_1["HeavyDebrisGuardrailEngine\n(GLCM / FFT Domain Guard & Habitat Shield)"]
+        B4_2["UnifiedInferenceService\n(YOLOv12-Sonar 9-Class Deep Detector)"]
+        B4_3["EchoPhysOmni3D & HydroPhysOmniNet\n(Slant-Range & Shadow Raymarching)"]
+        B4_4["BathymetryService & ReportGenerator"]
+        B4_1 --> B4_2 --> B4_3 --> B4_4
     end
+
+    %% Security & Encryption Block
+    subgraph BLOCK_5 ["5. SECURITY & ENCRYPTION"]
+        direction TB
+        B5_1["Fernet Symmetric Cryptography Subsystem\n(backend/app/core/security.py)"]
+    end
+
+    %% Data Persistence & Spatial DB Block
+    subgraph BLOCK_6 ["6. POSTGIS SPATIAL DATABASE LAYER"]
+        direction TB
+        B6_POOL["DatabaseManager & PostGISConnector"]
+        subgraph PG_DB ["PostgreSQL 15+ with PostGIS"]
+            T_DET[("sonar_spatial_detections")]
+            T_MSN[("sonar_spatial_missions")]
+            T_MPA[("mpa_geotags")]
+            ST_FUNC["Spatial Functions (ST_DWithin, ST_ConcaveHull)"]
+        end
+        subgraph SQLITE_DB ["Fallback: Embedded SQLite WAL"]
+            L_SQLITE[("echopulsenet.db")]
+        end
+        B6_POOL --> PG_DB
+        B6_POOL --> SQLITE_DB
+    end
+
+    %% Flow Connections between Blocks
+    BLOCK_1 ==> |"Raw Pings / GPS"| BLOCK_2
+    BLOCK_WRAPPER -.-> BLOCK_2
+    BLOCK_WRAPPER -.-> BLOCK_3
+    B2_5 ==> |"REST HTTP / JSON / Multipart"| B3_1
+    B3_3 ==> |"Dispatches Request"| B4_1
+    BLOCK_5 -.-> |"Decrypted DB Credentials"| B6_POOL
+    B3_3 ==> |"Read / Write Missions & Detections"| B6_POOL
+    POSTGIS_SRV["PostGIS Spatial Analytics"] --- ST_FUNC
+
+    %% Styling
+    style BLOCK_1 fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#f8fafc
+    style BLOCK_2 fill:#0f172a,stroke:#3b82f6,stroke-width:2px,color:#f8fafc
+    style BLOCK_WRAPPER fill:#1e1b4b,stroke:#818cf8,stroke-width:1px,stroke-dasharray: 4 4,color:#f8fafc
+    style BLOCK_3 fill:#0f172a,stroke:#10b981,stroke-width:2px,color:#f8fafc
+    style BLOCK_4 fill:#0f172a,stroke:#f59e0b,stroke-width:2px,color:#f8fafc
+    style BLOCK_5 fill:#0f172a,stroke:#ec4899,stroke-width:2px,color:#f8fafc
+    style BLOCK_6 fill:#0f172a,stroke:#06b6d4,stroke-width:2px,color:#f8fafc
 ```
 
 ---
