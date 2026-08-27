@@ -675,7 +675,7 @@ class UnifiedInferenceService:
                 pil_input = Image.fromarray(cv2.cvtColor(cv2.cvtColor(enhanced, cv2.COLOR_GRAY2BGR), cv2.COLOR_BGR2RGB))
                 omni_res = self.hydrophys_engine.process_omni_frame(pil_input, conf_threshold=min_confidence)
                 for d in omni_res.get("detections", []):
-                    x1, y1, x2, y2 = d["bbox_2d_pixels"]
+                    x1, y1, x2, y2 = d["box_2d"]
                     w = max(1, x2 - x1)
                     h = max(1, y2 - y1)
                     conf = float(d["confidence"])

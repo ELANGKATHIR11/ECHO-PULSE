@@ -430,12 +430,14 @@ class PostGISConnector:
         try:
             with self.engine.connect() as conn:
                 query = text("""
-                    SELECT id, mission_id, target_class, class_name_label, confidence, 
-                           latitude, longitude, depth_meters, slant_range_meters,
-                           (6371 * acos(cos(radians(:lat)) * cos(radians(latitude)) * cos(radians(longitude) - radians(:lng)) + sin(radians(:lat)) * sin(radians(latitude)))) AS distance_km
-                    FROM sonar_spatial_detections
-                    WHERE latitude IS NOT NULL AND longitude IS NOT NULL
-                    HAVING distance_km <= :radius
+                    SELECT * FROM (
+                        SELECT id, mission_id, target_class, class_name_label, confidence,
+                               latitude, longitude, depth_meters, slant_range_meters,
+                               (6371 * acos(cos(radians(:lat)) * cos(radians(latitude)) * cos(radians(longitude) - radians(:lng)) + sin(radians(:lat)) * sin(radians(latitude)))) AS distance_km
+                        FROM sonar_spatial_detections
+                        WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+                    ) AS sub
+                    WHERE distance_km <= :radius
                     ORDER BY distance_km ASC;
                 """)
                 res = conn.execute(query, {"lat": center_lat, "lng": center_lng, "radius": radius_km})

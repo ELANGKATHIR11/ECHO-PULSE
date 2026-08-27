@@ -124,6 +124,8 @@ graph TD
 | **GeoAlchemy2** / **shapely** | `>=0.14.0` / `>=2.0.0` | PostGIS spatial geometry indexing, geofencing & distance calculations |
 | **cryptography** | `>=42.0.0` | Fernet symmetric credential encryption for defense-grade security |
 | **pydantic** / **python-multipart** | `>=2.0.0` / `>=0.0.9` | Request validation & large acoustic sonar file ingestion |
+| **reportlab** | `>=4.0.0` | PDF mission intelligence report generation |
+| **pyxtf** | `>=1.4.0` | XTF side-scan sonar binary file parsing |
 | **pytest** | `>=8.0.0` | Automated backend testing suite |
 
 ---
