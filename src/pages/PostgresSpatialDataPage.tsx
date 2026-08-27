@@ -84,8 +84,8 @@ const CATEGORY_COLORS: Record<string, { hex: string; bg: string; border: string 
 };
 
 // Custom Marker Icon
-const createMarkerIcon = (targetClass: string, isSelected: boolean) => {
-  const norm = targetClass.toLowerCase();
+const createMarkerIcon = (targetClass: string | undefined | null, isSelected: boolean) => {
+  const norm = (targetClass || 'marine_debris').toLowerCase();
   const color = CATEGORY_COLORS[norm]?.hex || CATEGORY_COLORS.default.hex;
   const size = isSelected ? 34 : 26;
 
@@ -139,13 +139,15 @@ export const PostgresSpatialDataPage: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+
   // Fetch PostgreSQL status and records
   const fetchData = async (silent = false) => {
     if (!silent) setIsRefreshing(true);
     try {
       const [statusRes, recordsRes] = await Promise.all([
         fetch('/api/v1/gis/postgis/status'),
-        fetch('/api/v1/gis/postgis/detections?limit=200')
+        fetch('/api/v1/gis/postgis/detections?limit=500')
       ]);
 
       if (statusRes.ok) {
@@ -156,9 +158,30 @@ export const PostgresSpatialDataPage: React.FC = () => {
       if (recordsRes.ok) {
         const rData = await recordsRes.json();
         if (Array.isArray(rData)) {
-          setRecords(rData);
-          if (!selectedRecord && rData.length > 0) {
-            setSelectedRecord(rData[0]);
+          const normalized = rData.map((item: any, idx: number) => {
+            const rawClass = item.target_class || item.class || item.class_name || 'marine_debris';
+            const rawLabel = item.class_name_label || item.classNameLabel || item.label || String(rawClass).replace('_', ' ').toUpperCase();
+            return {
+              id: item.id || `PG-DET-${idx + 1}`,
+              mission_id: item.mission_id || item.missionId || 'SURVEY-01',
+              mission_name: item.mission_name || item.missionName || 'Sonar Survey',
+              target_class: rawClass,
+              class_name_label: rawLabel,
+              confidence: typeof item.confidence === 'number' ? item.confidence : (item.detector_score || item.score || 0.85),
+              detector_score: item.detector_score || item.detectorScore,
+              latitude: Number(item.latitude || 9.1524),
+              longitude: Number(item.longitude || 79.2819),
+              depth_meters: item.depth_meters || item.depthMeters || 18.5,
+              slant_range_meters: item.slant_range_meters || item.slantRangeMeters || 22.0,
+              verification_status: item.verification_status || item.verificationStatus || 'CONFIRMED',
+              operator_notes: item.operator_notes || item.notes || '',
+              model_version: item.model_version || item.modelVersion || 'HydroPhys-OmniNet Live',
+              created_at: item.created_at || new Date().toISOString()
+            };
+          });
+          setRecords(normalized);
+          if (!selectedRecord && normalized.length > 0) {
+            setSelectedRecord(normalized[0]);
           }
         }
       }
@@ -175,22 +198,31 @@ export const PostgresSpatialDataPage: React.FC = () => {
     fetchData();
     const interval = setInterval(() => {
       fetchData(true);
-    }, 3000);
+    }, 4000);
     return () => clearInterval(interval);
   }, []);
 
-  // Filter records based on search query
+  // Filter records based on search query and category
   const filteredRecords = useMemo(() => {
     return records.filter((r) => {
+      if (selectedCategory !== 'ALL') {
+        const norm = (r.target_class || '').toLowerCase();
+        if (selectedCategory === 'SHIPWRECKS' && norm !== 'shipwreck') return false;
+        if (selectedCategory === 'DEBRIS' && !['plastic', 'metal_scrap', 'ghost_gear', 'marine_debris'].includes(norm)) return false;
+        if (selectedCategory === 'INFRASTRUCTURE' && !['subsea_cable', 'pipeline_anomaly'].includes(norm)) return false;
+        if (selectedCategory === 'UXO' && norm !== 'unexploded_ordnance') return false;
+      }
+      if (!searchQuery) return true;
       const q = searchQuery.toLowerCase();
       return (
         (r.class_name_label && r.class_name_label.toLowerCase().includes(q)) ||
         (r.target_class && r.target_class.toLowerCase().includes(q)) ||
         (r.id && r.id.toLowerCase().includes(q)) ||
-        (r.mission_id && r.mission_id.toLowerCase().includes(q))
+        (r.mission_id && r.mission_id.toLowerCase().includes(q)) ||
+        (r.operator_notes && r.operator_notes.toLowerCase().includes(q))
       );
     });
-  }, [records, searchQuery]);
+  }, [records, searchQuery, selectedCategory]);
 
   // Center coordinate for map view
   const mapCenter: [number, number] = useMemo(() => {
@@ -317,12 +349,35 @@ export const PostgresSpatialDataPage: React.FC = () => {
               </span>
             </div>
 
+            {/* Category Filter Pills */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[10px]">
+              {[
+                { id: 'ALL', label: 'All Records' },
+                { id: 'SHIPWRECKS', label: '⚓ Shipwrecks (Indian Ocean)' },
+                { id: 'DEBRIS', label: '🗑 Marine Debris' },
+                { id: 'INFRASTRUCTURE', label: '⚡ Cables & Pipes' },
+                { id: 'UXO', label: '💣 UXO / Mines' },
+              ].map((pill) => (
+                <button
+                  key={pill.id}
+                  onClick={() => setSelectedCategory(pill.id)}
+                  className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all border ${
+                    selectedCategory === pill.id
+                      ? 'bg-cyan-500/30 text-cyan-200 border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.3)]'
+                      : 'bg-[#020712]/60 text-slate-400 border-cyan-900/40 hover:text-white'
+                  }`}
+                >
+                  {pill.label}
+                </button>
+              ))}
+            </div>
+
             {/* Search Input */}
             <div className="relative">
               <Search className="w-4 h-4 text-cyan-400 absolute left-3 top-2.5" />
               <input
                 type="text"
-                placeholder="Search by class, ID, mission, or coordinates..."
+                placeholder="Search by class, ship name, ID, mission, notes..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-3 py-2 bg-[#020712]/80 border border-cyan-900/50 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
@@ -338,7 +393,7 @@ export const PostgresSpatialDataPage: React.FC = () => {
               ) : (
                 filteredRecords.map((rec) => {
                   const isSelected = selectedRecord?.id === rec.id;
-                  const norm = rec.target_class.toLowerCase();
+                  const norm = (rec.target_class || 'marine_debris').toLowerCase();
                   const cfg = CATEGORY_COLORS[norm] || CATEGORY_COLORS.default;
 
                   return (
@@ -425,12 +480,9 @@ export const PostgresSpatialDataPage: React.FC = () => {
                   >
                     <MapController center={mapCenter} />
                     <TileLayer
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                      url={
-                        isDark
-                          ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-                          : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-                      }
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      maxZoom={19}
                     />
                     <ScaleControl position="bottomleft" />
 

@@ -43,9 +43,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
 
   return (
     <aside
-      className={`h-[calc(100vh-3.5rem)] bg-[#030A17]/80 dark:bg-[#030A17]/80 light:bg-white/85 backdrop-blur-2xl border-r border-cyan-500/25 dark:border-cyan-500/25 light:border-sky-300/60 flex flex-col justify-between transition-all duration-300 z-20 select-none shrink-0 shadow-[8px_0_32px_rgba(0,0,0,0.65),inset_1px_0_1.5px_rgba(255,255,255,0.22)] dark:shadow-[8px_0_32px_rgba(0,0,0,0.65),inset_1px_0_1.5px_rgba(255,255,255,0.22)] light:shadow-[4px_0_20px_rgba(15,23,42,0.06),inset_1px_0_1.5px_rgba(255,255,255,0.95)] relative overflow-hidden ${
-        collapsed ? 'w-16' : 'w-56'
-      }`}
+      className={`h-[calc(100vh-3.5rem)] bg-[#030A17]/80 dark:bg-[#030A17]/80 light:bg-white/85 backdrop-blur-2xl border-r border-cyan-500/25 dark:border-cyan-500/25 light:border-sky-300/60 flex flex-col justify-between transition-all duration-300 z-20 select-none shrink-0 shadow-[8px_0_32px_rgba(0,0,0,0.65),inset_1px_0_1.5px_rgba(255,255,255,0.22)] dark:shadow-[8px_0_32px_rgba(0,0,0,0.65),inset_1px_0_1.5px_rgba(255,255,255,0.22)] light:shadow-[4px_0_20px_rgba(15,23,42,0.06),inset_1px_0_1.5px_rgba(255,255,255,0.95)] relative overflow-hidden ${collapsed ? 'w-16' : 'w-56'
+        }`}
     >
       {/* Top Liquid Specular Reflection */}
       <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/40 dark:via-cyan-400/40 light:via-sky-400/50 to-transparent pointer-events-none" />
@@ -66,31 +65,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2.5 text-xs font-medium rounded-xl transition-all duration-200 relative overflow-hidden backdrop-blur-xl ${
-                    isActive
-                      ? 'bg-gradient-to-b from-cyan-500/30 to-cyan-600/15 dark:from-cyan-500/30 dark:to-cyan-600/15 light:from-sky-100 light:to-sky-200 text-cyan-200 dark:text-cyan-200 light:text-sky-900 font-bold border border-cyan-400/60 dark:border-cyan-400/60 light:border-sky-400 shadow-[0_0_20px_rgba(34,211,238,0.25),inset_0_1px_1px_rgba(255,255,255,0.4)] dark:shadow-[0_0_20px_rgba(34,211,238,0.25),inset_0_1px_1px_rgba(255,255,255,0.4)] light:shadow-[0_2px_8px_rgba(2,132,199,0.15),inset_0_1px_1px_rgba(255,255,255,0.9)]'
-                      : 'text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-100 dark:hover:text-slate-100 light:hover:text-slate-900 hover:bg-cyan-950/40 dark:hover:bg-cyan-950/40 light:hover:bg-slate-100/90 border border-transparent'
+                  `flex items-center gap-3 px-3 py-2.5 text-xs font-medium rounded-xl transition-all duration-200 relative overflow-hidden backdrop-blur-xl ${isActive
+                    ? 'bg-gradient-to-b from-cyan-500/30 to-cyan-600/15 dark:from-cyan-500/30 dark:to-cyan-600/15 light:from-sky-100 light:to-sky-200 text-cyan-200 dark:text-cyan-200 light:text-sky-900 font-bold border border-cyan-400/60 dark:border-cyan-400/60 light:border-sky-400 shadow-[0_0_20px_rgba(34,211,238,0.25),inset_0_1px_1px_rgba(255,255,255,0.4)] dark:shadow-[0_0_20px_rgba(34,211,238,0.25),inset_0_1px_1px_rgba(255,255,255,0.4)] light:shadow-[0_2px_8px_rgba(2,132,199,0.15),inset_0_1px_1px_rgba(255,255,255,0.9)]'
+                    : 'text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-100 dark:hover:text-slate-100 light:hover:text-slate-900 hover:bg-cyan-950/40 dark:hover:bg-cyan-950/40 light:hover:bg-slate-100/90 border border-transparent'
                   } ${collapsed ? 'justify-center px-0' : ''}`
                 }
                 title={collapsed ? item.label : undefined}
               >
                 <Icon
-                  className={`w-4 h-4 shrink-0 ${
-                    item.highlight
+                  className={`w-4 h-4 shrink-0 ${item.highlight
                       ? 'text-cyan-400 dark:text-cyan-400 light:text-sky-600 animate-pulse'
                       : ''
-                  }`}
+                    }`}
                 />
                 {!collapsed && (
                   <div className="flex items-center justify-between flex-1 truncate font-mono">
                     <span className="tracking-wider text-[11px] uppercase truncate">{item.label}</span>
                     {item.badge && (
                       <span
-                        className={`text-[9px] px-2 py-0.2 rounded-full font-mono font-bold ${
-                          item.highlight
+                        className={`text-[9px] px-2 py-0.2 rounded-full font-mono font-bold ${item.highlight
                             ? 'bg-cyan-400 dark:bg-cyan-400 light:bg-sky-600 text-slate-950 dark:text-slate-950 light:text-white font-black shadow-[0_0_8px_rgba(34,211,238,0.4)]'
                             : 'bg-cyan-950/90 dark:bg-cyan-950/90 light:bg-sky-100 text-cyan-300 dark:text-cyan-300 light:text-sky-800 border border-cyan-500/50 dark:border-cyan-500/50 light:border-sky-300'
-                        }`}
+                          }`}
                       >
                         {item.badge}
                       </span>

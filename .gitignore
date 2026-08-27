@@ -20,14 +20,20 @@ ENV/
 .DS_Store
 Thumbs.db
 
-# Environment variables
+# Environment variables and keys
 .env
 .env.local
+.env.production
+*.env
+*.key
+.echopulse_master.key
 !.env.example
 
 # Temporary uploads and cache
 uploads/*
 !uploads/.gitkeep
+cache/
+jobs_journal/
 *.db
 *.db-shm
 *.db-wal

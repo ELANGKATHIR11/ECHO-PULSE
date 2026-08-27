@@ -642,7 +642,7 @@ class UnifiedInferenceService:
     def run_live_inference(
         self,
         frame_bgr: np.ndarray,
-        min_confidence: float = 0.25,
+        min_confidence: float = 0.35,
         heave_comp: bool = True,
         speckle_filter: bool = True
     ) -> Dict[str, Any]:

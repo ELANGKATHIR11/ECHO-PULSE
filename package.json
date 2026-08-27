@@ -14,7 +14,8 @@
     "desktop:dist": "npm run build && electron-builder",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "package:ep": "npm run build && python scripts/build_ep_package.py"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.8",

@@ -721,6 +721,7 @@ function SuspendedMarineSnow({ count = 360, enabled = true }: { count?: number; 
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
+          args={[particles, 3]}
           count={count}
           array={particles}
           itemSize={3}

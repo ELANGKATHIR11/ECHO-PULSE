@@ -202,11 +202,11 @@ def get_postgis_status():
     return postgis_connector.get_status()
 
 @router.get("/gis/postgis/detections")
-def get_postgis_detections(limit: int = 200):
-    pg_records = postgis_connector.get_all_detections(limit=limit)
+def get_postgis_detections(limit: int = 500, target_class: Optional[str] = None):
+    pg_records = postgis_connector.get_all_detections(limit=limit, target_class=target_class)
     if pg_records:
         return pg_records
-    # Fallback to in-memory detections if PostgreSQL connection is offline
+    # Fallback to in-memory detections if database connection is offline
     return [_d.model_dump() for _d in _DETECTIONS[:limit]]
 
 @router.post("/gis/postgis/sync-target")
@@ -366,18 +366,42 @@ async def upload_sonar(
         else:
             infer_target_path = file_path
 
-        dets = inference_service.run_inference(
-            image_path=infer_target_path,
-            mission_id=missionId,
-            vessel_nav=parsed_nav,
-            model_type=selectedModel or "HYDROPHYS_OMNINET",
-            min_confidence=float(minConfidence) if minConfidence is not None else 0.35,
-            single_highest_debris=bool(singleHighestDebris) if singleHighestDebris is not None else True
-        )
-        _DETECTIONS.extend(dets)
+        from ..services.gpu_worker import gpu_worker
         
-        annotated_url = getattr(inference_service, "last_annotated_url", f"/uploads/{unique_filename}")
-        model_telem = getattr(inference_service, "last_model_telemetry", {})
+        # Submit inference task to single GPU worker queue
+        job = gpu_worker.submit_job(
+            job_type="SONAR_FILE",
+            payload={
+                "image_path": infer_target_path,
+                "mission_id": missionId,
+                "vessel_nav": parsed_nav,
+                "model_type": selectedModel or "HYDROPHYS_OMNINET",
+                "min_confidence": float(minConfidence) if minConfidence is not None else 0.35,
+                "single_highest_debris": bool(singleHighestDebris) if singleHighestDebris is not None else True
+            },
+            wait=True,
+            timeout=120.0
+        )
+
+        if job.status.value == "FAILED":
+            raise HTTPException(status_code=500, detail=f"GPU Worker Failure: {job.error}")
+
+        job_res = job.result or {}
+        dets = job_res.get("detections", [])
+        
+        # Add to active in-memory list for live dashboard
+        from ..schemas.contracts import DetectionSchema
+        for d in dets:
+            try:
+                if isinstance(d, dict):
+                    _DETECTIONS.append(DetectionSchema(**d))
+                else:
+                    _DETECTIONS.append(d)
+            except Exception:
+                pass
+        
+        annotated_url = job_res.get("annotatedImageUrl", f"/uploads/{unique_filename}")
+        model_telem = job_res.get("modelTelemetry", {})
         
         return {
             "fileId": f"FILE-{uuid.uuid4().hex[:8]}",
@@ -388,7 +412,9 @@ async def upload_sonar(
             "size_bytes": len(content),
             "detectionsCount": len(dets),
             "detections": dets,
-            "modelTelemetry": model_telem
+            "modelTelemetry": model_telem,
+            "jobId": job.job_id,
+            "workerDevice": job_res.get("device", "GPU_WORKER_0")
         }
 
     except HTTPException:
@@ -424,269 +450,30 @@ async def infer_live_frame(
     
     if img_bgr is None:
         raise HTTPException(status_code=400, detail="Invalid image payload")
-        
-    # 0. Strict Acoustic Domain Verification Guardrail
-    domain_check = HeavyDebrisGuardrailEngine.verify_sonar_acoustic_domain(img_bgr)
-    if not domain_check["is_sonar"]:
-        return {
-            "status": "REJECTED_OPTICAL_FRAME",
-            "guardrailPassed": False,
-            "guardrailReason": domain_check["reason"],
-            "engine": "Acoustic Domain Guardrail",
-            "device": str(inference_service.device),
-            "detectionsCount": 0,
-            "detections": [],
-            "strata1d": {
-                "waterSeabedHorizon_m": 0.0,
-                "subBottomStrataDepths_m": [],
-                "bedrockReflector_m": 0.0
-            },
-            "metrics": {
-                "meanIntensity": 0.0,
-                "snrDb": 0.0,
-                "heaveCompensated": heave_comp,
-                "speckleFiltered": speckle_filter
-            }
-        }
-        
-    gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
-    
-    # 1. Motion & Heave Artifact Compensation: 
-    if heave_comp:
-        row_medians = np.median(gray, axis=1, keepdims=True)
-        global_median = np.median(gray)
-        gray_levelled = np.clip(gray.astype(np.float32) - row_medians + global_median, 0, 255).astype(np.uint8)
-    else:
-        gray_levelled = gray
-        
-    # 2. Speckle Noise Reduction & Dynamic Range CLAHE
-    if speckle_filter:
-        denoised = cv2.bilateralFilter(gray_levelled, d=7, sigmaColor=45, sigmaSpace=45)
-        clahe = cv2.createCLAHE(clipLimit=2.8, tileGridSize=(8, 8))
-        enhanced = clahe.apply(denoised)
-    else:
-        enhanced = gray_levelled
-        
-    # 3. Morphological Top-Hat & Black-Hat transforms
-    kernel_size = 15
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kernel_size, kernel_size))
-    tophat = cv2.morphologyEx(enhanced, cv2.MORPH_TOPHAT, kernel)
-    blackhat = cv2.morphologyEx(enhanced, cv2.MORPH_BLACKHAT, kernel)
-    
-    # 4. Neural Vision Core Detection on RTX 5060
-    enhanced_3ch = cv2.cvtColor(enhanced, cv2.COLOR_GRAY2BGR)
-    dets = []
-    engine_name = selected_model
 
-    # Option 0: EchoPhys-Lite (Ultra-Fast 3-Channel Physics-Guided Mamba)
-    if selected_model == "ECHOPHYS_LITE":
-        try:
-            from ..models.echophys_lite import echophys_lite_engine
-            pil_input = Image.fromarray(cv2.cvtColor(enhanced_3ch, cv2.COLOR_BGR2RGB))
-            lite_res = echophys_lite_engine.process_frame(pil_input, conf_threshold=min_confidence)
-            for d in lite_res.get("detections", []):
-                x1, y1, x2, y2 = d["box_xyxy"]
-                w = max(1, int(x2 - x1))
-                h = max(1, int(y2 - y1))
-                conf = float(d["confidence"])
-                raw_class_name = d["class"]
-                gr_eval = HeavyDebrisGuardrailEngine.evaluate_target(
-                    raw_class_name=raw_class_name,
-                    confidence=conf,
-                    bbox=(int(x1), int(y1), w, h),
-                    image_shape=gray.shape,
-                    shadow_strength=0.90,
-                    anomaly_sharpness=0.88
-                )
-                dets.append({
-                    "bbox": [int(x1), int(y1), w, h],
-                    "class": gr_eval["class_id"],
-                    "classNameLabel": gr_eval["class_label"],
-                    "category": gr_eval["target_category"],
-                    "guardrailPassed": gr_eval["passed"],
-                    "isDebris": gr_eval["is_debris"],
-                    "guardrailReason": gr_eval["reason"],
-                    "score": round(conf, 3),
-                    "rawDetectorScore": round(conf, 3),
-                    "height3d_m": d.get("estimated_height_m", round(float(h * 0.05), 2)),
-                    "position3d": [round(float(x1 * 0.1), 2), round(float(y1 * 0.1), 2), round(float(h * 0.05), 2)],
-                    "dimensions3d": [round(float(w * 0.08), 2), round(float(h * 0.08), 2), round(float(h * 0.05), 2)],
-                    "colorHex": gr_eval["color_hex"],
-                    "colorRgb": list(gr_eval["color_rgb"]),
-                    "isArtificialAnomaly": gr_eval["is_debris"]
-                })
-            engine_name = "EchoPhys-Lite v1.0 (3-Channel Physics Mamba)"
-        except Exception as e:
-            print(f"[!] EchoPhys-Lite live inference note: {e}")
+    from ..services.gpu_worker import gpu_worker
 
-    # Option A: EchoPhys-X v3 Unified
-    elif selected_model in ["ECHOPHYS_X_V3", "ECHOPHYS_X_SSS640", "ECHOPHYS_X_PHYSICS"] and getattr(inference_service, "echophys_v3_engine", None) is not None:
-        try:
-            pil_input = Image.fromarray(cv2.cvtColor(enhanced_3ch, cv2.COLOR_BGR2RGB))
-            v3_res = inference_service.echophys_v3_engine.process_frame(pil_input, conf_threshold=min_confidence)
-            for d in v3_res.get("detections", []):
-                x1, y1, x2, y2 = d["box_xyxy"]
-                w = max(1, int(x2 - x1))
-                h = max(1, int(y2 - y1))
-                conf = float(d["confidence"])
-                cls_id = int(d.get("class_id", 4))
-                raw_class_name = CLASS_MAPPINGS.get(cls_id, ("marine_debris", "Marine Debris"))[0]
-                gr_eval = HeavyDebrisGuardrailEngine.evaluate_target(
-                    raw_class_name=raw_class_name,
-                    confidence=conf,
-                    bbox=(int(x1), int(y1), w, h),
-                    image_shape=gray.shape,
-                    shadow_strength=0.85,
-                    anomaly_sharpness=0.8
-                )
-                dets.append({
-                    "bbox": [int(x1), int(y1), w, h],
-                    "class": gr_eval["class_id"],
-                    "classNameLabel": gr_eval["class_label"],
-                    "category": gr_eval["target_category"],
-                    "guardrailPassed": gr_eval["passed"],
-                    "isDebris": gr_eval["is_debris"],
-                    "guardrailReason": gr_eval["reason"],
-                    "score": round(conf, 3),
-                    "rawDetectorScore": round(conf, 3),
-                    "height3d_m": round(float(h * 0.05), 2),
-                    "position3d": [round(float(x1 * 0.1), 2), round(float(y1 * 0.1), 2), round(float(h * 0.05), 2)],
-                    "dimensions3d": [round(float(w * 0.08), 2), round(float(h * 0.08), 2), round(float(h * 0.05), 2)],
-                    "colorHex": gr_eval["color_hex"],
-                    "colorRgb": list(gr_eval["color_rgb"]),
-                    "isArtificialAnomaly": gr_eval["is_debris"]
-                })
-            engine_name = "EchoPhys-X v3 Unified"
-        except Exception as e:
-            print(f"[!] EchoPhys-X v3 live inference note: {e}")
+    # Submit frame inference task to dedicated single GPU worker queue
+    job = gpu_worker.submit_job(
+        job_type="FRAME_IMAGE",
+        payload={
+            "img_bgr": img_bgr,
+            "heave_comp": bool(heave_comp),
+            "speckle_filter": bool(speckle_filter),
+            "shadow_boost": bool(shadow_boost),
+            "min_confidence": float(min_confidence),
+            "selected_model": selected_model,
+            "single_highest_debris": bool(single_highest_debris)
+        },
+        wait=True,
+        timeout=30.0
+    )
 
-    # Option B: HydroPhys-OmniNet Extreme
-    if len(dets) == 0 and selected_model in ["HYDROPHYS_OMNINET", "ECHOPHYS_X_SSS640", "ECHOPHYS_X_PHYSICS", "HYBRID_ENSEMBLE"] and getattr(inference_service, "omni_engine", None) is not None:
-        try:
-            pil_input = Image.fromarray(cv2.cvtColor(enhanced_3ch, cv2.COLOR_BGR2RGB))
-            omni_res = inference_service.omni_engine.process_omni_frame(
-                pil_input,
-                conf_threshold=min_confidence,
-                altitude_m=15.0,
-                swath_m=150.0
-            )
-            for d in omni_res.get("detections", []):
-                box_key = d.get("box_2d", d.get("bbox_2d_pixels", [0, 0, 1, 1]))
-                x1, y1, x2, y2 = box_key
-                w = max(1, int(x2 - x1))
-                h = max(1, int(y2 - y1))
-                conf = float(d.get("confidence", 0.5))
-                cat_name = d.get("class_name", d.get("category", "marine_debris"))
-                
-                gr_eval = HeavyDebrisGuardrailEngine.evaluate_target(
-                    raw_class_name=cat_name,
-                    confidence=conf,
-                    bbox=(int(x1), int(y1), w, h),
-                    image_shape=gray.shape,
-                    shadow_strength=0.85,
-                    anomaly_sharpness=0.8
-                )
+    if job.status.value == "FAILED":
+        raise HTTPException(status_code=500, detail=f"GPU Worker Failure: {job.error}")
 
-                dets.append({
-                    "bbox": [int(x1), int(y1), w, h],
-                    "class": gr_eval["class_id"],
-                    "classNameLabel": gr_eval["class_label"],
-                    "category": gr_eval["target_category"],
-                    "guardrailPassed": gr_eval["passed"],
-                    "isDebris": gr_eval["is_debris"],
-                    "guardrailReason": gr_eval["reason"],
-                    "score": round(conf, 3),
-                    "rawDetectorScore": round(conf, 3),
-                    "height3d_m": round(float(d.get("target_height_m", h * 0.05)), 2),
-                    "position3d": [round(float(v), 2) for v in d.get("center_3d_m", [x1*0.1, y1*0.1, 0.5])],
-                    "dimensions3d": [round(float(v), 2) for v in d.get("dimensions_3d_m", [w*0.08, h*0.08, 0.5])],
-                    "colorHex": gr_eval["color_hex"],
-                    "colorRgb": list(gr_eval["color_rgb"]),
-                    "isArtificialAnomaly": gr_eval["is_debris"],
-                    "shadowStrength": 0.85
-                })
-            engine_name = "HydroPhys-OmniNet (Extreme CAW-SSM)"
-        except Exception as e:
-            print(f"[!] HydroPhys-OmniNet live inference note: {e}")
-
-    # Option C: Attention-Centric YOLOv12
-    if len(dets) == 0 and inference_service.yolo_model is not None:
-        try:
-            dev_str = "0" if inference_service.device.type == "cuda" else "cpu"
-            results = inference_service.yolo_model.predict(
-                source=enhanced_3ch,
-                device=dev_str,
-                conf=min_confidence,
-                imgsz=640,
-                verbose=False
-            )
-            if results and len(results) > 0 and results[0].boxes is not None:
-                for box in results[0].boxes:
-                    xyxy = box.xyxy[0].cpu().numpy()
-                    x1, y1, x2, y2 = map(int, xyxy)
-                    conf = float(box.conf[0].cpu().numpy())
-                    cls_idx = int(box.cls[0].cpu().numpy())
-                    w = max(1, x2 - x1)
-                    h = max(1, y2 - y1)
-                    
-                    roi_shadow = blackhat[max(0, y1-5):min(blackhat.shape[0], y2+5), x2:min(blackhat.shape[1], x2 + int(w*2.5))]
-                    shadow_strength = float(np.mean(roi_shadow) / 255.0) if roi_shadow.size > 0 else 0.4
-                    roi_highlight = tophat[y1:y2, x1:x2]
-                    anomaly_sharpness = float(np.std(roi_highlight) / 64.0) if roi_highlight.size > 0 else 0.5
-                    fused_conf = float(np.clip(conf * 0.50 + shadow_strength * 0.25 + anomaly_sharpness * 0.25, 0.25, 0.99))
-                    
-                    class_key, class_label = inference_service.yolo_model.names.get(cls_idx, (f"target_{cls_idx}", f"Target {cls_idx}")) if hasattr(inference_service.yolo_model, 'names') else ("marine_debris", "Marine Anthropogenic Debris")
-                    if isinstance(class_key, tuple):
-                        class_key, class_label = class_key
-                    elif isinstance(class_key, str):
-                        class_label = class_key.replace('_', ' ').title()
-
-                    # Evaluate through Heavy Debris Guardrail Engine
-                    gr_eval = HeavyDebrisGuardrailEngine.evaluate_target(
-                        raw_class_name=str(class_key),
-                        confidence=fused_conf,
-                        bbox=(x1, y1, w, h),
-                        image_shape=gray.shape,
-                        shadow_strength=shadow_strength,
-                        anomaly_sharpness=anomaly_sharpness
-                    )
-                        
-                    dets.append({
-                        "bbox": [x1, y1, w, h],
-                        "class": gr_eval["class_id"],
-                        "classNameLabel": gr_eval["class_label"],
-                        "category": gr_eval["target_category"],
-                        "guardrailPassed": gr_eval["passed"],
-                        "isDebris": gr_eval["is_debris"],
-                        "guardrailReason": gr_eval["reason"],
-                        "score": round(fused_conf, 3),
-                        "rawDetectorScore": round(conf, 3),
-                        "shadowStrength": round(shadow_strength, 3),
-                        "anomalySharpness": round(anomaly_sharpness, 3),
-                        "height3d_m": round(float(h * 0.05), 2),
-                        "position3d": [round(float(x1 * 0.1), 2), round(float(y1 * 0.1), 2), round(float(h * 0.05), 2)],
-                        "dimensions3d": [round(float(w * 0.08), 2), round(float(h * 0.08), 2), round(float(h * 0.05), 2)],
-                        "colorHex": gr_eval["color_hex"],
-                        "colorRgb": list(gr_eval["color_rgb"]),
-                        "isArtificialAnomaly": gr_eval["is_debris"]
-                    })
-        except Exception as e:
-            print(f"[!] Live Frame YOLOv12 inference error: {e}")
-            
-    # Apply min_confidence filtering
-    valid_dets = [d for d in dets if d.get("score", 0.0) >= min_confidence]
-    
-    # Isolate single highest confidence debris target if requested
-    if single_highest_debris and len(valid_dets) > 0:
-        debris_candidates = [d for d in valid_dets if d.get("isDebris", True)]
-        if debris_candidates:
-            top_target = max(debris_candidates, key=lambda d: d.get("score", 0.0))
-            final_dets = [top_target]
-        else:
-            top_target = max(valid_dets, key=lambda d: d.get("score", 0.0))
-            final_dets = [top_target]
-    else:
-        final_dets = valid_dets
+    job_res = job.result or {}
+    final_dets = job_res.get("detections", [])
 
     # Create top notification payload for frontend alert center
     notification_payload = None
@@ -703,33 +490,28 @@ async def infer_live_frame(
                 "depth_m": pos3d[2] if len(pos3d) > 2 else 0.0,
                 "latitude": 9.15240,
                 "longitude": 79.28190
-            },
-            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            "message": f"Critical Debris Identified: {top_d.get('classNameLabel', 'Target')} ({int(top_d.get('score', 0)*100)}% Confidence) at Slant Range {pos3d[1]}m"
+            }
         }
 
     return {
-        "status": "SUCCESS",
-        "engine": engine_name,
-        "device": str(inference_service.device),
+        "status": job_res.get("status", "SUCCESS"),
+        "guardrailPassed": job_res.get("guardrailPassed", True),
+        "guardrailReason": job_res.get("guardrailReason", "Verified Authentic Marine Sonar Ingestion."),
+        "engine": job_res.get("engine", selected_model),
+        "device": job_res.get("device", "GPU_WORKER_0"),
         "detectionsCount": len(final_dets),
         "detections": final_dets,
         "notification": notification_payload,
-        "strata1d": {
-            "waterSeabedHorizon_m": 15.2,
-            "subBottomStrataDepths_m": [0.72, 1.45, 2.18, 3.10],
-            "bedrockReflector_m": 4.85
-        },
-        "metrics": {
-            "meanIntensity": float(np.mean(enhanced)),
-            "snrDb": float(20.0 * np.log10((np.mean(enhanced) + 1e-5) / (np.std(enhanced) + 1e-5))),
-            "heaveCompensated": heave_comp,
-            "speckleFiltered": speckle_filter
-        }
+        "jobId": job.job_id
     }
 
 @router.get("/inference/{job_id}")
 def get_inference_status(job_id: str, mission_id: Optional[str] = None):
+    from ..services.gpu_worker import gpu_worker
+    job = gpu_worker.get_job_status(job_id)
+    if job:
+        return job.to_dict()
+    
     dets = [d for d in _DETECTIONS if (not mission_id or d.missionId == mission_id)]
     return {
         "jobId": job_id,

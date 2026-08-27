@@ -259,7 +259,7 @@ function MarineParticles({
   return (
     <points ref={pointsRef}>
       <bufferGeometry>
-        <bufferAttribute attach="attributes-position" count={count} array={particles} itemSize={3} />
+        <bufferAttribute attach="attributes-position" args={[particles, 3]} count={count} array={particles} itemSize={3} />
       </bufferGeometry>
       <pointsMaterial
         size={0.06}

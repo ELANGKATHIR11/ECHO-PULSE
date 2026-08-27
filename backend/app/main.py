@@ -14,12 +14,12 @@ app = FastAPI(
     docs_url=f"{settings.API_V1_STR}/docs"
 )
 
-# Enable CORS for frontend & desktop client
+# Enable CORS for trusted frontend origins only (No wildcard in production)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 

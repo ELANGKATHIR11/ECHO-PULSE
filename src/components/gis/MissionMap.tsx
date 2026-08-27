@@ -58,10 +58,10 @@ const TILE_LAYERS: Record<TileProvider, { name: string; url: string; attribution
     maxZoom: 18,
   },
   CARTO_DARK: {
-    name: 'CartoDB Dark Matter',
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-    maxZoom: 19,
+    name: 'Esri Dark Canvas',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri &mdash; HERE, Garmin, USGS',
+    maxZoom: 18,
   },
   SATELLITE: {
     name: 'Esri World Satellite',
@@ -183,7 +183,7 @@ export const MissionMap: React.FC<MissionMapProps> = ({
   showLayersControl = true,
   initialHeatmapActive = true,
 }) => {
-  const [tileProvider, setTileProvider] = useState<TileProvider>('ESRI_OCEAN');
+  const [tileProvider, setTileProvider] = useState<TileProvider>('OSM');
   const [offlineMode, setOfflineMode] = useState(false);
 
   // Layer visibility toggles

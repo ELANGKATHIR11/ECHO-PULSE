@@ -146,7 +146,7 @@ export const MpaDebrisMapPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   // Basemap Tile Choice (Watermark-Free)
-  const [basemap, setBasemap] = useState<BasemapType>('ESRI_OCEAN');
+  const [basemap, setBasemap] = useState<BasemapType>('OSM');
 
   // Filters
   const [selectedMpaId, setSelectedMpaId] = useState<string>('ALL');

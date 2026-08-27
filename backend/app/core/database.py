@@ -15,10 +15,8 @@ Base = declarative_base()
 
 class DatabaseManager:
     def __init__(self):
-        self.db_url = os.getenv(
-            "DATABASE_URL",
-            os.getenv("POSTGIS_DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/echopulse_postgis")
-        )
+        from .security import resolve_db_connection_url
+        self.db_url = resolve_db_connection_url() or os.getenv("DATABASE_URL", "")
         self.engine = None
         self.SessionLocal = None
         self.is_connected = False
