@@ -219,7 +219,11 @@ def delete_detection(detection_id: str):
     return {"success": True, "deleted_id": detection_id}
 
 @router.post("/sonar/upload")
-async def upload_sonar(file: UploadFile = File(...), missionId: Optional[str] = Form("MSN-2026-0884")):
+async def upload_sonar(
+    file: UploadFile = File(...),
+    missionId: Optional[str] = Form("MSN-2026-0884"),
+    selectedModel: Optional[str] = Form("HYDROPHYS_OMNINET")
+):
     os.makedirs(settings.UPLOADS_DIR, exist_ok=True)
     file_path = os.path.join(settings.UPLOADS_DIR, file.filename)
     with open(file_path, "wb") as f:
@@ -245,10 +249,15 @@ async def upload_sonar(file: UploadFile = File(...), missionId: Optional[str] = 
         else:
             infer_target_path = file_path
 
-        dets = inference_service.run_inference(image_path=infer_target_path, mission_id=missionId)
+        dets = inference_service.run_inference(
+            image_path=infer_target_path,
+            mission_id=missionId,
+            model_type=selectedModel or "HYDROPHYS_OMNINET"
+        )
         _DETECTIONS.extend(dets)
         
         annotated_url = getattr(inference_service, "last_annotated_url", f"/uploads/{file.filename}")
+        model_telem = getattr(inference_service, "last_model_telemetry", {})
         
         return {
             "fileId": f"FILE-{uuid.uuid4().hex[:8]}",
@@ -260,7 +269,8 @@ async def upload_sonar(file: UploadFile = File(...), missionId: Optional[str] = 
             "path": file_path,
             "size_bytes": len(content),
             "detectionsCount": len(dets),
-            "detections": dets
+            "detections": dets,
+            "modelTelemetry": model_telem
         }
 
     except Exception as e:
