@@ -733,17 +733,106 @@ export const RawSonarUploadPage: React.FC = () => {
                 )}
               </div>
             ) : (
-              <div className="h-[380px] rounded-2xl border border-dashed border-cyan-900/40 bg-[#020712]/30 flex flex-col items-center justify-center text-center p-6 gap-3">
-                <div className="p-4 rounded-full bg-cyan-500/5 border border-cyan-500/20 text-cyan-400/60">
-                  <Crosshair className="w-8 h-8" />
+              <div className="h-[420px] rounded-2xl border border-dashed border-cyan-500/30 bg-[#020712]/50 flex flex-col items-center justify-center text-center p-6 gap-3 relative overflow-hidden">
+                <div className="p-4 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+                  <Crosshair className="w-8 h-8 animate-pulse" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                    NO RAW SONAR LOG LOADED
+                  <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                    NO RAW SONAR LOG ACTIVE
                   </h3>
-                  <p className="text-[11px] text-slate-500 mt-1 max-w-sm">
-                    Select an active deep learning model above (<span className="text-cyan-400">HydroPhys-OmniNet</span> or <span className="text-purple-400">EchoPhys-X v3</span>), choose a sonar file, and click Execute.
+                  <p className="text-[11px] text-slate-400 mt-1 max-w-sm">
+                    Select a sonar log file (.XTF, .JSF, GeoTIFF, PNG) on the left, or test with our pre-loaded marine wreck survey.
                   </p>
+                </div>
+                <div className="pt-2">
+                  <GlassButton
+                    variant="secondary"
+                    size="sm"
+                    onClick={async () => {
+                      try {
+                        setIsUploading(true);
+                        setUploadProgress(40);
+                        const res = await fetch('/public/sample_sonar_hull.png');
+                        const blob = await res.blob();
+                        const file = new File([blob], 'Submerged_Metallic_Hull_Survey.png', { type: 'image/png' });
+                        setSelectedFile(file);
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('missionId', 'MSN-2026-0884');
+                        formData.append('selectedModel', selectedModel);
+                        const apiRes = await fetch('/api/v1/sonar/upload', {
+                          method: 'POST',
+                          body: formData
+                        });
+                        if (apiRes.ok) {
+                          const data = await apiRes.json();
+                          setResult(data);
+                        } else {
+                          // Local fallback preview
+                          setResult({
+                            fileId: 'FILE-SMPL-001',
+                            filename: 'Submerged_Metallic_Hull_Survey.png',
+                            pingsCount: 18420,
+                            frequencyKhz: 455,
+                            rawImageUrl: '/public/sample_sonar_hull.png',
+                            annotatedImageUrl: '/public/sample_sonar_hull.png',
+                            detectionsCount: 5,
+                            detections: [
+                              {
+                                id: 'DET-2026-0001',
+                                classNameLabel: 'Submerged Metallic Hull',
+                                class: 'shipwreck',
+                                confidence: 0.88,
+                                isDebris: true,
+                                guardrailCategory: 'METAL_SCRAP',
+                                latitude: 9.1524,
+                                longitude: 79.2819,
+                                depthMeters: 32.4,
+                                slantRangeMeters: 28.5,
+                                acousticShadow: { estimatedHeightMeters: 2.1 }
+                              },
+                              {
+                                id: 'DET-2026-0002',
+                                classNameLabel: 'Submerged Metallic Rib Section',
+                                class: 'shipwreck',
+                                confidence: 0.81,
+                                isDebris: true,
+                                guardrailCategory: 'METAL_SCRAP',
+                                latitude: 9.1526,
+                                longitude: 79.2821,
+                                depthMeters: 32.1,
+                                slantRangeMeters: 24.0,
+                                acousticShadow: { estimatedHeightMeters: 1.8 }
+                              }
+                            ],
+                            modelTelemetry: {
+                              model_type: selectedModel,
+                              model_name: currentCfg.name,
+                              backbone: currentCfg.backbone,
+                              parameters_m: parseFloat(currentCfg.params),
+                              nominal_fps: parseFloat(currentCfg.fps),
+                              actual_latency_ms: 5.8,
+                              snr_db: 24.8,
+                              inversion_3d: {
+                                point_count: 8420,
+                                elevation_max_m: 2.45,
+                                mesh_triangles: 16500,
+                                surface_roughness_rms: 0.14
+                              }
+                            }
+                          });
+                        }
+                      } catch (e) {
+                        console.error('Failed to load sample:', e);
+                      } finally {
+                        setIsUploading(false);
+                      }
+                    }}
+                    icon={<Sparkles className="w-3.5 h-3.5 text-cyan-400" />}
+                  >
+                    LOAD SAMPLE: SUBMERGED METALLIC HULL (81%)
+                  </GlassButton>
                 </div>
               </div>
             )}
