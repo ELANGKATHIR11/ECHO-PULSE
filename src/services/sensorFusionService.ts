@@ -184,7 +184,7 @@ class SensorFusionService {
     else if (['metal_scrap', 'metal', 'shipwreck', 'unexploded_ordnance', 'pipeline_anomaly', 'knife', 'scissors'].includes(norm)) targetCat = 'METAL_SCRAP';
     else if (['biological_cluster', 'geological_formation', 'book', 'vase', 'chair', 'boat'].includes(norm)) targetCat = 'NOT_A_DEBRIS';
 
-    return {
+    const projectedObj: Projected3DObject = {
       id: `OPTIC-3D-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
       className,
       label: className.replace('_', ' ').toUpperCase(),
@@ -201,7 +201,41 @@ class SensorFusionService {
       bbox,
       timestamp: new Date().toISOString(),
     };
+
+    return projectedObj;
+  }
+
+  /**
+   * Directly posts the detected spatial target to PostgreSQL/PostGIS database
+   */
+  public async syncTargetToPostgres(target: Projected3DObject): Promise<boolean> {
+    try {
+      const res = await fetch('/api/v1/gis/postgis/sync-target', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: target.id,
+          missionId: 'LIVE-AI-CAM-SURVEY',
+          missionName: 'Live Optical / Sonar AI Scanner',
+          target_class: target.className,
+          classNameLabel: target.label,
+          category: target.category,
+          score: target.confidence,
+          latitude: target.wgs84.lat,
+          longitude: target.wgs84.lng,
+          depthMeters: target.wgs84.depthMeters,
+          slantRangeMeters: target.distanceMeters,
+          bbox: target.bbox,
+          source: 'Live AI Camera Sensor Fusion'
+        })
+      });
+      return res.ok;
+    } catch (e) {
+      console.debug('[PostGIS] Real-time sync notice:', e);
+      return false;
+    }
   }
 }
 
 export const sensorFusion = new SensorFusionService();
+

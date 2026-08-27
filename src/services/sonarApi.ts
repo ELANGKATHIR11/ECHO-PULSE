@@ -7,11 +7,17 @@ export const sonarApi = {
    */
   async uploadSonarFile(
     file: File,
-    missionId: string
-  ): Promise<{ fileId: string; pingsCount: number; frequencyKhz: number; detectionsCount?: number }> {
+    missionId: string,
+    selectedModel: string = 'ECHOPHYS_LITE',
+    minConfidence: number = 0.35,
+    singleHighestDebris: boolean = true
+  ): Promise<any> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('missionId', missionId);
+    formData.append('selectedModel', selectedModel);
+    formData.append('minConfidence', String(minConfidence));
+    formData.append('singleHighestDebris', String(singleHighestDebris));
 
     const response = await fetch('/api/v1/sonar/upload', {
       method: 'POST',

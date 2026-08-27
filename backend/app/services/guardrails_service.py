@@ -115,10 +115,11 @@ class HeavyDebrisGuardrailEngine:
         p90_sat = float(np.percentile(sat, 90))
 
         # 3. Decision Boundary:
-        # Pure SSS sonar in project: mean_chroma_diff = 0.0, mean_sat = 0.0.
-        # Monochromatic sonar colormap: mean_chroma_diff < 18.0, p90_sat < 0.65.
-        # Optical photos (e.g. pink Dahlia flower, nature, objects): mean_chroma_diff > 25.0, mean_sat > 0.20, p90_sat > 0.60.
-        is_optical_flower_or_photo = (mean_chroma_diff > 18.0) or (mean_sat > 0.18 and p90_sat > 0.48)
+        # Pure SSS sonar (true grayscale): mean_chroma_diff ≈ 0.0, mean_sat ≈ 0.0.
+        # Sonar images exported as PNG/JPEG may have up to ~28 chroma divergence due to compression.
+        # Sonar with colour-map overlays (copper/amber): mean_chroma_diff up to ~30, p90_sat < 0.65.
+        # Optical photos (flowers, nature, faces, objects): mean_chroma_diff >> 30, mean_sat > 0.25, p90_sat > 0.60.
+        is_optical_flower_or_photo = (mean_chroma_diff > 30.0) and (mean_sat > 0.25 and p90_sat > 0.60)
 
         if is_optical_flower_or_photo:
             return {
@@ -179,7 +180,9 @@ class HeavyDebrisGuardrailEngine:
                 "reason": "Detection dimensions are microscopic acoustic noise artifacts."
             }
 
-        if w > img_w * 0.75 and h > img_h * 0.75:
+        # Reject only if the box nearly fills the ENTIRE frame (likely seafloor gradient, not a discrete target)
+        # A shipwreck can legitimately fill 80%+ of the swath width on a side-scan image
+        if w > img_w * 0.88 and h > img_h * 0.88:
             return {
                 "passed": False,
                 "is_debris": False,

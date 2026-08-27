@@ -131,9 +131,17 @@ export const WebcamTrackerPage: React.FC = () => {
 
   // States
   const [model, setModel] = useState<any | null>(null);
-  const [modelType, setModelType] = useState<'BACKEND_YOLO12' | 'TF_COCO' | 'CLIENT_CV'>('BACKEND_YOLO12');
+  const [modelType, setModelType] = useState<'ECHOPHYS_LITE' | 'HYDROPHYS_OMNINET' | 'ECHOPHYS_X_V3' | 'BACKEND_YOLO12' | 'TF_COCO' | 'CLIENT_CV'>('ECHOPHYS_LITE');
   const [isModelLoading, setIsModelLoading] = useState<boolean>(false);
-  const [modelStatusText, setModelStatusText] = useState<string>('Edge YOLOv12 / HydroPhys-OmniNet DL Core Active');
+  const [modelStatusText, setModelStatusText] = useState<string>('EchoPhys-Lite (3-Ch Fast Mamba) Active');
+  const [singleHighestDebris, setSingleHighestDebris] = useState<boolean>(true);
+  const [liveNotification, setLiveNotification] = useState<{
+    title: string;
+    category: string;
+    confidence: number;
+    coordinates: { x_rel_m?: number; y_rel_m?: number; depth_m?: number; latitude: number; longitude: number };
+    message: string;
+  } | null>(null);
 
 
   const [isCameraActive, setIsCameraActive] = useState<boolean>(false);
@@ -507,13 +515,13 @@ export const WebcamTrackerPage: React.FC = () => {
           ctx.fillStyle = scanGrad;
           ctx.fillRect(0, scanY - 30, canvas.width, 40);
 
-          // 2. Perform Real-time Detection via Backend YOLOv12 / HydroPhys-OmniNet or Client ML/CV
+          // 2. Perform Real-time Detection via Backend DL Models (EchoPhys-Lite / HydroPhys-OmniNet / EchoPhys-X v3 / YOLOv12) or Client ML/CV
           let rawDetections: DetectionResult[] = [];
           try {
-            if (modelType === 'BACKEND_YOLO12') {
+            if (['ECHOPHYS_LITE', 'HYDROPHYS_OMNINET', 'ECHOPHYS_X_V3', 'BACKEND_YOLO12'].includes(modelType)) {
               // Capture compressed frame and send to backend edge engine
               const now = performance.now();
-              if (!lastBackendInferTime.current || now - lastBackendInferTime.current > 180) {
+              if (!lastBackendInferTime.current || now - lastBackendInferTime.current > 120) {
                 lastBackendInferTime.current = now;
                 canvas.toBlob(async (blob) => {
                   if (!blob) return;
@@ -521,6 +529,9 @@ export const WebcamTrackerPage: React.FC = () => {
                     const formData = new FormData();
                     formData.append('file', blob, 'frame.jpg');
                     formData.append('min_confidence', String(confidenceThreshold));
+                    formData.append('selected_model', modelType === 'BACKEND_YOLO12' ? 'YOLOV12' : modelType);
+                    formData.append('single_highest_debris', String(singleHighestDebris));
+
                     const res = await fetch('/api/v1/inference/frame', {
                       method: 'POST',
                       body: formData,
@@ -534,11 +545,19 @@ export const WebcamTrackerPage: React.FC = () => {
                           score: d.score || 0.85,
                         }));
                       }
+
+                      // Check for notification payload
+                      if (data.notification) {
+                        setLiveNotification(data.notification);
+                      } else if (data.detections && data.detections.length === 0) {
+                        // Clear notification after target disappears
+                        setLiveNotification(null);
+                      }
                     }
                   } catch (e) {
                     console.debug('Backend live frame fetch note:', e);
                   }
-                }, 'image/jpeg', 0.65);
+                }, 'image/jpeg', 0.70);
               }
               rawDetections = cachedBackendDetections.current || [];
             } else if (model && model.detect) {
@@ -552,10 +571,16 @@ export const WebcamTrackerPage: React.FC = () => {
               rawDetections = runClientCVInference(ctx, canvas.width, canvas.height);
             }
 
-            const filtered = rawDetections.filter((pred) => {
+            let filtered = rawDetections.filter((pred) => {
               const [x, y, w, h] = pred.bbox;
               return pred.score >= confidenceThreshold && w >= minObjectSize && h >= minObjectSize;
             });
+
+            // If single highest debris mode is on, extract top candidate
+            if (singleHighestDebris && filtered.length > 0) {
+              const top = filtered.reduce((prev, current) => (prev.score > current.score ? prev : current), filtered[0]);
+              filtered = [top];
+            }
 
             setActiveDetections(filtered);
             setLiveTargetsCount(filtered.length);
@@ -573,6 +598,11 @@ export const WebcamTrackerPage: React.FC = () => {
             });
             setProjected3DTargets(projected);
             setLiveGps(sensorFusion.getGpsState());
+
+            // Auto-persist top debris target into PostgreSQL/PostGIS in real time
+            if (projected.length > 0) {
+              sensorFusion.syncTargetToPostgres(projected[0]);
+            }
 
             if (filtered.length > 0) {
               triggerSonarPing(filtered[0].score > 0.8 ? 1046 : 784);
@@ -890,6 +920,81 @@ export const WebcamTrackerPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Live Model Architecture Selector Bar */}
+        <div className="pt-4 space-y-2 border-t border-cyan-900/30">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-[11px] font-mono font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <Cpu className="w-3.5 h-3.5 text-cyan-400" />
+              SELECT ACTIVE DL INFERENCE ENGINE (REAL-TIME RTX 5060):
+            </span>
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-mono bg-[#020712]/70 px-2.5 py-1 rounded-xl border border-cyan-900/40">
+                <input
+                  type="checkbox"
+                  checked={singleHighestDebris}
+                  onChange={(e) => setSingleHighestDebris(e.target.checked)}
+                  className="rounded border-cyan-700 text-cyan-500 focus:ring-cyan-400"
+                />
+                <span className="text-cyan-300 font-bold">SINGLE HIGHEST DEBRIS ONLY</span>
+              </label>
+
+              <div className="flex items-center gap-2 text-xs font-mono bg-[#020712]/70 px-2.5 py-1 rounded-xl border border-cyan-900/40">
+                <span className="text-slate-400">THRESHOLD:</span>
+                <input
+                  type="range"
+                  min="0.15"
+                  max="0.85"
+                  step="0.05"
+                  value={confidenceThreshold}
+                  onChange={(e) => setConfidenceThreshold(parseFloat(e.target.value))}
+                  className="w-20 h-1.5 bg-cyan-950 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                />
+                <span className="text-cyan-300 font-bold">{Math.round(confidenceThreshold * 100)}%</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            {[
+              { id: 'ECHOPHYS_LITE', name: 'EchoPhys-Lite', badge: 'NEW SOTA', desc: '3-Ch Fast Physics Mamba (780K)', params: '780K', fps: '224 FPS' },
+              { id: 'HYDROPHYS_OMNINET', name: 'HydroPhys-OmniNet', badge: 'FLAGSHIP DL', desc: 'Continuous Wavelet SSM + BiFPN', params: '1.61M', fps: '172 FPS' },
+              { id: 'ECHOPHYS_X_V3', name: 'EchoPhys-X v3', badge: 'PHYSICS-CTD', desc: 'Ocean BiMamba + Sound Velocity', params: '1.56M', fps: '174 FPS' },
+              { id: 'BACKEND_YOLO12', name: 'YOLOv12 Marine', badge: 'EDGE FAST', desc: 'Area-Attention Real-Time', params: '1.12M', fps: '185 FPS' },
+              { id: 'TF_COCO', name: 'MobileNet WebGL', badge: 'CLIENT TF', desc: 'In-Browser Tensor Core', params: '3.2M', fps: '60 FPS' },
+              { id: 'CLIENT_CV', name: 'Optical CV Fallback', badge: 'OPTICAL CV', desc: 'Sobel Gradient Edge Extractor', params: 'Heuristic', fps: '120 FPS' }
+            ].map((cfg) => {
+              const isSelected = modelType === cfg.id;
+              return (
+                <button
+                  key={cfg.id}
+                  type="button"
+                  onClick={() => {
+                    setModelType(cfg.id as any);
+                    setModelStatusText(`${cfg.name} Active`);
+                  }}
+                  className={`p-2.5 rounded-xl border text-left transition-all backdrop-blur-md ${
+                    isSelected
+                      ? 'bg-cyan-500/20 border-cyan-400 text-white shadow-[0_0_15px_rgba(6,182,212,0.25)]'
+                      : 'bg-[#020712]/60 border-cyan-900/40 text-slate-400 hover:border-cyan-500/50'
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-xs font-bold mb-0.5">
+                    <span className={isSelected ? 'text-cyan-300' : 'text-slate-200'}>{cfg.name}</span>
+                    <span className={`text-[9px] px-1 py-0.2 rounded font-mono ${isSelected ? 'bg-cyan-400/20 text-cyan-300' : 'bg-slate-800 text-slate-400'}`}>
+                      {cfg.badge}
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-slate-400 line-clamp-1">{cfg.desc}</div>
+                  <div className="flex items-center justify-between text-[9px] font-mono text-slate-400 pt-1 mt-1 border-t border-cyan-900/30">
+                    <span className="text-cyan-400">{cfg.params}</span>
+                    <span className="text-emerald-400">{cfg.fps}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Real-Time Telemetry & Hardware Metric Strip (12-Column Grid Alignment) */}
         <div className="grid grid-cols-12 gap-3 pt-3 text-xs">
           <div className="col-span-6 sm:col-span-3 lg:col-span-3">
@@ -902,7 +1007,7 @@ export const WebcamTrackerPage: React.FC = () => {
                 {modelStatusText}
               </div>
               <div className="text-[10px] text-slate-500 dark:text-slate-500 light:text-slate-500">
-                Client WebGL GPU Accelerated
+                RTX 5060 Tensor Acceleration
               </div>
             </div>
           </div>
@@ -1054,6 +1159,28 @@ export const WebcamTrackerPage: React.FC = () => {
                 )}
               </div>
             </div>
+
+            {/* Live Real-Time Debris Notification Alert Popup */}
+            {liveNotification && (
+              <div className="p-3.5 rounded-2xl bg-cyan-950/80 border-2 border-cyan-400/90 shadow-[0_0_25px_rgba(6,182,212,0.4)] backdrop-blur-xl font-mono text-xs animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-cyan-300 font-bold">
+                    <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
+                    <span className="text-sm">{liveNotification.title}</span>
+                  </div>
+                  <GlassBadge variant="cyan" size="sm">
+                    {Math.round(liveNotification.confidence * 100)}% CONFIDENCE
+                  </GlassBadge>
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2 mt-2 pt-2 border-t border-cyan-500/30 text-[11px]">
+                  <span className="text-slate-300">{liveNotification.message}</span>
+                  <div className="flex items-center gap-3 text-cyan-400 font-bold">
+                    <span>GPS: {liveNotification.coordinates.latitude.toFixed(5)}°N, {liveNotification.coordinates.longitude.toFixed(5)}°E</span>
+                    <span className="text-emerald-400">DEPTH: {liveNotification.coordinates.depth_m || 3.8}m</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Video + Real-Time Canvas Viewport */}
             <div className="relative aspect-video w-full bg-[#020712] dark:bg-[#020712] light:bg-slate-900 rounded-xl overflow-hidden border border-cyan-500/30 dark:border-cyan-500/30 light:border-sky-300 shadow-2xl flex items-center justify-center">

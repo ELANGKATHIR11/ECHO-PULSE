@@ -12,6 +12,7 @@ import {
   Box,
   Camera,
   Shield,
+  Database,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -31,6 +32,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
   const navItems: NavItem[] = [
     { to: '/', icon: Home, label: 'OVERVIEW' },
     { to: '/dashboard', icon: LayoutDashboard, label: 'DASHBOARD' },
+    { to: '/postgres', icon: Database, label: 'POSTGRES DB', badge: 'SQL', highlight: true },
     { to: '/mpa', icon: Shield, label: 'MPA GEO-TAGS', badge: 'MoES', highlight: true },
     { to: '/upload', icon: Cpu, label: 'RAW INGESTION', badge: 'XTF/AI', highlight: true },
     { to: '/digital-twin', icon: Box, label: 'DIGITAL TWIN', badge: '3D', highlight: true },

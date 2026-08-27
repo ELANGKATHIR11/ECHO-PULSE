@@ -241,13 +241,65 @@ class PostGISConnector:
             print(f"[!] PostGIS spatial query note: {e}")
             return []
 
+    def get_all_detections(self, limit: int = 200) -> List[Dict[str, Any]]:
+        """
+        Retrieves all stored spatial detections from PostgreSQL/PostGIS.
+        """
+        if not self.is_connected or not self.SessionLocal:
+            return []
+        try:
+            session = self.SessionLocal()
+            records = session.query(SpatialDetectionORM).order_by(SpatialDetectionORM.created_at.desc()).limit(limit).all()
+            results = []
+            for r in records:
+                results.append({
+                    "id": r.id,
+                    "mission_id": r.mission_id,
+                    "mission_name": r.mission_name,
+                    "target_class": r.target_class,
+                    "class_name_label": r.class_name_label,
+                    "confidence": r.confidence,
+                    "detector_score": r.detector_score,
+                    "shadow_score": r.shadow_score,
+                    "geometry_score": r.geometry_score,
+                    "anomaly_score": r.anomaly_score,
+                    "quality_score": r.quality_score,
+                    "latitude": r.latitude,
+                    "longitude": r.longitude,
+                    "depth_meters": r.depth_meters,
+                    "slant_range_meters": r.slant_range_meters,
+                    "altitude_meters": r.altitude_meters,
+                    "geotag_confidence": r.geotag_confidence,
+                    "ping_index": r.ping_index,
+                    "model_version": r.model_version,
+                    "image_crop_url": r.image_crop_url,
+                    "verification_status": r.verification_status,
+                    "operator_notes": r.operator_notes,
+                    "created_at": r.created_at.isoformat() if r.created_at else datetime.utcnow().isoformat()
+                })
+            session.close()
+            return results
+        except Exception as e:
+            print(f"[!] PostGIS get_all_detections note: {e}")
+            return []
+
     def get_status(self) -> Dict[str, Any]:
+        count = 0
+        if self.is_connected and self.SessionLocal:
+            try:
+                session = self.SessionLocal()
+                count = session.query(SpatialDetectionORM).count()
+                session.close()
+            except Exception:
+                pass
         return {
             "postgis_enabled": True,
             "connected": self.is_connected,
             "database_url": self.db_url.split("@")[-1] if "@" in self.db_url else "configured",
             "driver": "PostgreSQL+GeoAlchemy2",
-            "spatial_ref_system": "EPSG:4326 (WGS84) & EPSG:3857 (Web Mercator)"
+            "spatial_ref_system": "EPSG:4326 (WGS84) & EPSG:3857 (Web Mercator)",
+            "total_records_count": count,
+            "last_synced": datetime.utcnow().isoformat()
         }
 
 postgis_connector = PostGISConnector()

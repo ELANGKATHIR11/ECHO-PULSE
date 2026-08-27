@@ -12,6 +12,7 @@ import { WebcamTrackerPage } from './pages/WebcamTrackerPage';
 import { RawSonarUploadPage } from './pages/RawSonarUploadPage';
 import { CommandCenterPage } from './pages/CommandCenterPage';
 import { MpaDebrisMapPage } from './pages/MpaDebrisMapPage';
+import { PostgresSpatialDataPage } from './pages/PostgresSpatialDataPage';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 const PageFallback = () => (
@@ -104,6 +105,14 @@ export default function App() {
                 }
               />
               <Route
+                path="/postgres"
+                element={
+                  <Suspense fallback={<PageFallback />}>
+                    <PostgresSpatialDataPage />
+                  </Suspense>
+                }
+              />
+              <Route
                 path="/mpa"
                 element={
                   <Suspense fallback={<PageFallback />}>
@@ -113,6 +122,9 @@ export default function App() {
               />
 
               {/* Clean Aliases for streamlined architecture */}
+              <Route path="/postgis" element={<Navigate to="/postgres" replace />} />
+              <Route path="/database" element={<Navigate to="/postgres" replace />} />
+              <Route path="/sql" element={<Navigate to="/postgres" replace />} />
               <Route path="/mpa-zones" element={<Navigate to="/mpa" replace />} />
               <Route path="/marine-protected-areas" element={<Navigate to="/mpa" replace />} />
               <Route path="/gio-tags" element={<Navigate to="/mpa" replace />} />
