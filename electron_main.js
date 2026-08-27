@@ -1,7 +1,7 @@
 import { app, BrowserWindow, shell } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { spawn } from 'child_process';
+import { spawn, exec } from 'child_process';
 import http from 'http';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -9,16 +9,38 @@ const __dirname = path.dirname(__filename);
 
 let mainWindow = null;
 let backendProcess = null;
-const BACKEND_PORT = 8000;
-const BACKEND_URL = `http://127.0.0.1:${BACKEND_PORT}`;
+const SERVER_PORT = 8000;
+const SERVER_URL = `http://127.0.0.1:${SERVER_PORT}`;
 
+// 1. Ensure PostgreSQL service is active
+function ensurePostgres() {
+  return new Promise((resolve) => {
+    console.log('[EchoPulseNet Desktop] Checking PostgreSQL Database Service...');
+    if (process.platform === 'win32') {
+      exec('net start postgresql-x64-18', (err, stdout, stderr) => {
+        if (err) {
+          // If already running or manual, attempt pg_ctl directly
+          exec('& "F:\\Program Files\\PostgreSQL\\18\\bin\\pg_ctl.exe" start -D "F:\\Program Files\\PostgreSQL\\18\\data" -w', (pgErr) => {
+            resolve(true);
+          });
+        } else {
+          console.log('[EchoPulseNet Desktop] PostgreSQL Service Started.');
+          resolve(true);
+        }
+      });
+    } else {
+      resolve(true);
+    }
+  });
+}
+
+// 2. Start Unified Python AI + Frontend Backend
 function startBackend() {
-  console.log('[EchoPulseNet Desktop] Spawning embedded Python AI Backend...');
+  console.log('[EchoPulseNet Desktop] Launching Unified AI & Web Server on port 8000...');
   
   const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
-  const backendEntry = path.join(__dirname, 'backend', 'app', 'main.py');
   
-  backendProcess = spawn(pythonCmd, ['-m', 'uvicorn', 'app.main:app', '--host', '127.0.0.1', '--port', String(BACKEND_PORT)], {
+  backendProcess = spawn(pythonCmd, ['-m', 'uvicorn', 'app.main:app', '--host', '127.0.0.1', '--port', String(SERVER_PORT)], {
     cwd: path.join(__dirname, 'backend'),
     env: { ...process.env, PYTHONUNBUFFERED: '1' },
     stdio: 'inherit'
@@ -33,11 +55,11 @@ function startBackend() {
   });
 }
 
-function waitForBackend(url, timeout = 15000) {
+function waitForServer(url, timeout = 20000) {
   const start = Date.now();
   return new Promise((resolve) => {
     const check = () => {
-      http.get(`${url}/api/v1/health`, (res) => {
+      http.get(`${url}/api/v1/system/telemetry`, (res) => {
         if (res.statusCode === 200) {
           resolve(true);
         } else {
@@ -50,7 +72,7 @@ function waitForBackend(url, timeout = 15000) {
 
     const retry = () => {
       if (Date.now() - start > timeout) {
-        console.warn('[EchoPulseNet Desktop] Backend health timeout, proceeding to load UI...');
+        console.warn('[EchoPulseNet Desktop] Server health timeout, loading UI directly...');
         resolve(false);
       } else {
         setTimeout(check, 400);
@@ -63,13 +85,14 @@ function waitForBackend(url, timeout = 15000) {
 
 async function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1440,
-    height: 940,
+    width: 1480,
+    height: 960,
     minWidth: 1080,
     minHeight: 720,
     backgroundColor: '#020712',
-    title: 'EchoPulseNet | Marine Sonar Intelligence Platform (Standalone Desktop Edition)',
+    title: 'EchoPulseNet | Marine Sonar Intelligence Platform (Native Desktop Edition)',
     autoHideMenuBar: true,
+    show: false,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -78,19 +101,14 @@ async function createWindow() {
     },
   });
 
-  // Open external links in default browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
     return { action: 'deny' };
   });
 
-  // Load React app
-  const isDev = process.env.NODE_ENV === 'development';
-  if (isDev) {
-    mainWindow.loadURL('http://localhost:3000');
-  } else {
-    mainWindow.loadFile(path.join(__dirname, 'dist', 'index.html'));
-  }
+  // Load from Unified Single Server
+  await mainWindow.loadURL(SERVER_URL);
+  mainWindow.show();
 
   mainWindow.on('closed', () => {
     mainWindow = null;
@@ -98,8 +116,9 @@ async function createWindow() {
 }
 
 app.whenReady().then(async () => {
+  await ensurePostgres();
   startBackend();
-  await waitForBackend(BACKEND_URL);
+  await waitForServer(SERVER_URL);
   createWindow();
 
   app.on('activate', () => {
@@ -118,3 +137,4 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 });
+
