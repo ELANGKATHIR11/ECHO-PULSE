@@ -111,29 +111,29 @@ const MapController: React.FC<{ center: [number, number]; zoom: number }> = ({ c
   return null;
 };
 
-// Basemap Tiles Options
-type BasemapType = 'VOYAGER' | 'DARK' | 'ESRI_OCEAN' | 'OSM';
+// Basemap Tiles Options (100% Watermark-Free & No API Key Required)
+type BasemapType = 'ESRI_OCEAN' | 'ESRI_SATELLITE' | 'OSM' | 'ESRI_TOPO';
 
 const BASEMAP_URLS: Record<BasemapType, { url: string; name: string; attribution: string }> = {
-  VOYAGER: {
-    name: 'CartoDB Voyager (Marine/Coast)',
-    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap'
-  },
-  DARK: {
-    name: 'CartoDB Dark Matter',
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap'
-  },
   ESRI_OCEAN: {
-    name: 'Esri World Ocean Bathymetry',
+    name: 'Esri World Ocean (Bathymetry)',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean/MapServer/tile/{z}/{y}/{x}',
-    attribution: 'Tiles &copy; Esri &mdash; Sources: GEBCO, NOAA, CHS, OSU, UNH, CSUMB'
+    attribution: 'Tiles &copy; Esri &mdash; Sources: GEBCO, NOAA, CHS, CSUMB, National Geographic'
+  },
+  ESRI_SATELLITE: {
+    name: 'Esri Satellite Imagery',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics'
   },
   OSM: {
     name: 'OpenStreetMap Standard',
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  },
+  ESRI_TOPO: {
+    name: 'Esri World Topo & Coastal',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri &mdash; USGS, Intermap, EPA, NPS'
   }
 };
 
@@ -145,8 +145,8 @@ export const MpaDebrisMapPage: React.FC = () => {
   const [summary, setSummary] = useState<MpaSummaryMetrics | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Basemap Tile Choice
-  const [basemap, setBasemap] = useState<BasemapType>('VOYAGER');
+  // Basemap Tile Choice (Watermark-Free)
+  const [basemap, setBasemap] = useState<BasemapType>('ESRI_OCEAN');
 
   // Filters
   const [selectedMpaId, setSelectedMpaId] = useState<string>('ALL');
@@ -408,10 +408,10 @@ export const MpaDebrisMapPage: React.FC = () => {
                 onChange={(e) => setBasemap(e.target.value as BasemapType)}
                 className="bg-[#020712]/90 border border-cyan-900/60 rounded-lg px-2 py-1 text-[11px] font-mono text-cyan-300 focus:outline-none focus:border-cyan-400"
               >
-                <option value="VOYAGER">Voyager Marine</option>
-                <option value="DARK">Dark Matter</option>
-                <option value="ESRI_OCEAN">Esri Ocean Bathymetry</option>
-                <option value="OSM">OpenStreetMap</option>
+                <option value="ESRI_OCEAN">Esri World Ocean (Bathymetry)</option>
+                <option value="ESRI_SATELLITE">Esri Satellite Imagery</option>
+                <option value="OSM">OpenStreetMap Standard</option>
+                <option value="ESRI_TOPO">Esri Topographic & Coast</option>
               </select>
             </div>
           </GlassCard>

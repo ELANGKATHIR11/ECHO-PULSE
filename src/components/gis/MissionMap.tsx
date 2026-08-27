@@ -530,11 +530,11 @@ export const MissionMap: React.FC<MissionMapProps> = ({
       >
         <MapController bounds={mapBounds} />
 
-        {/* Dark Marine CartoDB / OSM Tiles */}
+        {/* Watermark-Free Esri World Ocean Bathymetry Tiles */}
         <TileLayer
-          attribution='&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-          maxZoom={19}
+          attribution='Tiles &copy; Esri &mdash; Sources: GEBCO, NOAA, CHS, CSUMB'
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean/MapServer/tile/{z}/{y}/{x}"
+          maxZoom={18}
           eventHandlers={{
             tileerror: () => setOfflineMode(true),
           }}
