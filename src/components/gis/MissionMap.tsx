@@ -725,13 +725,13 @@ export const MissionMap: React.FC<MissionMapProps> = ({
 
         {/* Detections Target Markers */}
         {activeLayers.detections &&
-          detections.map((det) => {
+          detections.map((det, idx) => {
             if (det.latitude === null || det.longitude === null) return null;
             const isSelected = det.id === selectedDetectionId;
 
             return (
               <Marker
-                key={det.id}
+                key={`${det.id}-${idx}`}
                 position={[det.latitude, det.longitude]}
                 icon={createCustomIcon(det.class, isSelected)}
                 eventHandlers={{

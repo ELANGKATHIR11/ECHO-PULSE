@@ -167,7 +167,13 @@ def delete_mission(mission_id: str):
 
 @router.get("/detections")
 def get_detections(mission_id: Optional[str] = None, min_confidence: Optional[float] = None) -> List[DetectionSchema]:
-    results = _DETECTIONS
+    seen_ids = set()
+    deduped = []
+    for d in _DETECTIONS:
+        if d.id not in seen_ids:
+            seen_ids.add(d.id)
+            deduped.append(d)
+    results = deduped
     if mission_id:
         results = [d for d in results if d.missionId == mission_id]
     if min_confidence is not None:

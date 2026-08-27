@@ -211,12 +211,12 @@ export const DetectionTable: React.FC<DetectionTableProps> = ({
           </thead>
           <tbody className="divide-y divide-cyan-900/20 dark:divide-cyan-900/20 light:divide-slate-200">
             {filteredDetections.length > 0 ? (
-              filteredDetections.map((det) => {
+              filteredDetections.map((det, idx) => {
                 const isSelected = det.id === selectedId;
 
                 return (
                   <tr
-                    key={det.id}
+                    key={`${det.id}-${idx}`}
                     onClick={() => onSelectDetection && onSelectDetection(det)}
                     className={`transition-colors cursor-pointer hover:bg-cyan-950/20 dark:hover:bg-cyan-950/20 light:hover:bg-sky-50 ${
                       isSelected ? 'bg-cyan-950/40 dark:bg-cyan-950/40 light:bg-sky-100/60 border-l-2 border-cyan-400' : ''

@@ -185,9 +185,9 @@ export const SonarWorkstationPage: React.FC = () => {
                 <GlassBadge variant="emerald" size="sm">{detections.length}</GlassBadge>
               </div>
               <div className="space-y-1.5 max-h-[190px] overflow-y-auto pr-1">
-                {detections.map((det) => (
+                {detections.map((det, idx) => (
                   <div
-                    key={det.id}
+                    key={`${det.id}-${idx}`}
                     onClick={() => {
                       setSelectedDetection(det);
                       setPingIndex(det.pingIndex);

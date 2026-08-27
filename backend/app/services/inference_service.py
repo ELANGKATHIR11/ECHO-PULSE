@@ -356,7 +356,7 @@ class UnifiedInferenceService:
                 cv2.imwrite(crop_path, crop_img)
                 
             detections.append(DetectionSchema(
-                id=f"DET-2026-{len(detections)+1:04d}",
+                id=f"DET-{uuid.uuid4().hex[:8].upper()}",
                 missionId=mission_id,
                 missionName=mission_name,
                 class_name=class_id,

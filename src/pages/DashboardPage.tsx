@@ -409,9 +409,9 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-12 gap-4 mt-3.5">
-          {detections.slice(0, 4).map((det) => (
+          {detections.slice(0, 4).map((det, idx) => (
             <div
-              key={det.id}
+              key={`${det.id}-${idx}`}
               onClick={() => {
                 setSelectedDetection(det);
                 setPingIndex(det.pingIndex);

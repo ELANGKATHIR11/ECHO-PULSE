@@ -668,7 +668,7 @@ export const RawSonarUploadPage: React.FC = () => {
 
                         return (
                           <div
-                            key={det.id || idx}
+                            key={`${det.id || 'det'}-${idx}`}
                             className={`p-3 rounded-xl bg-[#020712]/80 border ${isDebris ? 'border-cyan-900/40 hover:border-cyan-500/50' : 'border-slate-800 opacity-75'} flex items-center justify-between text-xs transition-all`}
                           >
                             <div className="flex items-center gap-3">
