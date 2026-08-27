@@ -15,6 +15,7 @@ import { WebcamTrackerPage } from './pages/WebcamTrackerPage';
 import { ActiveLearningStudio } from './pages/ActiveLearningStudio';
 import { RawSonarUploadPage } from './pages/RawSonarUploadPage';
 import { CommandCenterPage } from './pages/CommandCenterPage';
+import { MpaDebrisMapPage } from './pages/MpaDebrisMapPage';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 const PageFallback = () => (
@@ -138,8 +139,20 @@ export default function App() {
                   </Suspense>
                 }
               />
+              <Route
+                path="/mpa"
+                element={
+                  <Suspense fallback={<PageFallback />}>
+                    <MpaDebrisMapPage />
+                  </Suspense>
+                }
+              />
 
               {/* Clean Aliases for streamlined architecture */}
+              <Route path="/mpa-zones" element={<Navigate to="/mpa" replace />} />
+              <Route path="/marine-protected-areas" element={<Navigate to="/mpa" replace />} />
+              <Route path="/gio-tags" element={<Navigate to="/mpa" replace />} />
+              <Route path="/geo-tags" element={<Navigate to="/mpa" replace />} />
               <Route path="/vision" element={<Navigate to="/webcam-tracker" replace />} />
               <Route path="/camera" element={<Navigate to="/webcam-tracker" replace />} />
               <Route path="/live-vision" element={<Navigate to="/webcam-tracker" replace />} />

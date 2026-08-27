@@ -13,6 +13,7 @@ import {
   Box,
   Camera,
   Brain,
+  Shield,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -32,6 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
   const navItems: NavItem[] = [
     { to: '/', icon: Home, label: 'OVERVIEW' },
     { to: '/dashboard', icon: LayoutDashboard, label: 'DASHBOARD' },
+    { to: '/mpa', icon: Shield, label: 'MPA GEO-TAGS', badge: 'MoES', highlight: true },
     { to: '/upload', icon: Cpu, label: 'RAW INGESTION', badge: 'YOLO', highlight: true },
     { to: '/digital-twin', icon: Box, label: 'DIGITAL TWIN', badge: '3D', highlight: true },
     { to: '/webcam-tracker', icon: Camera, label: 'LIVE WEBCAM AI', badge: 'LIVE', highlight: true },

@@ -3,7 +3,7 @@
  * Supports live FastAPI backend endpoints and seamless offline/demo fallbacks.
  */
 
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || '/api/v1';
+export const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || '/api/v1';
 
 export class ApiError extends Error {
   status: number;

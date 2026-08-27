@@ -9,6 +9,7 @@ import {
   Compass,
   Sun,
   Moon,
+  Shield,
 } from 'lucide-react';
 import { systemApi } from '../../services/systemApi';
 import { missionApi } from '../../services/missionApi';
@@ -177,6 +178,17 @@ export const Navbar: React.FC = () => {
           className="text-[11px] px-2.5 py-1 shrink-0"
         >
           <span>DIGITAL TWIN</span>
+        </GlassButton>
+
+        {/* Indian MPA Zones Quick Access */}
+        <GlassButton
+          variant={location.pathname === '/mpa' ? 'primary' : 'secondary'}
+          size="sm"
+          icon={<Shield className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-400 light:text-emerald-600" />}
+          onClick={() => navigate('/mpa')}
+          className="text-[11px] px-2.5 py-1 shrink-0"
+        >
+          <span>MPA ZONES</span>
         </GlassButton>
 
       </div>

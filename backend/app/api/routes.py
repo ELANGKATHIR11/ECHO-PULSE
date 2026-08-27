@@ -818,5 +818,57 @@ def sync_optical_3d_detection(
     synced = postgis_connector.sync_detection(payload)
     return {"status": "SUCCESS" if synced else "LOCAL_BUFFERED", "id": id, "lat": lat, "lng": lng}
 
+# --- OFFICIAL INDIAN MARINE PROTECTED AREAS (MPA) & GEO-TAG ENDPOINTS ---
+@router.get("/gis/mpa-zones")
+def get_official_mpa_zones():
+    """Returns official Indian Marine Protected Areas (MPA) polygons and protection mandates."""
+    from ..services.mpa_service import MpaService
+    return {
+        "status": "SUCCESS",
+        "zones": MpaService.get_all_mpa_zones()
+    }
 
+@router.get("/gis/mpa-debris")
+def get_official_mpa_debris(
+    mpa_id: Optional[str] = None,
+    threat_level: Optional[str] = None,
+    target_class: Optional[str] = None,
+    certifying_agency: Optional[str] = None
+):
+    """Returns official geo-tagged debris registry from NCCR, INCOIS, CMFRI, and CSIR-NIO."""
+    from ..services.mpa_service import MpaService
+    tags = MpaService.get_all_debris_tags()
+    
+    if mpa_id:
+        tags = [t for t in tags if t["mpa_id"] == mpa_id]
+    if threat_level:
+        tags = [t for t in tags if t["threat_level"].upper() == threat_level.upper()]
+    if target_class:
+        tags = [t for t in tags if t["target_class"].upper() == target_class.upper()]
+    if certifying_agency:
+        tags = [t for t in tags if certifying_agency.upper() in t["certifying_agency"].upper()]
+        
+    return {
+        "status": "SUCCESS",
+        "count": len(tags),
+        "tags": tags
+    }
 
+@router.get("/gis/indian-eez")
+def get_indian_eez_boundary():
+    """Returns the 200 nautical mile Exclusive Economic Zone (EEZ) maritime corridor of India."""
+    from ..services.mpa_service import MpaService
+    return {
+        "status": "SUCCESS",
+        "maritime_boundary": "Indian 200 NM Exclusive Economic Zone (EEZ)",
+        "coordinates": MpaService.get_eez_polygon()
+    }
+
+@router.get("/gis/mpa-summary")
+def get_mpa_summary_metrics():
+    """Returns comprehensive national telemetry on debris density in Indian MPAs."""
+    from ..services.mpa_service import MpaService
+    return {
+        "status": "SUCCESS",
+        "metrics": MpaService.get_summary_metrics()
+    }
