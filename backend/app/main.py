@@ -35,15 +35,23 @@ app.include_router(router, prefix="/api")
 DIST_DIR = Path(__file__).resolve().parents[2] / "dist"
 
 if DIST_DIR.exists():
-    # Mount assets folder
+    # Mount assets folder if present
     assets_dir = DIST_DIR / "assets"
     if assets_dir.exists():
         app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
 
-    # SPA Catch-all route to serve index.html
+    # Explicit root endpoint
+    @app.get("/", response_class=FileResponse)
+    async def serve_root():
+        index_file = DIST_DIR / "index.html"
+        if index_file.is_file():
+            return FileResponse(index_file)
+        return HTMLResponse("<h1>EchoPulseNet Platform</h1><p>Client build index.html missing.</p>")
+
+    # SPA Catch-all route to serve static files or index.html
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
-        # Allow /api and /uploads to be handled by their respective routers
+        # Allow /api and /uploads to pass through
         if full_path.startswith("api") or full_path.startswith("uploads") or full_path.startswith("docs") or full_path.startswith("openapi"):
             return None
         file_path = DIST_DIR / full_path
@@ -52,7 +60,7 @@ if DIST_DIR.exists():
         index_file = DIST_DIR / "index.html"
         if index_file.is_file():
             return FileResponse(index_file)
-        return HTMLResponse("<h1>EchoPulseNet Platform</h1><p>Building client bundle...</p>")
+        return FileResponse(DIST_DIR / "index.html")
 
 if __name__ == "__main__":
     import uvicorn
