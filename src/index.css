@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
-@custom-variant light (&:where(.light, .light *));
-@custom-variant dark (&:where(.dark, .dark *));
+@variant light (&:where(.light, .light *));
+@variant dark (&:where(.dark, .dark *));
 
 @layer base {
   :root {
@@ -41,8 +41,8 @@
     /* Luminous Coastal Light Sea-Blue Liquid Glass Theme */
     --bg-page: #d2ecf9;
     --bg-page-secondary: #c4e4f6;
-    --bg-surface: rgba(255, 255, 255, 0.88);
-    --bg-surface-elevated: rgba(255, 255, 255, 0.96);
+    --bg-surface: rgba(255, 255, 255, 0.90);
+    --bg-surface-elevated: rgba(255, 255, 255, 0.98);
     --bg-surface-inset: rgba(210, 236, 249, 0.9);
     --border-main: rgba(2, 132, 199, 0.30);
     --border-subtle: rgba(2, 132, 199, 0.16);
@@ -140,8 +140,8 @@
   border-radius: var(--kpi-card-radius);
   background: var(--bg-surface);
   border: 1px solid var(--border-main);
-  backdrop-filter: blur(24px) saturate(190%) contrast(105%);
   -webkit-backdrop-filter: blur(24px) saturate(190%) contrast(105%);
+  backdrop-filter: blur(24px) saturate(190%) contrast(105%);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -162,8 +162,9 @@ html.dark .kpi-card {
 }
 
 html.light .kpi-card {
-  background: rgba(255, 255, 255, 0.90);
-  border-color: rgba(2, 132, 199, 0.28);
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: rgba(2, 132, 199, 0.28) !important;
+  color: #061930 !important;
   box-shadow: 
     0 10px 30px -6px rgba(15, 23, 42, 0.08),
     0 0 18px -2px rgba(2, 132, 199, 0.14),
@@ -226,18 +227,6 @@ html.light .kpi-card {
 /* ----------------------------------------------------
    Liquid Glass Texture & Caustic Animations
    ---------------------------------------------------- */
-@keyframes liquidFlow {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
 @keyframes liquidCausticDrift {
   0% {
     transform: translate3d(0, 0, 0) scale(1);
@@ -250,15 +239,6 @@ html.light .kpi-card {
   100% {
     transform: translate3d(0, 0, 0) scale(1);
     opacity: 0.35;
-  }
-}
-
-@keyframes liquidShimmer {
-  0% {
-    transform: translateX(-100%) rotate(25deg);
-  }
-  100% {
-    transform: translateX(200%) rotate(25deg);
   }
 }
 
@@ -283,8 +263,8 @@ html.light .liquid-caustic-layer {
 /* Liquid Glass Cards & Surfaces */
 .liquid-glass-surface {
   background: var(--bg-surface);
-  backdrop-filter: blur(24px) saturate(190%) contrast(105%);
   -webkit-backdrop-filter: blur(24px) saturate(190%) contrast(105%);
+  backdrop-filter: blur(24px) saturate(190%) contrast(105%);
   border: 1px solid var(--border-main);
   position: relative;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -299,8 +279,8 @@ html.dark .liquid-glass-surface {
 }
 
 html.light .liquid-glass-surface {
-  background: rgba(255, 255, 255, 0.90);
-  border-color: rgba(2, 132, 199, 0.28);
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: rgba(2, 132, 199, 0.28) !important;
   box-shadow: 
     0 10px 30px -6px rgba(15, 23, 42, 0.08),
     0 0 18px -2px rgba(2, 132, 199, 0.14),
@@ -425,6 +405,7 @@ html.light .leaflet-tile {
 
 html.dark .leaflet-control-zoom a {
   background: rgba(5, 14, 30, 0.85) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
   backdrop-filter: blur(16px) !important;
   color: #22D3EE !important;
   border: 1px solid rgba(34, 211, 238, 0.35) !important;
@@ -435,6 +416,7 @@ html.dark .leaflet-control-zoom a {
 
 html.light .leaflet-control-zoom a {
   background: rgba(255, 255, 255, 0.94) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
   backdrop-filter: blur(16px) !important;
   color: #00639b !important;
   border: 1px solid rgba(2, 132, 199, 0.30) !important;
@@ -445,6 +427,7 @@ html.light .leaflet-control-zoom a {
 
 html.dark .leaflet-popup-content-wrapper {
   background: rgba(5, 14, 30, 0.92) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
   backdrop-filter: blur(24px) saturate(190%) !important;
   color: #f1f5f9 !important;
   border: 1px solid rgba(34, 211, 238, 0.45) !important;
@@ -454,6 +437,7 @@ html.dark .leaflet-popup-content-wrapper {
 
 html.light .leaflet-popup-content-wrapper {
   background: rgba(255, 255, 255, 0.96) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
   backdrop-filter: blur(24px) saturate(190%) !important;
   color: #061930 !important;
   border: 1px solid rgba(2, 132, 199, 0.35) !important;
@@ -472,120 +456,174 @@ html.light .leaflet-popup-tip {
 }
 
 /* ----------------------------------------------------
-   LIGHT MODE HIGH-CONTRAST TYPOGRAPHY & SURFACE OVERRIDES
+   LIGHT THEME UNIVERSAL HIGH-CONTRAST & TRANSLUCENT BOXES
    Guarantees 100% visible text, crisp inputs & bright ocean styling
    ---------------------------------------------------- */
 html.light {
   color-scheme: light;
 }
 
-html.light .text-white {
+/* Universal Light Mode Text Contrast Rules */
+html.light .text-white,
+html.light [class*="text-white"] {
   color: #061930 !important;
 }
 
-html.light .text-slate-100 {
+html.light .text-slate-100,
+html.light [class*="text-slate-100"] {
   color: #09203c !important;
 }
 
-html.light .text-slate-200 {
+html.light .text-slate-200,
+html.light [class*="text-slate-200"] {
   color: #0e2948 !important;
 }
 
-html.light .text-slate-300 {
+html.light .text-slate-300,
+html.light [class*="text-slate-300"] {
   color: #163252 !important;
 }
 
-html.light .text-slate-400 {
+html.light .text-slate-400,
+html.light [class*="text-slate-400"] {
   color: #2b4562 !important;
 }
 
-html.light .text-slate-500 {
+html.light .text-slate-500,
+html.light [class*="text-slate-500"] {
   color: #435b75 !important;
 }
 
+html.light .text-cyan-100,
 html.light .text-cyan-200,
 html.light .text-cyan-300,
-html.light .text-cyan-400 {
+html.light .text-cyan-400,
+html.light [class*="text-cyan-200"],
+html.light [class*="text-cyan-300"],
+html.light [class*="text-cyan-400"] {
   color: #00639b !important;
 }
 
 html.light .text-emerald-300,
-html.light .text-emerald-400 {
+html.light .text-emerald-400,
+html.light [class*="text-emerald-300"],
+html.light [class*="text-emerald-400"] {
   color: #03624c !important;
 }
 
 html.light .text-amber-300,
-html.light .text-amber-400 {
+html.light .text-amber-400,
+html.light [class*="text-amber-300"],
+html.light [class*="text-amber-400"] {
   color: #8a3b00 !important;
 }
 
 html.light .text-pink-300,
 html.light .text-pink-400,
 html.light .text-rose-300,
-html.light .text-rose-400 {
+html.light .text-rose-400,
+html.light [class*="text-rose-300"],
+html.light [class*="text-rose-400"] {
   color: #9e1030 !important;
 }
 
 html.light .text-purple-300,
-html.light .text-purple-400 {
+html.light .text-purple-400,
+html.light [class*="text-purple-300"],
+html.light [class*="text-purple-400"] {
   color: #60259e !important;
 }
 
-/* Light mode dark background elements transform into crisp translucent white glass */
-html.light .bg-\[\#01040a\],
-html.light .bg-\[\#020610\],
-html.light .bg-\[\#020712\],
-html.light .bg-\[\#020814\],
-html.light .bg-\[\#030710\],
-html.light .bg-\[\#030914\],
-html.light .bg-\[\#030A17\],
-html.light .bg-\[\#040B18\],
-html.light .bg-\[\#040D1B\],
-html.light .bg-\[\#040E1E\],
-html.light .bg-\[\#050b14\],
-html.light .bg-\[\#050B14\],
-html.light .bg-\[\#050E1F\],
-html.light .bg-\[\#051124\],
-html.light .bg-\[\#061322\],
-html.light .bg-\[\#061426\],
-html.light .bg-\[\#061528\],
-html.light .bg-\[\#08121e\],
-html.light .bg-\[\#091522\],
-html.light .bg-\[\#0b1624\] {
-  background-color: rgba(255, 255, 255, 0.88) !important;
-  color: #061930;
+/* Light Mode Universal Container & Box Background Rules */
+html.light [class*="bg-[#01040a]"],
+html.light [class*="bg-[#020610]"],
+html.light [class*="bg-[#020611]"],
+html.light [class*="bg-[#02060C]"],
+html.light [class*="bg-[#020712]"],
+html.light [class*="bg-[#020716]"],
+html.light [class*="bg-[#020814]"],
+html.light [class*="bg-[#03060f]"],
+html.light [class*="bg-[#030710]"],
+html.light [class*="bg-[#030914]"],
+html.light [class*="bg-[#030A17]"],
+html.light [class*="bg-[#040B18]"],
+html.light [class*="bg-[#040D1B]"],
+html.light [class*="bg-[#040E1E]"],
+html.light [class*="bg-[#050b14]"],
+html.light [class*="bg-[#050B14]"],
+html.light [class*="bg-[#050E1F]"],
+html.light [class*="bg-[#051124]"],
+html.light [class*="bg-[#061322]"],
+html.light [class*="bg-[#061426]"],
+html.light [class*="bg-[#061528]"],
+html.light [class*="bg-[#08121e]"],
+html.light [class*="bg-[#081830]"],
+html.light [class*="bg-[#091522]"],
+html.light [class*="bg-[#0b1624]"] {
+  background-color: rgba(255, 255, 255, 0.90) !important;
+  color: #061930 !important;
+  border-color: rgba(2, 132, 199, 0.28) !important;
 }
 
-/* Light mode hover states */
+/* Light mode dark badge & chip tints */
+html.light [class*="bg-cyan-950"] {
+  background-color: rgba(224, 242, 254, 0.90) !important;
+  color: #00639b !important;
+  border-color: rgba(2, 132, 199, 0.35) !important;
+}
+
+html.light [class*="bg-emerald-950"] {
+  background-color: rgba(209, 250, 229, 0.90) !important;
+  color: #03624c !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+html.light [class*="bg-amber-950"] {
+  background-color: rgba(254, 243, 199, 0.90) !important;
+  color: #8a3b00 !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+}
+
+html.light [class*="bg-rose-950"] {
+  background-color: rgba(255, 228, 230, 0.90) !important;
+  color: #9e1030 !important;
+  border-color: rgba(244, 63, 94, 0.35) !important;
+}
+
+html.light [class*="bg-purple-950"] {
+  background-color: rgba(243, 232, 255, 0.90) !important;
+  color: #60259e !important;
+  border-color: rgba(168, 85, 247, 0.35) !important;
+}
+
+/* Light mode interactive hover states */
 html.light .hover\:bg-cyan-950\/20:hover,
 html.light .hover\:bg-cyan-950\/30:hover,
 html.light .hover\:bg-cyan-950\/40:hover,
 html.light .hover\:bg-cyan-950\/50:hover,
-html.light .hover\:bg-cyan-950\/60:hover {
-  background-color: rgba(224, 242, 254, 0.8) !important;
+html.light .hover\:bg-cyan-950\/60:hover,
+html.light [class*="hover:bg-[#040E1E]"]:hover,
+html.light [class*="hover:bg-[#081830]"]:hover,
+html.light [class*="hover:bg-[#020712]"]:hover {
+  background-color: rgba(224, 242, 254, 0.90) !important;
 }
 
-/* Light mode borders */
-html.light .border-cyan-900\/20,
-html.light .border-cyan-900\/30,
-html.light .border-cyan-900\/35,
-html.light .border-cyan-900\/40,
-html.light .border-cyan-900\/45,
-html.light .border-cyan-900\/50,
-html.light .border-cyan-900\/60,
-html.light .border-cyan-500\/20,
-html.light .border-cyan-500\/25,
-html.light .border-cyan-500\/30,
-html.light .border-cyan-500\/35,
-html.light .border-cyan-500\/40 {
+/* Universal Light Mode Borders */
+html.light [class*="border-cyan-900"],
+html.light [class*="border-cyan-500"],
+html.light [class*="border-cyan-400"],
+html.light [class*="border-slate-800"],
+html.light [class*="border-slate-700"] {
   border-color: rgba(2, 132, 199, 0.28) !important;
 }
 
-/* Inputs, selects, and textareas in light mode */
+/* Form Controls in Light Mode */
 html.light input,
 html.light select,
 html.light textarea {
+  background-color: #ffffff !important;
   color: #061930 !important;
+  border-color: rgba(2, 132, 199, 0.35) !important;
 }
 
 html.light input::placeholder,
@@ -596,4 +634,28 @@ html.light textarea::placeholder {
 html.light select option {
   background-color: #ffffff !important;
   color: #061930 !important;
+}
+
+/* Table and Virtual List Light Mode Overrides */
+html.light table,
+html.light thead,
+html.light tbody,
+html.light tr,
+html.light td,
+html.light th {
+  color: #061930 !important;
+}
+
+html.light thead {
+  background-color: rgba(224, 242, 254, 0.90) !important;
+}
+
+html.light tr:hover {
+  background-color: rgba(240, 249, 255, 0.85) !important;
+}
+
+/* Progress bar background tracks in Light Mode */
+html.light [class*="bg-slate-800"],
+html.light [class*="bg-slate-900"] {
+  background-color: rgba(2, 132, 199, 0.14) !important;
 }

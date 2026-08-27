@@ -24,8 +24,11 @@ Thumbs.db
 !.env.example
 
 # Temporary uploads and cache
-uploads/raw_sonar/*
-!uploads/raw_sonar/.gitkeep
+uploads/*
+!uploads/.gitkeep
+*.db
+*.db-shm
+*.db-wal
 
 # Windows reserved filename in third-party submodule
 **/aux.py

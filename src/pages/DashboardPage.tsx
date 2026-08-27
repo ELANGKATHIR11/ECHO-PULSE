@@ -4,31 +4,22 @@ import { Mission, Detection, SystemTelemetry, RenderProfile } from '../types';
 import { missionApi } from '../services/missionApi';
 import { detectionApi } from '../services/detectionApi';
 import { systemApi } from '../services/systemApi';
-import { SonarViewer } from '../components/sonar/SonarViewer';
-import { MissionMap } from '../components/gis/MissionMap';
 import { ThreeOceanScene } from '../components/three/ThreeOceanScene';
 import { OpenCvAnalysisPanel } from '../components/sonar/OpenCvAnalysisPanel';
-import { GlassCard, GlassPanel, GlassButton, GlassStat, GlassBadge, KpiCard } from '../components/glass/GlassCard';
+import { GlassCard, GlassButton, GlassBadge, KpiCard } from '../components/glass/GlassCard';
 import {
   Compass,
   Cpu,
-  Zap,
   Radio,
-  Layers,
-  Sparkles,
   ExternalLink,
   Shield,
   Activity,
   Box,
-  MapPin,
-  Flame,
-  Play,
-  RotateCcw,
-  Sliders,
   ChevronRight,
   Maximize2,
-  Anchor,
   Camera,
+  Layers,
+  Sparkles,
 } from 'lucide-react';
 
 interface ContextType {
@@ -46,7 +37,7 @@ export const DashboardPage: React.FC = () => {
   const [detections, setDetections] = useState<Detection[]>([]);
   const [selectedDetection, setSelectedDetection] = useState<Detection | null>(null);
   const [telemetry, setTelemetry] = useState<SystemTelemetry | null>(null);
-  const [viewMode, setViewMode] = useState<'3D_DIGITAL_TWIN' | 'GIS' | 'OPENCV_INSPECT'>('3D_DIGITAL_TWIN');
+  const [viewMode, setViewMode] = useState<'3D_DIGITAL_TWIN' | 'OPENCV_INSPECT'>('3D_DIGITAL_TWIN');
   const [activeHistogram, setActiveHistogram] = useState<number[]>([]);
   const [pingIndex, setPingIndex] = useState<number>(3200);
 
@@ -172,22 +163,22 @@ export const DashboardPage: React.FC = () => {
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div className="bg-[#020712]/60 dark:bg-[#020712]/60 light:bg-slate-50 p-1.5 rounded-lg border border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-200">
                   <div className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-500 light:text-slate-600 font-bold">Ghost Gear</div>
-                  <div className="text-amber-400 dark:text-amber-400 light:text-amber-700 font-bold text-sm">{ghostGearCount}</div>
+                  <div className="text-emerald-400 dark:text-emerald-400 light:text-emerald-700 font-bold text-sm">{ghostGearCount}</div>
                 </div>
                 <div className="bg-[#020712]/60 dark:bg-[#020712]/60 light:bg-slate-50 p-1.5 rounded-lg border border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-200">
                   <div className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-500 light:text-slate-600 font-bold">Wrecks</div>
-                  <div className="text-pink-400 dark:text-pink-400 light:text-pink-700 font-bold text-sm">{shipwreckCount}</div>
+                  <div className="text-orange-400 dark:text-orange-400 light:text-orange-700 font-bold text-sm">{shipwreckCount}</div>
                 </div>
                 <div className="bg-[#020712]/60 dark:bg-[#020712]/60 light:bg-slate-50 p-1.5 rounded-lg border border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-200">
                   <div className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-500 light:text-slate-600 font-bold">Mean Conf</div>
-                  <div className="text-emerald-400 dark:text-emerald-400 light:text-emerald-700 font-bold text-sm">{avgConfidence}%</div>
+                  <div className="text-cyan-400 dark:text-cyan-400 light:text-cyan-700 font-bold text-sm">{avgConfidence}%</div>
                 </div>
               </div>
             </div>
 
             <div className="kpi-footer">
               <span>False-Pos: {(selectedMission.summaryMetrics.falsePositiveRatio * 100).toFixed(1)}%</span>
-              <span className="text-emerald-400 dark:text-emerald-400 light:text-emerald-700 font-bold">YOLOv11+SAM2</span>
+              <span className="text-emerald-400 dark:text-emerald-400 light:text-emerald-700 font-bold">HydroPhys-OmniNet</span>
             </div>
           </KpiCard>
         </div>
@@ -198,7 +189,7 @@ export const DashboardPage: React.FC = () => {
             <div className="kpi-header">
               <span className="flex items-center gap-1.5 text-white dark:text-white light:text-slate-900 text-[10px] tracking-widest uppercase">
                 <Cpu className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-400 light:text-emerald-600" />
-                NVIDIA RTX 5060
+                NVIDIA ACCELERATION
               </span>
               <span className="text-[10px] text-emerald-400 dark:text-emerald-400 light:text-emerald-700 font-bold">
                 {telemetry && telemetry.temperatureCelsius !== null && telemetry.temperatureCelsius !== undefined
@@ -235,7 +226,7 @@ export const DashboardPage: React.FC = () => {
                   ? `${telemetry.vramUsedGb} / ${telemetry.vramTotalGb || 8} GB`
                   : '3.6 / 8 GB'}
               </span>
-              <span className="text-purple-300 dark:text-purple-300 light:text-purple-700 font-bold">FP16 TensorRT</span>
+              <span className="text-purple-300 dark:text-purple-300 light:text-purple-700 font-bold">FP16 / PyTorch</span>
             </div>
           </KpiCard>
         </div>
@@ -255,7 +246,7 @@ export const DashboardPage: React.FC = () => {
 
             <div className="kpi-body">
               <p className="text-[11px] text-slate-300 dark:text-slate-300 light:text-slate-700 leading-relaxed font-sans line-clamp-2">
-                Procedural bathymetry, volumetric sonar beam pulse, and acoustic shadow optics.
+                Physics-assisted 3D target projection, volumetric sonar pulse, and geospatial seafloor visualization.
               </p>
             </div>
 
@@ -283,23 +274,10 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Row 2: Main Workspace Split (Left: Waterfall Sonar Viewer, Right: 3D Twin Centerpiece / GIS / OpenCV) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[570px]">
-        {/* Left 7 Columns: Sonar Waterfall Workstation Preview */}
-        <div className="lg:col-span-7 flex flex-col h-[570px]">
-          <SonarViewer
-            detections={detections}
-            selectedDetectionId={selectedDetection?.id}
-            onSelectDetection={(d) => setSelectedDetection(d)}
-            onHistogramUpdate={setActiveHistogram}
-            missionName={selectedMission.name}
-            pingIndex={pingIndex}
-            onPingChange={setPingIndex}
-          />
-        </div>
-
-        {/* Right 5 Columns: 3D Digital Twin Centerpiece / GIS Command Map / OpenCV Telemetry */}
-        <div className="lg:col-span-5 flex flex-col h-[570px] rounded-2xl overflow-hidden bg-[#040E1E]/75 dark:bg-[#040E1E]/75 light:bg-white/85 backdrop-blur-2xl border border-cyan-500/25 dark:border-cyan-500/25 light:border-sky-300/60 shadow-[0_16px_40px_-10px_rgba(0,0,0,0.75),inset_0_1px_1.5px_0_rgba(255,255,255,0.25)] dark:shadow-[0_16px_40px_-10px_rgba(0,0,0,0.75),inset_0_1px_1.5px_0_rgba(255,255,255,0.25)] light:shadow-[0_10px_30px_-6px_rgba(15,23,42,0.08),inset_0_1px_1.5px_0_rgba(255,255,255,0.95)] relative">
+      {/* Row 2: Main Hydrographic 3D Interactive Centerpiece */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[580px]">
+        {/* Main 8 Columns: 3D Digital Twin / OpenCV Analysis Viewport */}
+        <div className="lg:col-span-8 flex flex-col h-[580px] rounded-2xl overflow-hidden bg-[#040E1E]/75 dark:bg-[#040E1E]/75 light:bg-white/85 backdrop-blur-2xl border border-cyan-500/25 dark:border-cyan-500/25 light:border-sky-300/60 shadow-[0_16px_40px_-10px_rgba(0,0,0,0.75),inset_0_1px_1.5px_0_rgba(255,255,255,0.25)] dark:shadow-[0_16px_40px_-10px_rgba(0,0,0,0.75),inset_0_1px_1.5px_0_rgba(255,255,255,0.25)] light:shadow-[0_10px_30px_-6px_rgba(15,23,42,0.08),inset_0_1px_1.5px_0_rgba(255,255,255,0.95)] relative">
           {/* Top Liquid Specular Reflection */}
           <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/40 dark:via-cyan-400/40 light:via-sky-400/50 to-transparent pointer-events-none z-20" />
 
@@ -315,19 +293,7 @@ export const DashboardPage: React.FC = () => {
                 }`}
               >
                 <Box className="w-3.5 h-3.5 text-cyan-400 dark:text-cyan-400 light:text-sky-600" />
-                <span>3D Ocean Floor</span>
-              </button>
-
-              <button
-                onClick={() => setViewMode('GIS')}
-                className={`px-3 py-1.5 rounded-xl text-[10px] uppercase font-mono font-bold tracking-wider transition-all flex items-center gap-1.5 relative overflow-hidden backdrop-blur-xl ${
-                  viewMode === 'GIS'
-                    ? 'bg-gradient-to-b from-cyan-500/30 to-cyan-600/15 dark:from-cyan-500/30 dark:to-cyan-600/15 light:from-sky-100 light:to-sky-200 text-cyan-200 dark:text-cyan-200 light:text-sky-900 border border-cyan-400/60 dark:border-cyan-400/60 light:border-sky-400 shadow-[0_0_16px_rgba(34,211,238,0.25),inset_0_1px_1px_rgba(255,255,255,0.4)]'
-                    : 'text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-white dark:hover:text-white light:hover:text-slate-900 border border-transparent'
-                }`}
-              >
-                <Compass className="w-3.5 h-3.5 text-cyan-400 dark:text-cyan-400 light:text-sky-600" />
-                <span>GIS Swath Map</span>
+                <span>3D Ocean Floor Twin</span>
               </button>
 
               <button
@@ -343,7 +309,7 @@ export const DashboardPage: React.FC = () => {
               </button>
             </div>
 
-            {viewMode === '3D_DIGITAL_TWIN' && (
+            <div className="flex items-center gap-2">
               <GlassButton
                 variant="ghost"
                 size="sm"
@@ -351,9 +317,9 @@ export const DashboardPage: React.FC = () => {
                 onClick={() => navigate(`/digital-twin?missionId=${selectedMission.id}`)}
                 className="text-[10px] text-cyan-400 dark:text-cyan-400 light:text-sky-700 hover:text-cyan-300"
               >
-                EXPAND 3D
+                FULLSCREEN 3D
               </GlassButton>
-            )}
+            </div>
           </div>
 
           {/* Sub-view Viewport Content */}
@@ -368,17 +334,6 @@ export const DashboardPage: React.FC = () => {
               />
             )}
 
-            {viewMode === 'GIS' && (
-              <MissionMap
-                mission={selectedMission}
-                allMissions={missions}
-                detections={detections}
-                selectedDetectionId={selectedDetection?.id}
-                onSelectDetection={(d) => setSelectedDetection(d)}
-                className="h-full w-full"
-              />
-            )}
-
             {viewMode === 'OPENCV_INSPECT' && (
               <div className="h-full overflow-y-auto p-4 bg-[#030914] dark:bg-[#030914] light:bg-slate-50">
                 <OpenCvAnalysisPanel
@@ -389,6 +344,111 @@ export const DashboardPage: React.FC = () => {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Right 4 Columns: Focused Target Acoustic Inspector */}
+        <div className="lg:col-span-4 flex flex-col h-[580px] rounded-2xl overflow-hidden bg-[#040E1E]/75 dark:bg-[#040E1E]/75 light:bg-white/85 backdrop-blur-2xl border border-cyan-500/25 dark:border-cyan-500/25 light:border-sky-300/60 p-4 shadow-[0_16px_40px_-10px_rgba(0,0,0,0.75)] relative">
+          <div className="flex items-center justify-between pb-2.5 border-b border-cyan-900/35 text-xs">
+            <span className="font-bold text-white uppercase tracking-widest text-[11px] flex items-center gap-1.5">
+              <Shield className="w-3.5 h-3.5 text-cyan-400" />
+              TARGET ACOUSTIC TELEMETRY
+            </span>
+            {selectedDetection && (
+              <GlassBadge variant={selectedDetection.confidence > 0.8 ? 'emerald' : 'cyan'} size="sm">
+                {(selectedDetection.confidence * 100).toFixed(0)}% FUSED
+              </GlassBadge>
+            )}
+          </div>
+
+          {selectedDetection ? (
+            <div className="flex-1 flex flex-col gap-3.5 mt-3 overflow-y-auto pr-1">
+              {/* Target Image Crop / Highlight */}
+              <div className="w-full h-36 bg-[#020712] rounded-xl border border-cyan-900/40 overflow-hidden relative flex items-center justify-center">
+                {selectedDetection.imageCropUrl ? (
+                  <img
+                    src={selectedDetection.imageCropUrl}
+                    alt={selectedDetection.classNameLabel}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <div className="text-slate-500 text-xs flex flex-col items-center gap-1">
+                    <Radio className="w-5 h-5 text-cyan-500 animate-pulse" />
+                    <span>Acoustic Highlight Envelope</span>
+                  </div>
+                )}
+                <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/70 text-[9px] font-mono text-cyan-300 font-bold border border-cyan-500/40">
+                  {selectedDetection.id}
+                </div>
+              </div>
+
+              {/* Classification Banner */}
+              <div className="p-3 bg-[#020814]/80 rounded-xl border border-cyan-900/30">
+                <div className="text-[10px] uppercase text-slate-400 font-bold">Classified Category</div>
+                <div className="text-sm font-bold text-cyan-300 uppercase tracking-wide mt-0.5">
+                  {selectedDetection.classNameLabel}
+                </div>
+                <div className="text-[10px] text-slate-400 mt-1 font-mono">
+                  {selectedDetection.modelVersion}
+                </div>
+              </div>
+
+              {/* Multi-Factor Scoring Metrics */}
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="p-2.5 bg-[#020814]/70 rounded-lg border border-cyan-900/25">
+                  <div className="text-[9px] uppercase text-slate-400">Slant Range</div>
+                  <div className="text-xs font-bold text-white mt-0.5">{selectedDetection.slantRangeMeters} m</div>
+                </div>
+                <div className="p-2.5 bg-[#020814]/70 rounded-lg border border-cyan-900/25">
+                  <div className="text-[9px] uppercase text-slate-400">Depth</div>
+                  <div className="text-xs font-bold text-white mt-0.5">{selectedDetection.depthMeters} m</div>
+                </div>
+                <div className="p-2.5 bg-[#020814]/70 rounded-lg border border-cyan-900/25">
+                  <div className="text-[9px] uppercase text-slate-400">Shadow Height</div>
+                  <div className="text-xs font-bold text-amber-400 mt-0.5">
+                    {selectedDetection.acousticShadow?.estimatedHeightMeters
+                      ? `${selectedDetection.acousticShadow.estimatedHeightMeters} m`
+                      : 'N/A'}
+                  </div>
+                </div>
+                <div className="p-2.5 bg-[#020814]/70 rounded-lg border border-cyan-900/25">
+                  <div className="text-[9px] uppercase text-slate-400">Anomaly Sharpness</div>
+                  <div className="text-xs font-bold text-purple-400 mt-0.5">
+                    {(selectedDetection.anomalyScore * 100).toFixed(0)}%
+                  </div>
+                </div>
+              </div>
+
+              {/* Geolocation Coordinate Banner */}
+              <div className="p-2.5 bg-[#020814]/80 rounded-xl border border-cyan-900/30 text-[10px] font-mono">
+                <div className="text-slate-400 uppercase text-[9px] font-bold">WGS84 Coordinates</div>
+                <div className="text-cyan-300 font-bold mt-0.5">
+                  {selectedDetection.latitude !== null && selectedDetection.latitude !== undefined
+                    ? `${selectedDetection.latitude.toFixed(5)}° N, ${selectedDetection.longitude?.toFixed(5)}° E`
+                    : 'UNAVAILABLE (Missing Nav Telemetry)'}
+                </div>
+                <div className="text-slate-500 text-[9px] mt-0.5">
+                  Geotag Confidence: {(selectedDetection.geotagConfidence * 100).toFixed(0)}%
+                </div>
+              </div>
+
+              <GlassButton
+                variant="primary"
+                size="sm"
+                className="w-full text-xs font-bold py-2 mt-auto"
+                icon={<ChevronRight className="w-3.5 h-3.5" />}
+                onClick={() => navigate(`/detections/${selectedDetection.id}`)}
+              >
+                DETAILED TARGET ANALYSIS
+              </GlassButton>
+            </div>
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-slate-500 text-xs">
+              Select a target below to inspect acoustic telemetry
+            </div>
+          )}
         </div>
       </div>
 

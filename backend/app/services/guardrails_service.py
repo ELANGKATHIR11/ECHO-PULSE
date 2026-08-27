@@ -1,92 +1,156 @@
+import os
+import json
+from pathlib import Path
+from typing import Dict, Any, Tuple, Optional, Union
 import numpy as np
-from typing import Dict, Any, Tuple, Optional
+import cv2
 
-# ==============================================================================
-# HEAVY DEBRIS GUARDRAIL ENGINE: 5-CLASS TARGET POLICY
-# Allowed Categories:
-# 1. HUMAN          - Subsea Diver, Operator, SAR Presence
-# 2. ELECTRICAL     - Subsea Power Cables, High-Voltage Conduits, Power Harnesses
-# 3. ELECTRONIC     - Batteries, E-Waste, Transponders, Sonar Beacons, Circuits
-# 4. PLASTIC        - Ghost Nets, Synthetic Polymers, Bottles, Marine Plastic Litter
-# 5. METAL_SCRAP    - Shipwreck Hull Fragments, UXO, Structural Steel, Ferrous Scrap
-#
-# All other targets (Geological rock outcrops, Biological reefs, Sand ripples,
-# Mud ridges, Organic matter) are strictly classified as NOT A DEBRIS.
-# ==============================================================================
+# Load canonical model taxonomy
+TAXONOMY_PATH = Path(__file__).resolve().parent.parent.parent / "configs" / "model_taxonomy.json"
+if not TAXONOMY_PATH.exists():
+    TAXONOMY_PATH = Path(__file__).resolve().parents[3] / "configs" / "model_taxonomy.json"
 
-# Allowed target taxonomy mappings
-TARGET_CLASS_MAPPING = {
-    # 1. Humans
-    "human": ("human", "Human / Subsea Diver Presence", "HUMAN", "#10B981"),
-    "person": ("human", "Human / Subsea Diver Presence", "HUMAN", "#10B981"),
-    "diver": ("human", "Scuba Diver / SAR Operator", "HUMAN", "#10B981"),
-    "scuba_diver": ("human", "Scuba Diver / SAR Operator", "HUMAN", "#10B981"),
-    
-    # 2. Electrical
-    "electrical": ("electrical", "Subsea Power & Electrical Cable", "ELECTRICAL", "#F59E0B"),
-    "subsea_cable": ("electrical", "Subsea Power & High-Voltage Cable", "ELECTRICAL", "#F59E0B"),
-    "power_cable": ("electrical", "Subsea Power Cable", "ELECTRICAL", "#F59E0B"),
-    "power_harness": ("electrical", "Submerged Electrical Harness", "ELECTRICAL", "#F59E0B"),
-    "cable": ("electrical", "Subsea Electrical Conduit", "ELECTRICAL", "#F59E0B"),
+TAXONOMY_DATA = {}
+if TAXONOMY_PATH.exists():
+    try:
+        with open(TAXONOMY_PATH, "r", encoding="utf-8") as f:
+            TAXONOMY_DATA = json.load(f)
+    except Exception as e:
+        print(f"[!] Warning loading model_taxonomy.json: {e}")
 
-    # 3. Electronic
-    "electronic": ("electronic", "Subsea Electronic Hardware & E-Waste", "ELECTRONIC", "#EF4444"),
-    "electronics": ("electronic", "Subsea Electronic Hardware & E-Waste", "ELECTRONIC", "#EF4444"),
-    "e_waste": ("electronic", "Subsea Battery / Hazardous E-Waste", "ELECTRONIC", "#EF4444"),
-    "cell_phone": ("electronic", "Subsea Battery / Electronic Litter", "ELECTRONIC", "#EF4444"),
-    "laptop": ("electronic", "Subsea Battery / E-Waste", "ELECTRONIC", "#EF4444"),
-    "remote": ("electronic", "Acoustic Sensor / Circuit Hardware", "ELECTRONIC", "#EF4444"),
-    "keyboard": ("electronic", "Electronic Peripheral Waste", "ELECTRONIC", "#EF4444"),
-    "mouse": ("electronic", "Electronic Subsea Debris", "ELECTRONIC", "#EF4444"),
-    "transponder": ("electronic", "Acoustic Transponder / Sonar Beacon", "ELECTRONIC", "#EF4444"),
+# Build lookup mapping
+TARGET_CLASS_MAPPING = {}
+for item in TAXONOMY_DATA.get("model_classes", []):
+    key = item["model_class"]
+    TARGET_CLASS_MAPPING[key] = (
+        key,
+        item["display_name"],
+        item["operational_category"],
+        item["color_hex"],
+        item["is_debris"]
+    )
 
-    # 4. Plastic
-    "plastic": ("plastic", "Synthetic Polymer / Marine Plastic Waste", "PLASTIC", "#06B6D4"),
-    "plastic_waste": ("plastic", "Marine Plastic Debris", "PLASTIC", "#06B6D4"),
-    "ghost_gear": ("plastic", "Derelict Ghost Gear & Synthetic Fishing Net", "PLASTIC", "#06B6D4"),
-    "bottle": ("plastic", "Plastic Bottle / Marine Polymer", "PLASTIC", "#06B6D4"),
-    "cup": ("plastic", "Polymer Single-Use Container", "PLASTIC", "#06B6D4"),
-    "bowl": ("plastic", "Rigid Plastic Container", "PLASTIC", "#06B6D4"),
-    "fork": ("plastic", "Plastic Marine Litter", "PLASTIC", "#06B6D4"),
-    "spoon": ("plastic", "Plastic Marine Litter", "PLASTIC", "#06B6D4"),
-    "handbag": ("plastic", "Synthetic Fabric / Polymer Bag", "PLASTIC", "#06B6D4"),
-    "backpack": ("plastic", "Synthetic Gear Pack / Entanglement Hazard", "PLASTIC", "#06B6D4"),
-    "toothbrush": ("plastic", "Marine Polypropylene Micro-Litter", "PLASTIC", "#06B6D4"),
-    "frisbee": ("plastic", "Rigid HDPE Polymer Plastic", "PLASTIC", "#06B6D4"),
-    "sports_ball": ("plastic", "Buoyant Polymer Sphere", "PLASTIC", "#06B6D4"),
-    "marine_debris": ("plastic", "Marine Anthropogenic Plastic Debris", "PLASTIC", "#06B6D4"),
+# Fallback taxonomy items
+FALLBACK_ITEM = TAXONOMY_DATA.get("fallback_anomaly", {
+    "model_class": "unknown_anomaly",
+    "display_name": "Unclassified Acoustic Anomaly",
+    "operational_category": "UNKNOWN_ANOMALY",
+    "color_hex": "#64748B",
+    "is_debris": False
+})
 
-    # 5. Metal Scraps
-    "metal_scrap": ("metal_scrap", "Ferrous Metal Scrap & Structural Steel", "METAL_SCRAP", "#E67E22"),
-    "metal": ("metal_scrap", "Metallic Debris & Salvage Scrap", "METAL_SCRAP", "#E67E22"),
-    "shipwreck": ("metal_scrap", "Submerged Metallic Hull / Vessel Scrap", "METAL_SCRAP", "#E67E22"),
-    "unexploded_ordnance": ("metal_scrap", "Unexploded Ordnance (UXO) Metallic Hazard", "METAL_SCRAP", "#DC2626"),
-    "pipeline_anomaly": ("metal_scrap", "Metallic Pipeline Scour / Anchor Drag Scrap", "METAL_SCRAP", "#E67E22"),
-    "knife": ("metal_scrap", "Metallic Scrap Hazard", "METAL_SCRAP", "#E67E22"),
-    "scissors": ("metal_scrap", "Sharp Metallic Scrap", "METAL_SCRAP", "#E67E22"),
-    "structural_metal": ("metal_scrap", "Structural Steel / Subsea Pipe Scrap", "METAL_SCRAP", "#E67E22")
-}
-
-# Explicit non-debris / natural exclusions
-EXCLUDED_NON_DEBRIS_CLASSES = {
-    "biological_cluster", "coral_reef", "fish", "marine_fauna", "benthic_cluster", "organic",
+EXCLUDED_NATURAL_CLASSES = {
+    "biological_cluster", "coral_reef", "benthic_cluster", "organic",
     "geological_formation", "rock_outcrop", "sand_ripple", "mud_ridge", "bathymetry_ridge",
-    "seafloor", "water_column", "book", "vase", "chair", "bed", "dining_table"
+    "seafloor", "water_column"
 }
 
 
 class HeavyDebrisGuardrailEngine:
     """
-    Authoritative Heavy Guardrail Engine enforcing 5-Class Target Debris Detection:
-    1. Humans
-    2. Electrical
-    3. Electronic
-    4. Plastic
-    5. Metal Scraps
-    
-    Any non-conforming or natural geological/biological targets are evaluated and
-    either strictly filtered out or marked explicitly as NOT A DEBRIS.
+    Authoritative Guardrail Engine enforcing SIH26057 Marine Debris Taxonomy & Acoustic Domain Integrity:
+    1. Strict Acoustic Domain Verification (OOD Rejection of Optical/Natural RGB Photos, Flowers, Web Graphics).
+    2. Rigorous Target Classification against Canonical Marine Debris Taxonomy.
+    3. Natural Habitat & Geological Formation Protection (Coral, Rock, Sand, Mud).
+    4. False Positive & Clutter Elimination.
     """
+
+    @classmethod
+    def verify_sonar_acoustic_domain(cls, image_input: Union[str, np.ndarray]) -> Dict[str, Any]:
+        """
+        Validates whether the ingested file/frame is an authentic Side-Scan Sonar (SSS)
+        acoustic backscatter dataset image vs an out-of-distribution optical photograph (flowers, faces, etc.).
+        """
+        if isinstance(image_input, str):
+            if not os.path.exists(image_input):
+                return {
+                    "is_sonar": False,
+                    "reason": f"File does not exist: {image_input}",
+                    "confidence": 0.0,
+                    "metrics": {}
+                }
+            img = cv2.imread(image_input, cv2.IMREAD_COLOR)
+        elif isinstance(image_input, np.ndarray):
+            if len(image_input.shape) == 2:
+                # 1-channel grayscale is inherently acoustic compatible
+                img = cv2.cvtColor(image_input, cv2.COLOR_GRAY2BGR)
+            elif len(image_input.shape) == 3:
+                img = image_input
+            else:
+                return {
+                    "is_sonar": False,
+                    "reason": f"Invalid tensor shape: {image_input.shape}",
+                    "confidence": 0.0,
+                    "metrics": {}
+                }
+        else:
+            return {
+                "is_sonar": False,
+                "reason": "Unsupported image format input.",
+                "confidence": 0.0,
+                "metrics": {}
+            }
+
+        if img is None or img.size == 0:
+            return {
+                "is_sonar": False,
+                "reason": "Unable to decode image raster payload.",
+                "confidence": 0.0,
+                "metrics": {}
+            }
+
+        # 1. Chrominance Dispersion Check (RGB Channel Divergence)
+        # Genuine SSS sonar is scalar acoustic pressure (R=G=B) or standardized monotonic colormaps (copper/amber).
+        # Optical photographs (flowers, animals, landscapes, indoor objects) have high cross-channel divergence.
+        b_ch, g_ch, r_ch = img[:, :, 0].astype(np.float32), img[:, :, 1].astype(np.float32), img[:, :, 2].astype(np.float32)
+        diff_rg = np.mean(np.abs(r_ch - g_ch))
+        diff_gb = np.mean(np.abs(g_ch - b_ch))
+        diff_rb = np.mean(np.abs(r_ch - b_ch))
+        mean_chroma_diff = float((diff_rg + diff_gb + diff_rb) / 3.0)
+
+        # 2. HSV Saturation Profile
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        sat = hsv[:, :, 1].astype(np.float32) / 255.0
+        mean_sat = float(np.mean(sat))
+        p90_sat = float(np.percentile(sat, 90))
+
+        # 3. Decision Boundary:
+        # Pure SSS sonar in project: mean_chroma_diff = 0.0, mean_sat = 0.0.
+        # Monochromatic sonar colormap: mean_chroma_diff < 18.0, p90_sat < 0.65.
+        # Optical photos (e.g. pink Dahlia flower, nature, objects): mean_chroma_diff > 25.0, mean_sat > 0.20, p90_sat > 0.60.
+        is_optical_flower_or_photo = (mean_chroma_diff > 18.0) or (mean_sat > 0.18 and p90_sat > 0.48)
+
+        if is_optical_flower_or_photo:
+            return {
+                "is_sonar": False,
+                "confidence": 0.0,
+                "rejection_code": "OUT_OF_DISTRIBUTION_OPTICAL_IMAGE",
+                "reason": (
+                    "REJECTED: Out-of-Distribution Optical/Natural Image Detected. "
+                    f"High chromatic divergence ({mean_chroma_diff:.1f}) and saturation ({mean_sat:.2f}) "
+                    "violate Side-Scan Sonar (SSS) scalar acoustic backscatter physics. "
+                    "EchoPulseNet strictly validates and executes inference only on marine sonar dataset imagery."
+                ),
+                "metrics": {
+                    "mean_chroma_divergence": round(mean_chroma_diff, 2),
+                    "mean_saturation": round(mean_sat, 3),
+                    "p90_saturation": round(p90_sat, 3),
+                    "is_acoustic_sensor": False
+                }
+            }
+
+        return {
+            "is_sonar": True,
+            "confidence": 1.0,
+            "rejection_code": None,
+            "reason": "Verified Authentic Marine Side-Scan Sonar (SSS) Acoustic Sensor Ingestion.",
+            "metrics": {
+                "mean_chroma_divergence": round(mean_chroma_diff, 2),
+                "mean_saturation": round(mean_sat, 3),
+                "p90_saturation": round(p90_sat, 3),
+                "is_acoustic_sensor": True
+            }
+        }
 
     @classmethod
     def evaluate_target(
@@ -98,13 +162,7 @@ class HeavyDebrisGuardrailEngine:
         shadow_strength: float = 0.5,
         anomaly_sharpness: float = 0.5
     ) -> Dict[str, Any]:
-        """
-        Evaluates candidate detection through heavy guardrails:
-        - Ontology check (Humans, Electrical, Electronic, Plastic, Metal Scraps)
-        - Dimension check (reject full-image gradients and 1px noise)
-        - Acoustic physics signature check (shadow length & specular contrast)
-        """
-        norm_class = raw_class_name.lower().strip().replace(" ", "_").replace("-", "_")
+        norm_class = str(raw_class_name).lower().strip().replace(" ", "_").replace("-", "_")
         x, y, w, h = bbox
         img_h, img_w = image_shape
 
@@ -115,10 +173,10 @@ class HeavyDebrisGuardrailEngine:
                 "is_debris": False,
                 "target_category": "NOT_A_DEBRIS",
                 "class_id": "not_a_debris",
-                "class_label": "Not a Debris (Microscopic Noise <6px)",
+                "class_label": "Not a Debris (Microscopic Acoustic Noise <6px)",
                 "color_hex": "#64748B",
                 "color_rgb": (100, 116, 139),
-                "reason": "Detection dimensions are too small (microscopic acoustic speckle)."
+                "reason": "Detection dimensions are microscopic acoustic noise artifacts."
             }
 
         if w > img_w * 0.75 and h > img_h * 0.75:
@@ -127,44 +185,41 @@ class HeavyDebrisGuardrailEngine:
                 "is_debris": False,
                 "target_category": "NOT_A_DEBRIS",
                 "class_id": "not_a_debris",
-                "class_label": "Not a Debris (Seafloor Gradient)",
+                "class_label": "Not a Debris (Seafloor Backscatter Gradient)",
                 "color_hex": "#64748B",
                 "color_rgb": (100, 116, 139),
-                "reason": "Detection covers large portion of frame (natural seafloor gradient)."
+                "reason": "Candidate covers majority of frame; consistent with gradual seafloor slope."
             }
 
-        # 2. Strict Ontology Filter
-        if norm_class in EXCLUDED_NON_DEBRIS_CLASSES:
+        # 2. Strict Confidence Threshold
+        if confidence < 0.28:
             return {
                 "passed": False,
                 "is_debris": False,
                 "target_category": "NOT_A_DEBRIS",
                 "class_id": "not_a_debris",
-                "class_label": f"Not a Debris (Natural / {norm_class.replace('_', ' ').title()})",
+                "class_label": "Not a Debris (Low Confidence Noise)",
                 "color_hex": "#94A3B8",
                 "color_rgb": (148, 163, 184),
-                "reason": f"Class '{norm_class}' is classified as natural/non-debris under Heavy Guardrail Policy."
+                "reason": f"Detection failed minimum confidence threshold ({confidence:.2f} < 0.28)."
             }
 
-        # 3. Check allowed target mapping
+        # 3. Check canonical model taxonomy
         if norm_class in TARGET_CLASS_MAPPING:
-            target_id, target_label, category, color_hex = TARGET_CLASS_MAPPING[norm_class]
-            
-            # Map hex to RGB
+            target_id, target_label, category, color_hex, is_debris = TARGET_CLASS_MAPPING[norm_class]
             hex_clean = color_hex.lstrip("#")
             color_rgb = tuple(int(hex_clean[i:i+2], 16) for i in (0, 2, 4))
 
-            # Minimum confidence guardrail for confirmed debris
-            if confidence < 0.28:
+            if not is_debris:
                 return {
-                    "passed": False,
+                    "passed": True,
                     "is_debris": False,
-                    "target_category": "NOT_A_DEBRIS",
-                    "class_id": "not_a_debris",
-                    "class_label": "Not a Debris (Low Confidence Clutter)",
-                    "color_hex": "#94A3B8",
-                    "color_rgb": (148, 163, 184),
-                    "reason": f"Candidate target failed minimum guardrail confidence threshold ({confidence:.2f} < 0.28)."
+                    "target_category": category,
+                    "class_id": target_id,
+                    "class_label": target_label,
+                    "color_hex": color_hex,
+                    "color_rgb": color_rgb,
+                    "reason": f"Classified as natural {category} feature (non-anthropogenic)."
                 }
 
             return {
@@ -175,78 +230,33 @@ class HeavyDebrisGuardrailEngine:
                 "class_label": target_label,
                 "color_hex": color_hex,
                 "color_rgb": color_rgb,
-                "reason": f"Heavy Guardrail verified valid {category} target."
+                "reason": f"Verified anthropogenic marine {category} target."
             }
 
-        # 4. Partial substring matcher for edge cases (e.g. 'plastic_cup', 'steel_pipe', 'subsea_wire')
-        if any(k in norm_class for k in ["human", "diver", "swimmer", "person"]):
+        # 4. Explicit check for natural exclusions
+        if norm_class in EXCLUDED_NATURAL_CLASSES:
             return {
                 "passed": True,
-                "is_debris": True,
-                "target_category": "HUMAN",
-                "class_id": "human",
-                "class_label": "Human / Subsea Diver Presence",
-                "color_hex": "#10B981",
-                "color_rgb": (16, 185, 129),
-                "reason": "Guardrail pattern matched Human presence."
+                "is_debris": False,
+                "target_category": "NATURAL_FORMATION",
+                "class_id": norm_class,
+                "class_label": f"Natural Seafloor ({norm_class.replace('_', ' ').title()})",
+                "color_hex": "#94A3B8",
+                "color_rgb": (148, 163, 184),
+                "reason": f"Evaluated as natural seafloor structure: '{norm_class}'."
             }
 
-        if any(k in norm_class for k in ["electric", "cable", "wire", "power", "harness"]):
-            return {
-                "passed": True,
-                "is_debris": True,
-                "target_category": "ELECTRICAL",
-                "class_id": "electrical",
-                "class_label": "Subsea Electrical Equipment / Cable",
-                "color_hex": "#F59E0B",
-                "color_rgb": (245, 158, 11),
-                "reason": "Guardrail pattern matched Electrical equipment."
-            }
-
-        if any(k in norm_class for k in ["electronic", "battery", "sensor", "circuit", "transponder", "phone", "chip"]):
-            return {
-                "passed": True,
-                "is_debris": True,
-                "target_category": "ELECTRONIC",
-                "class_id": "electronic",
-                "class_label": "Electronic Hardware & E-Waste",
-                "color_hex": "#EF4444",
-                "color_rgb": (239, 68, 68),
-                "reason": "Guardrail pattern matched Electronic hardware."
-            }
-
-        if any(k in norm_class for k in ["plastic", "net", "polymer", "bottle", "ghost", "rope", "synthetic", "nylon"]):
-            return {
-                "passed": True,
-                "is_debris": True,
-                "target_category": "PLASTIC",
-                "class_id": "plastic",
-                "class_label": "Plastic Debris & Synthetic Polymer",
-                "color_hex": "#06B6D4",
-                "color_rgb": (6, 182, 212),
-                "reason": "Guardrail pattern matched Plastic waste."
-            }
-
-        if any(k in norm_class for k in ["metal", "steel", "iron", "hull", "shipwreck", "scrap", "ordnance", "uxo", "pipe", "ferrous"]):
-            return {
-                "passed": True,
-                "is_debris": True,
-                "target_category": "METAL_SCRAP",
-                "class_id": "metal_scrap",
-                "class_label": "Metal Scraps & Ferrous Debris",
-                "color_hex": "#E67E22",
-                "color_rgb": (230, 126, 34),
-                "reason": "Guardrail pattern matched Metal Scrap."
-            }
-
-        # 5. Default Fallback: If not matched in the 5 categories, EXCLUDE as NOT A DEBRIS
+        # 5. Fallback for unclassified anomaly
+        fb_hex = FALLBACK_ITEM.get("color_hex", "#64748B").lstrip("#")
+        fb_rgb = tuple(int(fb_hex[i:i+2], 16) for i in (0, 2, 4))
+        
         return {
-            "passed": False,
+            "passed": True,
             "is_debris": False,
-            "target_category": "NOT_A_DEBRIS",
-            "class_id": "not_a_debris",
-            "class_label": "Not a Debris (Non-Target Clutter)",
-            "color_hex": "#94A3B8",
-            "color_rgb": (148, 163, 184),
-            "reason": f"Class '{raw_class_name}' is not one of [Humans, Electrical, Electronic, Plastic, Metal Scraps]."
+            "target_category": FALLBACK_ITEM.get("operational_category", "UNKNOWN_ANOMALY"),
+            "class_id": FALLBACK_ITEM.get("model_class", "unknown_anomaly"),
+            "class_label": FALLBACK_ITEM.get("display_name", "Unclassified Acoustic Anomaly"),
+            "color_hex": f"#{fb_hex}",
+            "color_rgb": fb_rgb,
+            "reason": f"Acoustic anomaly candidate '{norm_class}' requires hydrographic review."
         }

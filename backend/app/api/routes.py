@@ -231,7 +231,19 @@ async def upload_sonar(
     selectedModel: Optional[str] = Form("HYDROPHYS_OMNINET")
 ):
     os.makedirs(settings.UPLOADS_DIR, exist_ok=True)
-    file_path = os.path.join(settings.UPLOADS_DIR, file.filename)
+    # Sanitize filename against path traversal
+    safe_basename = Path(file.filename).name
+    ext = os.path.splitext(safe_basename)[1].lower()
+    allowed_exts = {".xtf", ".jsf", ".sl2", ".sl3", ".dat", ".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".npy"}
+    
+    if ext not in allowed_exts:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file format '{ext}'. Allowed formats: {sorted(list(allowed_exts))}"
+        )
+
+    unique_filename = f"{uuid.uuid4().hex[:8]}_{safe_basename}"
+    file_path = os.path.join(settings.UPLOADS_DIR, unique_filename)
     with open(file_path, "wb") as f:
         content = await file.read()
         f.write(content)
@@ -239,37 +251,54 @@ async def upload_sonar(
     try:
         from ..services.sonar_parsers import UniversalSonarParser
         
+        parsed_nav = None
         # Check if the file is a raw binary sonar format (.xtf, .jsf, .sl2, .dat)
-        ext = os.path.splitext(file.filename)[1].lower()
         if ext in [".xtf", ".jsf", ".sl2", ".sl3", ".dat"]:
             parsed = UniversalSonarParser.parse_file(file_path)
-            # Render waterfall preview image
+            
+            if parsed.get("status") == "PARSING_FAILED":
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Sonar File Decoding Error: {parsed.get('error', 'Corrupt or unsupported format.')}"
+                )
+
             preview_img = parsed.get("waterfall_image")
-            if preview_img is None or preview_img.size == 0:
-                # Synthesize acoustic waterfall representation
-                preview_img = np.random.randint(40, 180, (512, 1024), dtype=np.uint8)
+            if preview_img is None or (isinstance(preview_img, np.ndarray) and preview_img.size == 0):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Sonar Decoder Notice: No acoustic swath backscatter payload could be extracted from {safe_basename}."
+                )
+
             preview_filename = f"waterfall_{uuid.uuid4().hex[:8]}.png"
             preview_path = os.path.join(settings.UPLOADS_DIR, preview_filename)
             cv2.imwrite(preview_path, preview_img)
             infer_target_path = preview_path
+
+            if parsed.get("positions"):
+                first_pos = parsed["positions"][0]
+                parsed_nav = {
+                    "lat": first_pos.get("lat"),
+                    "lng": first_pos.get("lng"),
+                    "altitude": parsed.get("sample_altitudes", [None])[0] if parsed.get("sample_altitudes") else None,
+                    "ping": first_pos.get("ping", 0)
+                }
         else:
             infer_target_path = file_path
 
         dets = inference_service.run_inference(
             image_path=infer_target_path,
             mission_id=missionId,
+            vessel_nav=parsed_nav,
             model_type=selectedModel or "HYDROPHYS_OMNINET"
         )
         _DETECTIONS.extend(dets)
         
-        annotated_url = getattr(inference_service, "last_annotated_url", f"/uploads/{file.filename}")
+        annotated_url = getattr(inference_service, "last_annotated_url", f"/uploads/{unique_filename}")
         model_telem = getattr(inference_service, "last_model_telemetry", {})
         
         return {
             "fileId": f"FILE-{uuid.uuid4().hex[:8]}",
-            "pingsCount": 18420,
-            "frequencyKhz": 455,
-            "filename": file.filename,
+            "filename": safe_basename,
             "rawImageUrl": f"/uploads/{os.path.basename(infer_target_path)}",
             "annotatedImageUrl": annotated_url,
             "path": file_path,
@@ -279,11 +308,12 @@ async def upload_sonar(
             "modelTelemetry": model_telem
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"[!] Upload parsing/inference error: {e}")
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Sonar Processing Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Sonar Pipeline Error: {str(e)}")
 
 
 @router.post("/inference/frame")
@@ -310,6 +340,30 @@ async def infer_live_frame(
     
     if img_bgr is None:
         raise HTTPException(status_code=400, detail="Invalid image payload")
+        
+    # 0. Strict Acoustic Domain Verification Guardrail
+    domain_check = HeavyDebrisGuardrailEngine.verify_sonar_acoustic_domain(img_bgr)
+    if not domain_check["is_sonar"]:
+        return {
+            "status": "REJECTED_OPTICAL_FRAME",
+            "guardrailPassed": False,
+            "guardrailReason": domain_check["reason"],
+            "engine": "Acoustic Domain Guardrail",
+            "device": str(inference_service.device),
+            "detectionsCount": 0,
+            "detections": [],
+            "strata1d": {
+                "waterSeabedHorizon_m": 0.0,
+                "subBottomStrataDepths_m": [],
+                "bedrockReflector_m": 0.0
+            },
+            "metrics": {
+                "meanIntensity": 0.0,
+                "snrDb": 0.0,
+                "heaveCompensated": heave_comp,
+                "speckleFiltered": speckle_filter
+            }
+        }
         
     gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
     

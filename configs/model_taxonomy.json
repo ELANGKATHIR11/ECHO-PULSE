@@ -1,0 +1,105 @@
+{
+  "taxonomy_version": "2.6.0-SIH26057",
+  "standard": "Standard 8-Class Marine Sonar Taxonomy",
+  "model_classes": [
+    {
+      "class_id": 0,
+      "model_class": "ghost_gear",
+      "display_name": "Derelict Ghost Gear & Fishing Net",
+      "operational_category": "PLASTIC",
+      "threat_level": "CRITICAL",
+      "is_debris": true,
+      "color_hex": "#2ECC71",
+      "color_rgb": [46, 204, 113],
+      "description": "Lost, abandoned, or discarded fishing gear, gillnets, and synthetic polymer traps ensnaring marine life or seafloor habitat."
+    },
+    {
+      "class_id": 1,
+      "model_class": "shipwreck",
+      "display_name": "Shipwreck / Submerged Hull",
+      "operational_category": "METAL_SCRAP",
+      "threat_level": "HIGH",
+      "is_debris": true,
+      "color_hex": "#E67E22",
+      "color_rgb": [230, 126, 34],
+      "description": "Submerged vessel hulls, metal structural wreckage, or maritime salvage anomalies on the seafloor."
+    },
+    {
+      "class_id": 2,
+      "model_class": "unexploded_ordnance",
+      "display_name": "Unexploded Ordnance (UXO)",
+      "operational_category": "HAZARD_UXO",
+      "threat_level": "CRITICAL",
+      "is_debris": true,
+      "color_hex": "#E74C3C",
+      "color_rgb": [231, 76, 60],
+      "description": "Submerged unexploded munitions, naval mines, artillery shells, or torpedo hazards on the seabed."
+    },
+    {
+      "class_id": 3,
+      "model_class": "pipeline_anomaly",
+      "display_name": "Pipeline Scour / Anchor Drag Anomaly",
+      "operational_category": "METAL_SCRAP",
+      "threat_level": "HIGH",
+      "is_debris": true,
+      "color_hex": "#3498DB",
+      "color_rgb": [52, 152, 219],
+      "description": "Subsea hydrocarbon/water pipeline spans, unburied exposures, or anchor drag scour marks."
+    },
+    {
+      "class_id": 4,
+      "model_class": "marine_debris",
+      "display_name": "Marine Anthropogenic Debris",
+      "operational_category": "PLASTIC",
+      "threat_level": "HIGH",
+      "is_debris": true,
+      "color_hex": "#9B59B6",
+      "color_rgb": [155, 89, 182],
+      "description": "General anthropogenic submerged solid waste including plastics, discarded drums, and synthetic containers."
+    },
+    {
+      "class_id": 5,
+      "model_class": "subsea_cable",
+      "display_name": "Subsea Power & Data Cable",
+      "operational_category": "ELECTRICAL",
+      "threat_level": "MEDIUM",
+      "is_debris": true,
+      "color_hex": "#F1C40F",
+      "color_rgb": [241, 196, 15],
+      "description": "High-voltage submarine power transmission lines, fiber optic communications cables, and umbilical conduits."
+    },
+    {
+      "class_id": 6,
+      "model_class": "biological_cluster",
+      "display_name": "Benthic Biological Cluster / Coral Reef",
+      "operational_category": "BIOLOGICAL",
+      "threat_level": "NONE",
+      "is_debris": false,
+      "color_hex": "#1ABC9C",
+      "color_rgb": [26, 188, 156],
+      "description": "Natural biogenic structures, coral reefs, benthic shellfish beds, and sponge aggregations (Non-debris natural habitat)."
+    },
+    {
+      "class_id": 7,
+      "model_class": "geological_formation",
+      "display_name": "Geological Outcrop / Seafloor Ridge",
+      "operational_category": "GEOLOGICAL",
+      "threat_level": "NONE",
+      "is_debris": false,
+      "color_hex": "#95A5A6",
+      "color_rgb": [149, 165, 166],
+      "description": "Natural seabed bathymetric features including bedrock outcrops, sand ripples, sediment berms, and boulders (Non-debris natural seafloor)."
+    }
+  ],
+  "fallback_anomaly": {
+    "class_id": -1,
+    "model_class": "unknown_anomaly",
+    "display_name": "Unclassified Acoustic Anomaly",
+    "operational_category": "UNKNOWN_ANOMALY",
+    "threat_level": "UNKNOWN",
+    "is_debris": false,
+    "color_hex": "#64748B",
+    "color_rgb": [100, 116, 139],
+    "description": "Acoustic highlight-shadow anomaly detected via morphological heuristics without confident neural classification."
+  }
+}

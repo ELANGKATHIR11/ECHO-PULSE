@@ -76,11 +76,11 @@ export const HomePage: React.FC = () => {
             <GlassButton
               variant="secondary"
               size="lg"
-              onClick={() => navigate('/sonar')}
-              icon={<Waves className="w-5 h-5 text-emerald-400 dark:text-emerald-400 light:text-emerald-700" />}
+              onClick={() => navigate('/upload')}
+              icon={<Cpu className="w-5 h-5 text-emerald-400 dark:text-emerald-400 light:text-emerald-700" />}
               className="px-6 py-3.5 text-sm font-bold tracking-wide border-cyan-500/40"
             >
-              SONAR WORKSTATION
+              RAW INGESTION & AI
             </GlassButton>
           </div>
 

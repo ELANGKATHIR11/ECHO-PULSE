@@ -51,6 +51,9 @@ interface ModelTelemetry {
   };
   guardrail_filtered_count?: number;
   natural_clutter_rejected_count?: number;
+  guardrail_status?: string;
+  guardrail_reason?: string;
+  rejection_code?: string;
 }
 
 interface UploadResult {
@@ -535,6 +538,24 @@ export const RawSonarUploadPage: React.FC = () => {
             {/* Display Area */}
             {result ? (
               <div className="space-y-4">
+                {/* Strict Guardrail Alert Banner if Non-Sonar Image Rejected */}
+                {telemetry?.guardrail_status === 'REJECTED' && (
+                  <div className="p-4 rounded-2xl bg-rose-950/40 border border-rose-500/60 backdrop-blur-xl space-y-2 text-xs font-mono">
+                    <div className="flex items-center gap-2 text-rose-300 font-bold text-sm">
+                      <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+                      <span>STRICT GUARDRAIL: OUT-OF-DISTRIBUTION OPTICAL IMAGE REJECTED</span>
+                    </div>
+                    <p className="text-slate-300 leading-relaxed text-[11px]">
+                      {telemetry?.guardrail_reason || 'Out-of-distribution optical/natural photograph detected. EchoPulseNet strictly validates and executes inference only on marine sonar dataset imagery.'}
+                    </p>
+                    <div className="flex items-center gap-4 text-[10px] text-rose-300/80 pt-1 border-t border-rose-900/40">
+                      <span>Detections: 0 (All rejected)</span>
+                      <span>Sensor Domain: NON-ACOUSTIC OPTICAL</span>
+                      <span>Debris Ingestion: SUPPRESSED</span>
+                    </div>
+                  </div>
+                )}
+
                 {/* 1. 2D Annotated Swath View */}
                 {activeTab === 'ANNOTATED' && (
                   <div className="space-y-3">
@@ -545,8 +566,8 @@ export const RawSonarUploadPage: React.FC = () => {
                         className="w-full object-contain max-h-[460px]"
                       />
                       <div className="absolute top-3 right-3 bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-cyan-500/40 text-[11px] font-mono text-cyan-300 flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                        <span>{result.detectionsCount} Debris Targets • {telemetry?.model_name || currentCfg.name}</span>
+                        <span className={`w-2 h-2 rounded-full ${telemetry?.guardrail_status === 'REJECTED' ? 'bg-rose-400' : 'bg-emerald-400'} animate-ping`} />
+                        <span>{result.detectionsCount} Debris Targets • {telemetry?.guardrail_status === 'REJECTED' ? 'Guardrail Rejected' : (telemetry?.model_name || currentCfg.name)}</span>
                       </div>
                     </div>
 

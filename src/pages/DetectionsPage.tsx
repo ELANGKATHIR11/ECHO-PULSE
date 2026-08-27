@@ -2,8 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Detection } from '../types';
 import { detectionApi } from '../services/detectionApi';
 import { DetectionTable } from '../components/detections/DetectionTable';
-import { exportDetectionsToCSV, downloadBlobFile, exportDetectionsToGeoJSON } from '../utils/geoUtils';
-import { Crosshair, Download, FileSpreadsheet } from 'lucide-react';
+import {
+  exportDetectionsToCSV,
+  exportDetectionsToJSON,
+  exportDetectionsToGeoJSON,
+  downloadBlobFile,
+} from '../utils/geoUtils';
+import { Crosshair, Download, FileSpreadsheet, FileCode } from 'lucide-react';
 import { GlassButton } from '../components/glass/GlassCard';
 
 export const DetectionsPage: React.FC = () => {
@@ -20,6 +25,11 @@ export const DetectionsPage: React.FC = () => {
   const handleExportCSV = () => {
     const csv = exportDetectionsToCSV(detections);
     downloadBlobFile(csv, 'echopulsenet_acoustic_detections.csv', 'text/csv');
+  };
+
+  const handleExportJSON = () => {
+    const json = exportDetectionsToJSON(detections);
+    downloadBlobFile(json, 'echopulsenet_acoustic_intelligence_report.json', 'application/json');
   };
 
   const handleExportGeoJSON = () => {
@@ -49,6 +59,14 @@ export const DetectionsPage: React.FC = () => {
             onClick={handleExportCSV}
           >
             Export CSV
+          </GlassButton>
+          <GlassButton
+            variant="secondary"
+            size="md"
+            icon={<FileCode className="w-4 h-4 text-cyan-400" />}
+            onClick={handleExportJSON}
+          >
+            Export JSON
           </GlassButton>
           <GlassButton
             variant="primary"

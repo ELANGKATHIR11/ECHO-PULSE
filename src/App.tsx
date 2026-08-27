@@ -5,14 +5,10 @@ import { CommandLayout } from './components/layout/CommandLayout';
 import { HomePage } from './pages/HomePage';
 import { DashboardPage } from './pages/DashboardPage';
 import { DigitalTwinPage } from './pages/DigitalTwinPage';
-import { MissionsPage } from './pages/MissionsPage';
-import { MissionDetailPage } from './pages/MissionDetailPage';
-import { SonarWorkstationPage } from './pages/SonarWorkstationPage';
 import { DetectionsPage } from './pages/DetectionsPage';
 import { DetectionDetailPage } from './pages/DetectionDetailPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { WebcamTrackerPage } from './pages/WebcamTrackerPage';
-import { ActiveLearningStudio } from './pages/ActiveLearningStudio';
 import { RawSonarUploadPage } from './pages/RawSonarUploadPage';
 import { CommandCenterPage } from './pages/CommandCenterPage';
 import { MpaDebrisMapPage } from './pages/MpaDebrisMapPage';
@@ -76,30 +72,6 @@ export default function App() {
                 }
               />
               <Route
-                path="/missions"
-                element={
-                  <Suspense fallback={<PageFallback />}>
-                    <MissionsPage />
-                  </Suspense>
-                }
-              />
-              <Route
-                path="/missions/:id"
-                element={
-                  <Suspense fallback={<PageFallback />}>
-                    <MissionDetailPage />
-                  </Suspense>
-                }
-              />
-              <Route
-                path="/sonar"
-                element={
-                  <Suspense fallback={<PageFallback />}>
-                    <SonarWorkstationPage />
-                  </Suspense>
-                }
-              />
-              <Route
                 path="/detections"
                 element={
                   <Suspense fallback={<PageFallback />}>
@@ -120,14 +92,6 @@ export default function App() {
                 element={
                   <Suspense fallback={<PageFallback />}>
                     <AnalyticsPage />
-                  </Suspense>
-                }
-              />
-              <Route
-                path="/active-learning"
-                element={
-                  <Suspense fallback={<PageFallback />}>
-                    <ActiveLearningStudio />
                   </Suspense>
                 }
               />
@@ -153,14 +117,18 @@ export default function App() {
               <Route path="/marine-protected-areas" element={<Navigate to="/mpa" replace />} />
               <Route path="/gio-tags" element={<Navigate to="/mpa" replace />} />
               <Route path="/geo-tags" element={<Navigate to="/mpa" replace />} />
+              <Route path="/missions" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/missions/*" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/sonar" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/active-learning" element={<Navigate to="/upload" replace />} />
               <Route path="/vision" element={<Navigate to="/webcam-tracker" replace />} />
               <Route path="/camera" element={<Navigate to="/webcam-tracker" replace />} />
               <Route path="/live-vision" element={<Navigate to="/webcam-tracker" replace />} />
               <Route path="/models" element={<Navigate to="/analytics?tab=models" replace />} />
               <Route path="/datasets" element={<Navigate to="/analytics?tab=datasets" replace />} />
-              <Route path="/system" element={<Navigate to="/analytics?tab=system" replace />} />
-              <Route path="/reports" element={<Navigate to="/missions" replace />} />
-              <Route path="/settings" element={<Navigate to="/sonar" replace />} />
+              <Route path="/system" element={<Navigate to="/analytics" replace />} />
+              <Route path="/reports" element={<Navigate to="/analytics" replace />} />
+              <Route path="/settings" element={<Navigate to="/analytics" replace />} />
 
               {/* Catch-all */}
               <Route path="*" element={<Navigate to="/dashboard" replace />} />

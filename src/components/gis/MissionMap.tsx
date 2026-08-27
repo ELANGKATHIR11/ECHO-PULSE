@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   MapContainer,
   TileLayer,
@@ -28,11 +28,13 @@ import {
   Sliders,
   Maximize2,
   Minimize2,
-  Calendar,
-  Zap,
-  Info,
+  Navigation,
+  Globe,
+  MapPin,
   CheckSquare,
   Square,
+  Crosshair,
+  Shield,
 } from 'lucide-react';
 
 interface MissionMapProps {
@@ -46,37 +48,72 @@ interface MissionMapProps {
   initialHeatmapActive?: boolean;
 }
 
+type TileProvider = 'ESRI_OCEAN' | 'CARTO_DARK' | 'SATELLITE' | 'OSM';
+
+const TILE_LAYERS: Record<TileProvider, { name: string; url: string; attribution: string; maxZoom: number }> = {
+  ESRI_OCEAN: {
+    name: 'Esri Ocean Bathymetry',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri &mdash; GEBCO, NOAA, CHS',
+    maxZoom: 18,
+  },
+  CARTO_DARK: {
+    name: 'CartoDB Dark Matter',
+    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+    maxZoom: 19,
+  },
+  SATELLITE: {
+    name: 'Esri World Satellite',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri &mdash; Earthstar Geographics',
+    maxZoom: 19,
+  },
+  OSM: {
+    name: 'OpenStreetMap Hydro',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 19,
+  },
+};
+
 // Custom Leaflet Icons for Sonar Detections
 function createCustomIcon(detClass: string, isSelected: boolean) {
   let color = '#22d3ee';
   let label = 'DET';
 
   if (detClass === 'ghost_gear') {
-    color = '#f59e0b';
+    color = '#2ecc71';
     label = 'NET';
   } else if (detClass === 'shipwreck') {
-    color = '#ec4899';
+    color = '#e67e22';
     label = 'WRECK';
   } else if (detClass === 'unexploded_ordnance') {
-    color = '#ef4444';
+    color = '#e74c3c';
     label = 'UXO';
   } else if (detClass === 'pipeline_anomaly') {
-    color = '#8b5cf6';
+    color = '#3498db';
     label = 'PIPE';
+  } else if (detClass === 'subsea_cable') {
+    color = '#f1c40f';
+    label = 'CABLE';
   } else if (detClass === 'biological_cluster') {
-    color = '#10b981';
+    color = '#1abc9c';
     label = 'REEF';
+  } else if (detClass === 'geological_formation') {
+    color = '#95a5a6';
+    label = 'GEO';
   }
 
   const border = isSelected
-    ? 'border-2 border-white scale-125 shadow-[0_0_12px_#22D3EE]'
-    : 'border border-cyan-900/60 shadow-md';
+    ? 'border-2 border-white scale-125 shadow-[0_0_16px_#22D3EE]'
+    : 'border border-cyan-900/80 shadow-lg';
 
   return L.divIcon({
     className: 'custom-sonar-marker',
     html: `
       <div style="background-color: ${color}; transform: translate(-50%, -50%);" 
-           class="w-6 h-6 rounded-full flex items-center justify-center font-mono font-bold text-[9px] text-slate-950 ${border} transition-transform">
+           class="w-6 h-6 rounded-full flex items-center justify-center font-mono font-bold text-[9px] text-slate-950 ${border} transition-all duration-200">
         ${label}
       </div>
     `,
@@ -85,7 +122,28 @@ function createCustomIcon(detClass: string, isSelected: boolean) {
   });
 }
 
-// Controller component to zoom to bounds or selected marker
+// AUV Vessel Icon with heading indicator
+function createAuvVesselIcon(headingDeg: number = 0) {
+  return L.divIcon({
+    className: 'custom-auv-vessel-marker',
+    html: `
+      <div style="transform: translate(-50%, -50%);" class="relative flex items-center justify-center">
+        <div class="absolute w-8 h-8 rounded-full bg-cyan-500/20 animate-ping"></div>
+        <div class="w-7 h-7 rounded-full bg-gradient-to-b from-cyan-400 to-cyan-700 border-2 border-white flex items-center justify-center shadow-[0_0_12px_#06b6d4]">
+          <div style="transform: rotate(${headingDeg}deg);" class="transition-transform duration-300">
+            <svg class="w-4 h-4 text-slate-950" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L4 20L12 16L20 20L12 2Z" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    `,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+  });
+}
+
+// Controller component to resize and zoom map
 function MapController({
   center,
   zoom,
@@ -98,11 +156,18 @@ function MapController({
   const map = useMap();
 
   useEffect(() => {
-    if (bounds) {
-      map.fitBounds(bounds, { padding: [40, 40] });
-    } else if (center) {
-      map.setView(center, zoom || 14);
-    }
+    // Invalidate size immediately and after slight delay for smooth tab activation
+    map.invalidateSize();
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+      if (bounds) {
+        map.fitBounds(bounds, { padding: [45, 45], maxZoom: 16 });
+      } else if (center) {
+        map.setView(center, zoom || 14);
+      }
+    }, 120);
+
+    return () => clearTimeout(timer);
   }, [center, zoom, bounds, map]);
 
   return null;
@@ -114,10 +179,13 @@ export const MissionMap: React.FC<MissionMapProps> = ({
   detections = [],
   selectedDetectionId,
   onSelectDetection,
-  className = 'h-full w-full min-h-[400px]',
+  className = 'h-full w-full min-h-[450px]',
   showLayersControl = true,
   initialHeatmapActive = true,
 }) => {
+  const [tileProvider, setTileProvider] = useState<TileProvider>('ESRI_OCEAN');
+  const [offlineMode, setOfflineMode] = useState(false);
+
   // Layer visibility toggles
   const [activeLayers, setActiveLayers] = useState({
     corridor: true,
@@ -125,6 +193,7 @@ export const MissionMap: React.FC<MissionMapProps> = ({
     detections: true,
     historicalHeatmap: initialHeatmapActive,
     allHistoricalSwaths: false,
+    auvVessel: true,
   });
 
   // Heatmap customization state
@@ -133,11 +202,11 @@ export const MissionMap: React.FC<MissionMapProps> = ({
   const [kernelBandwidth, setKernelBandwidth] = useState<number>(80);
   const [heatmapOpacity, setHeatmapOpacity] = useState<number>(0.65);
   const [showHeatmapSettings, setShowHeatmapSettings] = useState<boolean>(false);
+  const [showTileSelector, setShowTileSelector] = useState<boolean>(false);
   const [selectedMissionsForHeatmap, setSelectedMissionsForHeatmap] = useState<string[]>(
     allMissions.map((m) => m.id)
   );
 
-  const [offlineMode, setOfflineMode] = useState(false);
   const [selectedHeatNode, setSelectedHeatNode] = useState<PingDensityNode | null>(null);
 
   // Filter missions by user selection
@@ -162,6 +231,23 @@ export const MissionMap: React.FC<MissionMapProps> = ({
       return [mission.coordinates];
     }
     return mission.trackPoints.map((tp) => [tp.latitude, tp.longitude]);
+  }, [mission]);
+
+  // Latest AUV waypoint position
+  const currentAuvPoint = useMemo(() => {
+    if (mission.trackPoints && mission.trackPoints.length > 0) {
+      return mission.trackPoints[mission.trackPoints.length - 1];
+    }
+    return {
+      latitude: mission.coordinates[0],
+      longitude: mission.coordinates[1],
+      headingDeg: 42.0,
+      depthMeters: 32.0,
+      altitudeMeters: 8.5,
+      speedKnots: 3.2,
+      pingIndex: 10420,
+      timestamp: 'Active Track',
+    };
   }, [mission]);
 
   // Compute Sonar Swath Coverage Polygon for current mission
@@ -203,7 +289,7 @@ export const MissionMap: React.FC<MissionMapProps> = ({
   const mapBounds = useMemo<L.LatLngBoundsExpression>(() => {
     const latLngs: [number, number][] = [...routePositions];
     detections.forEach((d) => {
-      if (d.latitude !== null && d.longitude !== null) {
+      if (d.latitude !== null && d.longitude !== null && !isNaN(d.latitude) && !isNaN(d.longitude)) {
         latLngs.push([d.latitude, d.longitude]);
       }
     });
@@ -227,24 +313,27 @@ export const MissionMap: React.FC<MissionMapProps> = ({
   };
 
   return (
-    <div className={`relative overflow-hidden rounded-lg border border-cyan-900/30 bg-[#02060C] ${className}`}>
+    <div className={`relative overflow-hidden rounded-xl border border-cyan-900/40 bg-[#02060C] ${className}`}>
       {/* Top Map HUD Status Overlay */}
-      <div className="absolute top-3 left-3 z-[1000] flex flex-wrap items-center gap-2 bg-[#050B14]/90 backdrop-blur-md border border-cyan-900/40 px-3 py-1.5 rounded-sm text-xs font-mono shadow-xl">
+      <div className="absolute top-3 left-3 z-[1000] flex flex-wrap items-center gap-2 bg-[#050B14]/90 backdrop-blur-md border border-cyan-900/50 px-3 py-1.5 rounded-lg text-xs font-mono shadow-2xl">
         <div className="flex items-center gap-2">
-          <Compass className="w-3.5 h-3.5 text-cyan-400 animate-spin" style={{ animationDuration: '16s' }} />
-          <span className="text-white font-bold">{mission.name}</span>
+          <Compass className="w-4 h-4 text-cyan-400 animate-spin" style={{ animationDuration: '20s' }} />
+          <span className="text-white font-bold tracking-wide">{mission.name}</span>
         </div>
         <span className="text-slate-600 hidden sm:inline">|</span>
-        <span className="text-cyan-400 hidden sm:inline">
+        <span className="text-cyan-300 font-bold hidden sm:inline">
           {formatDMS(mission.coordinates[0], true)}, {formatDMS(mission.coordinates[1], false)}
         </span>
         <span className="text-slate-600">|</span>
-        <span className="text-emerald-400 font-semibold">{detections.length} TARGETS</span>
+        <span className="text-emerald-400 font-bold flex items-center gap-1">
+          <Shield className="w-3.5 h-3.5" />
+          {detections.length} TARGETS
+        </span>
 
         {activeLayers.historicalHeatmap && (
           <>
             <span className="text-slate-600">|</span>
-            <span className="flex items-center gap-1 text-[11px] font-bold text-amber-400 bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-500/30">
+            <span className="flex items-center gap-1 text-[10px] font-bold text-amber-400 bg-amber-950/40 px-2 py-0.5 rounded border border-amber-500/30">
               <Flame className="w-3 h-3 text-amber-400" />
               HEATMAP: {heatmapStats.totalAggregatedPings.toLocaleString()} PINGS
             </span>
@@ -255,28 +344,67 @@ export const MissionMap: React.FC<MissionMapProps> = ({
       {/* Layer Control & Heatmap Toggle Toolbar */}
       {showLayersControl && (
         <div className="absolute top-3 right-3 z-[1000] flex flex-col gap-2">
-          {/* Main Layer Widget */}
-          <div className="bg-[#050B14]/95 backdrop-blur-md border border-cyan-900/40 p-2.5 rounded-sm flex flex-col gap-1.5 text-[11px] font-mono shadow-2xl min-w-[200px]">
-            <div className="flex items-center justify-between text-slate-400 font-bold px-1 pb-1 border-b border-cyan-900/30">
+          {/* Main Layer & Tile Selector Widget */}
+          <div className="bg-[#050B14]/95 backdrop-blur-md border border-cyan-900/50 p-2.5 rounded-xl flex flex-col gap-2 text-[11px] font-mono shadow-2xl min-w-[210px]">
+            <div className="flex items-center justify-between text-slate-400 font-bold px-1 pb-1 border-b border-cyan-900/40">
               <div className="flex items-center gap-1.5 text-cyan-300">
                 <Layers className="w-3.5 h-3.5 text-cyan-400" />
-                <span>GIS LAYERS</span>
+                <span>GIS SWATH LAYERS</span>
               </div>
-              <button
-                onClick={() => setShowHeatmapSettings(!showHeatmapSettings)}
-                className={`p-1 rounded text-[10px] transition-colors ${
-                  showHeatmapSettings
-                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-                    : 'text-slate-400 hover:text-cyan-400'
-                }`}
-                title="Configure Mission Coverage Heatmap"
-              >
-                <Sliders className="w-3 h-3" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setShowTileSelector(!showTileSelector)}
+                  className={`p-1 rounded text-[10px] transition-colors ${
+                    showTileSelector
+                      ? 'bg-cyan-500/25 text-cyan-300 border border-cyan-400'
+                      : 'text-slate-400 hover:text-cyan-300'
+                  }`}
+                  title="Select Basemap Provider"
+                >
+                  <Globe className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setShowHeatmapSettings(!showHeatmapSettings)}
+                  className={`p-1 rounded text-[10px] transition-colors ${
+                    showHeatmapSettings
+                      ? 'bg-cyan-500/25 text-cyan-300 border border-cyan-400'
+                      : 'text-slate-400 hover:text-cyan-300'
+                  }`}
+                  title="Configure Mission Coverage Heatmap"
+                >
+                  <Sliders className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
 
+            {/* Basemap Selection Dropdown */}
+            {showTileSelector && (
+              <div className="bg-[#020712] p-2 rounded-lg border border-cyan-900/40 space-y-1">
+                <div className="text-[9px] uppercase tracking-wider text-slate-400 font-bold mb-1">
+                  Basemap Provider:
+                </div>
+                {(Object.keys(TILE_LAYERS) as TileProvider[]).map((prov) => (
+                  <button
+                    key={prov}
+                    onClick={() => {
+                      setTileProvider(prov);
+                      setShowTileSelector(false);
+                    }}
+                    className={`w-full text-left px-2 py-1 rounded text-[10px] flex items-center justify-between transition-all ${
+                      tileProvider === prov
+                        ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                    }`}
+                  >
+                    <span>{TILE_LAYERS[prov].name}</span>
+                    {tileProvider === prov && <span className="text-cyan-400 font-black">✓</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Heatmap Layer Master Toggle */}
-            <label className="flex items-center gap-2 px-1 py-1 text-cyan-300 bg-cyan-950/30 border border-cyan-500/30 rounded-sm hover:bg-cyan-950/50 cursor-pointer font-bold transition-all">
+            <label className="flex items-center gap-2 px-1.5 py-1 text-cyan-300 bg-cyan-950/30 border border-cyan-500/30 rounded-lg hover:bg-cyan-950/50 cursor-pointer font-bold transition-all">
               <input
                 type="checkbox"
                 checked={activeLayers.historicalHeatmap}
@@ -291,7 +419,7 @@ export const MissionMap: React.FC<MissionMapProps> = ({
               </span>
             </label>
 
-            {/* Other Standard Layers */}
+            {/* Standard Layers */}
             <label className="flex items-center gap-2 px-1 py-0.5 text-slate-300 hover:text-white cursor-pointer">
               <input
                 type="checkbox"
@@ -309,7 +437,17 @@ export const MissionMap: React.FC<MissionMapProps> = ({
                 onChange={(e) => setActiveLayers({ ...activeLayers, route: e.target.checked })}
                 className="accent-cyan-400 rounded cursor-pointer"
               />
-              <span className="text-[10px]">AUV Track & Waypoints</span>
+              <span className="text-[10px]">AUV Track Waypoints</span>
+            </label>
+
+            <label className="flex items-center gap-2 px-1 py-0.5 text-slate-300 hover:text-white cursor-pointer">
+              <input
+                type="checkbox"
+                checked={activeLayers.auvVessel}
+                onChange={(e) => setActiveLayers({ ...activeLayers, auvVessel: e.target.checked })}
+                className="accent-cyan-400 rounded cursor-pointer"
+              />
+              <span className="text-[10px]">AUV Vessel Marker</span>
             </label>
 
             <label className="flex items-center gap-2 px-1 py-0.5 text-slate-300 hover:text-white cursor-pointer">
@@ -331,13 +469,13 @@ export const MissionMap: React.FC<MissionMapProps> = ({
                 }
                 className="accent-cyan-400 rounded cursor-pointer"
               />
-              <span className="text-[10px]">Historical Swath Corridors</span>
+              <span className="text-[10px]">Historical Swaths</span>
             </label>
           </div>
 
           {/* Expanded Heatmap Advanced Settings Panel */}
           {showHeatmapSettings && activeLayers.historicalHeatmap && (
-            <div className="bg-[#050B14]/95 backdrop-blur-md border border-cyan-500/30 p-3 rounded-sm flex flex-col gap-2.5 text-[11px] font-mono shadow-2xl min-w-[240px]">
+            <div className="bg-[#050B14]/95 backdrop-blur-md border border-cyan-500/30 p-3 rounded-xl flex flex-col gap-2.5 text-[11px] font-mono shadow-2xl min-w-[240px]">
               <div className="flex items-center justify-between border-b border-cyan-900/30 pb-1.5">
                 <span className="font-bold text-white text-[10px] uppercase tracking-wider flex items-center gap-1.5">
                   <Flame className="w-3.5 h-3.5 text-amber-400" />
@@ -359,7 +497,7 @@ export const MissionMap: React.FC<MissionMapProps> = ({
                 <div className="grid grid-cols-2 gap-1">
                   <button
                     onClick={() => setHeatmapScope('ALL_HISTORICAL')}
-                    className={`px-2 py-1 rounded-sm text-[9px] uppercase font-bold transition-all ${
+                    className={`px-2 py-1 rounded text-[9px] uppercase font-bold transition-all ${
                       heatmapScope === 'ALL_HISTORICAL'
                         ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400'
                         : 'bg-[#02060C] text-slate-400 border border-cyan-900/30 hover:text-slate-200'
@@ -369,7 +507,7 @@ export const MissionMap: React.FC<MissionMapProps> = ({
                   </button>
                   <button
                     onClick={() => setHeatmapScope('ACTIVE_ONLY')}
-                    className={`px-2 py-1 rounded-sm text-[9px] uppercase font-bold transition-all ${
+                    className={`px-2 py-1 rounded text-[9px] uppercase font-bold transition-all ${
                       heatmapScope === 'ACTIVE_ONLY'
                         ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400'
                         : 'bg-[#02060C] text-slate-400 border border-cyan-900/30 hover:text-slate-200'
@@ -392,7 +530,7 @@ export const MissionMap: React.FC<MissionMapProps> = ({
                 >
                   <option value="PING_DENSITY">Ping Density (Pings/km²)</option>
                   <option value="SWATH_OVERLAP">Swath Overlap Multiplier</option>
-                  <option value="ANOMALY_RATE">Anomaly Anomaly Rate</option>
+                  <option value="ANOMALY_RATE">Anomaly Occurrence Rate</option>
                   <option value="FREQUENCY_DIST">Acoustic Frequency (kHz)</option>
                 </select>
               </div>
@@ -472,7 +610,7 @@ export const MissionMap: React.FC<MissionMapProps> = ({
 
       {/* Heatmap Color Scale Legend & Aggregate Summary HUD */}
       {activeLayers.historicalHeatmap && (
-        <div className="absolute bottom-3 right-3 z-[1000] bg-[#050B14]/90 backdrop-blur-md border border-cyan-900/40 p-2.5 rounded-sm font-mono text-[10px] shadow-2xl flex flex-col gap-2 max-w-[320px]">
+        <div className="absolute bottom-3 right-3 z-[1000] bg-[#050B14]/90 backdrop-blur-md border border-cyan-900/50 p-2.5 rounded-xl font-mono text-[10px] shadow-2xl flex flex-col gap-2 max-w-[320px]">
           <div className="flex items-center justify-between border-b border-cyan-900/30 pb-1.5">
             <span className="font-bold text-white text-[9px] uppercase tracking-wider flex items-center gap-1">
               <Flame className="w-3 h-3 text-amber-400" />
@@ -485,7 +623,7 @@ export const MissionMap: React.FC<MissionMapProps> = ({
 
           {/* Color Gradient Bar */}
           <div className="space-y-1">
-            <div className="h-2 w-full rounded-sm bg-gradient-to-r from-[#06b6d4] via-[#10b981] via-[#f59e0b] to-[#f43f5e] shadow-inner" />
+            <div className="h-2 w-full rounded bg-gradient-to-r from-[#06b6d4] via-[#10b981] via-[#f59e0b] to-[#f43f5e] shadow-inner" />
             <div className="flex justify-between text-[8px] text-slate-400 uppercase">
               <span>&lt;10k (Base)</span>
               <span>20k (Dense)</span>
@@ -514,9 +652,9 @@ export const MissionMap: React.FC<MissionMapProps> = ({
 
       {/* Offline Mode Alert Indicator */}
       {offlineMode && (
-        <div className="absolute bottom-3 left-3 z-[1000] bg-amber-950/80 border border-amber-500/50 text-amber-300 px-3 py-1 rounded text-xs font-mono flex items-center gap-2">
+        <div className="absolute bottom-3 left-3 z-[1000] bg-amber-950/80 border border-amber-500/50 text-amber-300 px-3 py-1 rounded-lg text-xs font-mono flex items-center gap-2">
           <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
-          <span>OFFLINE GIS CACHE ACTIVE — Local Bathymetry Rendered</span>
+          <span>OFFLINE GIS CACHE ACTIVE — Local Bathymetry Tiles</span>
         </div>
       )}
 
@@ -530,11 +668,11 @@ export const MissionMap: React.FC<MissionMapProps> = ({
       >
         <MapController bounds={mapBounds} />
 
-        {/* Watermark-Free Esri World Ocean Bathymetry Tiles */}
+        {/* Selected Basemap Tile Provider */}
         <TileLayer
-          attribution='Tiles &copy; Esri &mdash; Sources: GEBCO, NOAA, CHS, CSUMB'
-          url="https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean/MapServer/tile/{z}/{y}/{x}"
-          maxZoom={18}
+          attribution={TILE_LAYERS[tileProvider].attribution}
+          url={TILE_LAYERS[tileProvider].url}
+          maxZoom={TILE_LAYERS[tileProvider].maxZoom}
           eventHandlers={{
             tileerror: () => setOfflineMode(true),
           }}
@@ -542,7 +680,7 @@ export const MissionMap: React.FC<MissionMapProps> = ({
 
         {/* Historical Swaths Corridors Layer */}
         {activeLayers.allHistoricalSwaths &&
-          historicalSwaths.map((hs, idx) => {
+          historicalSwaths.map((hs) => {
             if (!hs) return null;
             return (
               <React.Fragment key={`hist-swath-${hs.mission.id}`}>
@@ -578,7 +716,7 @@ export const MissionMap: React.FC<MissionMapProps> = ({
               weight: 1.5,
               dashArray: '3, 6',
               fillColor: '#00f0ff',
-              fillOpacity: 0.12,
+              fillOpacity: 0.14,
             }}
           />
         )}
@@ -590,7 +728,7 @@ export const MissionMap: React.FC<MissionMapProps> = ({
               positions={routePositions}
               pathOptions={{
                 color: '#38bdf8',
-                weight: 3,
+                weight: 3.5,
                 opacity: 0.9,
               }}
             />
@@ -624,10 +762,35 @@ export const MissionMap: React.FC<MissionMapProps> = ({
           </>
         )}
 
+        {/* Active AUV Vessel Marker */}
+        {activeLayers.auvVessel && currentAuvPoint && (
+          <Marker
+            position={[currentAuvPoint.latitude, currentAuvPoint.longitude]}
+            icon={createAuvVesselIcon(currentAuvPoint.headingDeg || 0)}
+          >
+            <Popup>
+              <div className="font-mono text-xs p-1 space-y-1 min-w-[200px]">
+                <div className="font-bold text-cyan-300 flex items-center gap-1.5 border-b border-cyan-900/40 pb-1">
+                  <Navigation className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>AUV DEEPSCAN-4 (ACTIVE POSITION)</span>
+                </div>
+                <div className="text-slate-200">
+                  Coordinates: {currentAuvPoint.latitude.toFixed(5)}°N, {currentAuvPoint.longitude.toFixed(5)}°E
+                </div>
+                <div className="grid grid-cols-2 gap-1 text-[11px] text-slate-300 pt-1">
+                  <div>Heading: {currentAuvPoint.headingDeg}°</div>
+                  <div>Speed: {currentAuvPoint.speedKnots} kn</div>
+                  <div>Depth: {currentAuvPoint.depthMeters}m</div>
+                  <div>Altitude: {currentAuvPoint.altitudeMeters}m</div>
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        )}
+
         {/* MISSION COVERAGE HEATMAP LAYER (Aggregated Ping Density) */}
         {activeLayers.historicalHeatmap &&
           heatNodes.map((node) => {
-            // Visual circle radius based on kernel bandwidth and density
             const pixelRadius = Math.max(16, Math.min(48, Math.round(kernelBandwidth * 0.35)));
 
             return (
@@ -726,7 +889,7 @@ export const MissionMap: React.FC<MissionMapProps> = ({
         {/* Detections Target Markers */}
         {activeLayers.detections &&
           detections.map((det, idx) => {
-            if (det.latitude === null || det.longitude === null) return null;
+            if (det.latitude === null || det.longitude === null || isNaN(det.latitude) || isNaN(det.longitude)) return null;
             const isSelected = det.id === selectedDetectionId;
 
             return (
@@ -739,15 +902,15 @@ export const MissionMap: React.FC<MissionMapProps> = ({
                 }}
               >
                 <Popup>
-                  <div className="font-mono text-xs p-1 space-y-1.5 min-w-[200px]">
+                  <div className="font-mono text-xs p-1 space-y-1.5 min-w-[210px]">
                     <div className="flex items-center justify-between border-b border-cyan-500/30 pb-1">
                       <span className="font-bold text-cyan-300">{det.id}</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 font-semibold">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 font-bold border border-cyan-500/40">
                         {(det.confidence * 100).toFixed(1)}% CONF
                       </span>
                     </div>
 
-                    <div className="font-sans font-semibold text-slate-100 text-[13px]">
+                    <div className="font-sans font-bold text-white text-[13px]">
                       {det.classNameLabel}
                     </div>
 
@@ -760,7 +923,9 @@ export const MissionMap: React.FC<MissionMapProps> = ({
                       </div>
                       <div>
                         <span className="text-slate-400">Shadow:</span>{' '}
-                        {det.acousticShadow ? `${det.acousticShadow.lengthMeters}m` : 'None'}
+                        {det.acousticShadow?.estimatedHeightMeters
+                          ? `${det.acousticShadow.estimatedHeightMeters}m`
+                          : 'None'}
                       </div>
                       <div>
                         <span className="text-slate-400">Anomaly:</span>{' '}
@@ -772,7 +937,7 @@ export const MissionMap: React.FC<MissionMapProps> = ({
                       <div>
                         {formatDMS(det.latitude, true)}, {formatDMS(det.longitude, false)}
                       </div>
-                      <div>Model: {det.modelVersion}</div>
+                      <div className="text-slate-500 mt-0.5 truncate">Model: {det.modelVersion}</div>
                     </div>
                   </div>
                 </Popup>

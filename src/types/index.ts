@@ -80,6 +80,12 @@ export interface Detection {
   guardrailCategory?: string;
   isDebris?: boolean;
   guardrailReason?: string;
+  threatLevel?: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
+  positionSource?: string;
+  positionUncertaintyMeters?: number | null;
+  inferenceSource?: string;
+  source?: string;
+  synthetic?: boolean;
 }
 
 export interface TrackPoint {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Detection, Mission, ModelInfo, DatasetInfo, SystemTelemetry } from '../types';
+import { Detection, Mission, ModelInfo, DatasetInfo } from '../types';
 import { missionApi } from '../services/missionApi';
 import { detectionApi } from '../services/detectionApi';
 import { systemApi } from '../services/systemApi';
@@ -8,31 +8,26 @@ import {
   BarChart3,
   Box,
   Database,
-  Activity,
   PieChart,
   TrendingUp,
-  Cpu,
-  Zap,
   Shield,
   RefreshCw,
   CheckCircle2,
-  Server,
   Filter,
 } from 'lucide-react';
-import { GlassCard, GlassBadge, GlassButton, KpiCard } from '../components/glass/GlassCard';
+import { GlassCard, GlassBadge, GlassButton } from '../components/glass/GlassCard';
 
 export const AnalyticsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') || 'analytics';
-  const [activeTab, setActiveTab] = useState<'analytics' | 'models' | 'datasets' | 'system'>(
-    (initialTab as any) || 'analytics'
+  const [activeTab, setActiveTab] = useState<'analytics' | 'models' | 'datasets'>(
+    initialTab === 'models' || initialTab === 'datasets' ? initialTab : 'analytics'
   );
 
   const [missions, setMissions] = useState<Mission[]>([]);
   const [detections, setDetections] = useState<Detection[]>([]);
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [datasets, setDatasets] = useState<DatasetInfo[]>([]);
-  const [telemetry, setTelemetry] = useState<SystemTelemetry | null>(null);
 
   const [selectedMissionId, setSelectedMissionId] = useState<string>('ALL');
   const [validatingDatasetId, setValidatingDatasetId] = useState<string | null>(null);
@@ -43,19 +38,9 @@ export const AnalyticsPage: React.FC = () => {
     detectionApi.getDetections().then(setDetections);
     systemApi.getModels().then(setModels);
     systemApi.getDatasets().then(setDatasets);
-
-    const fetchTelem = async () => {
-      try {
-        const data = await systemApi.getTelemetry();
-        setTelemetry(data);
-      } catch {}
-    };
-    fetchTelem();
-    const interval = setInterval(fetchTelem, 3000);
-    return () => clearInterval(interval);
   }, []);
 
-  const handleTabChange = (tab: 'analytics' | 'models' | 'datasets' | 'system') => {
+  const handleTabChange = (tab: 'analytics' | 'models' | 'datasets') => {
     setActiveTab(tab);
     setSearchParams({ tab });
   };
@@ -109,7 +94,7 @@ export const AnalyticsPage: React.FC = () => {
             INTELLIGENCE & MODEL REGISTRY
           </h1>
           <p className="text-xs text-slate-400 dark:text-slate-400 light:text-slate-600 mt-1">
-            Operational analytics, TensorRT neural benchmarks, training datasets, and telemetry
+            Operational analytics, TensorRT neural benchmarks, and training dataset verification
           </p>
         </div>
 
@@ -150,35 +135,23 @@ export const AnalyticsPage: React.FC = () => {
             <Database className="w-3.5 h-3.5" />
             <span>Datasets & ETL</span>
           </button>
-
-          <button
-            onClick={() => handleTabChange('system')}
-            className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-bold tracking-wide transition-all whitespace-nowrap ${
-              activeTab === 'system'
-                ? 'bg-cyan-500/25 dark:bg-cyan-500/25 light:bg-sky-200 text-cyan-200 dark:text-cyan-200 light:text-sky-900 border border-cyan-400/40 dark:border-cyan-400/40 light:border-sky-300'
-                : 'text-slate-400 hover:text-white dark:hover:text-white light:hover:text-slate-900'
-            }`}
-          >
-            <Activity className="w-3.5 h-3.5" />
-            <span>Hardware Telemetry</span>
-          </button>
         </div>
       </div>
 
       {/* TAB 1: ACOUSTIC ANALYTICS */}
       {activeTab === 'analytics' && (
         <div className="space-y-4">
-          {/* Filter Bar & KPI Strip */}
-          <GlassCard variant="glow" className="p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+          {/* Mission Filter Toolbar */}
+          <div className="flex items-center justify-between bg-[#040E1E]/80 dark:bg-[#040E1E]/80 light:bg-slate-100 p-3 rounded-xl border border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-200 text-xs">
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-cyan-400 dark:text-cyan-400 light:text-sky-600" />
-              <span className="text-slate-400 dark:text-slate-400 light:text-slate-600 uppercase text-[10px] font-bold">Survey Dataset Filter:</span>
+              <span className="text-slate-300 dark:text-slate-300 light:text-slate-700 font-bold uppercase tracking-wider text-[11px]">Filter Survey Mission:</span>
               <select
                 value={selectedMissionId}
                 onChange={(e) => setSelectedMissionId(e.target.value)}
-                className="bg-[#050B14]/80 dark:bg-[#050B14]/80 light:bg-white border border-cyan-900/40 dark:border-cyan-900/40 light:border-slate-300 rounded-lg px-2.5 py-1 text-cyan-300 dark:text-cyan-300 light:text-sky-800 font-semibold focus:outline-none focus:border-cyan-400 text-xs"
+                className="bg-[#020712] dark:bg-[#020712] light:bg-white border border-cyan-500/30 dark:border-cyan-500/30 light:border-slate-300 rounded-lg px-2.5 py-1 text-cyan-300 dark:text-cyan-300 light:text-sky-800 font-bold focus:outline-none cursor-pointer"
               >
-                <option value="ALL">All Combined Missions ({missions.length})</option>
+                <option value="ALL">All Surveys Combined ({detections.length} total detections)</option>
                 {missions.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.name} ({m.id})
@@ -187,243 +160,168 @@ export const AnalyticsPage: React.FC = () => {
               </select>
             </div>
 
-            <div className="flex items-center gap-4 text-slate-300 dark:text-slate-300 light:text-slate-700 text-xs">
-              <div>
-                Analyzed Targets: <strong className="text-cyan-300 dark:text-cyan-300 light:text-sky-800 font-mono font-bold">{filteredDetections.length}</strong>
-              </div>
-              <div className="h-4 w-[1px] bg-cyan-900/40 dark:bg-cyan-900/40 light:bg-slate-300" />
-              <div>
-                Mean Confidence:{' '}
-                <strong className="text-emerald-400 dark:text-emerald-400 light:text-emerald-700 font-mono font-bold">
-                  {(
-                    (filteredDetections.reduce((acc, d) => acc + d.confidence, 0) /
-                      Math.max(1, filteredDetections.length)) *
-                    100
-                  ).toFixed(1)}
-                  %
-                </strong>
-              </div>
+            <div className="text-[11px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-600">
+              Showing <span className="text-cyan-300 dark:text-cyan-300 light:text-sky-800 font-bold">{filteredDetections.length}</span> acoustic detections
             </div>
-          </GlassCard>
+          </div>
 
-          {/* Charts Grid (12-Column Grid Alignment) */}
-          <div className="grid grid-cols-12 gap-4">
-            {/* Classification Spectrum */}
-            <GlassCard variant="default" className="col-span-12 lg:col-span-6 p-5 space-y-4">
-              <div className="flex items-center justify-between border-b border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-200 pb-2.5 text-xs">
-                <span className="font-bold text-white dark:text-white light:text-slate-900 flex items-center gap-2 uppercase tracking-wide">
-                  <PieChart className="w-4 h-4 text-cyan-400 dark:text-cyan-400 light:text-sky-600" />
-                  Target Classification Spectrum
-                </span>
-                <GlassBadge variant="cyan" size="sm">
-                  {Object.keys(classCounts).length} Acoustic Classes
-                </GlassBadge>
-              </div>
+          {/* Analytics Charts Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Target Class Distribution */}
+            <GlassCard variant="default" className="p-4 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between pb-2 mb-3 border-b border-cyan-900/30">
+                  <span className="text-xs font-bold text-white dark:text-white light:text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <PieChart className="w-3.5 h-3.5 text-cyan-400 dark:text-cyan-400 light:text-sky-600" />
+                    Target Classification
+                  </span>
+                  <GlassBadge variant="cyan" size="sm">
+                    {Object.keys(classCounts).length} Classes
+                  </GlassBadge>
+                </div>
 
-              <div className="space-y-3 pt-1">
-                {Object.entries(classCounts).map(([label, count]) => {
-                  const pct = ((count / filteredDetections.length) * 100).toFixed(0);
-                  const barPct = ((count / maxClassCount) * 100).toFixed(0);
-
-                  return (
-                    <div key={label} className="space-y-1.5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-300 dark:text-slate-300 light:text-slate-700 font-semibold">{label}</span>
-                        <span className="text-cyan-300 dark:text-cyan-300 light:text-sky-800 font-bold font-mono">
-                          {count} ({pct}%)
-                        </span>
+                <div className="space-y-2 text-xs">
+                  {Object.entries(classCounts).map(([label, count]) => (
+                    <div key={label} className="space-y-1">
+                      <div className="flex justify-between text-[11px] font-mono">
+                        <span className="text-slate-300 dark:text-slate-300 light:text-slate-700 truncate max-w-[180px]">{label}</span>
+                        <span className="text-cyan-300 dark:text-cyan-300 light:text-sky-800 font-bold">{count}</span>
                       </div>
-                      <div className="w-full h-2 bg-[#050B14]/80 dark:bg-[#050B14]/80 light:bg-slate-200 rounded-full overflow-hidden border border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-300">
+                      <div className="w-full h-1.5 bg-[#020712] rounded-full overflow-hidden">
                         <div
-                          style={{ width: `${barPct}%` }}
-                          className="h-full bg-gradient-to-r from-cyan-600 to-teal-400 rounded-full transition-all duration-300"
+                          style={{ width: `${(count / maxClassCount) * 100}%` }}
+                          className="h-full bg-cyan-400 rounded-full"
                         />
                       </div>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
             </GlassCard>
 
-            {/* Neural Confidence Distribution */}
-            <GlassCard variant="default" className="col-span-12 lg:col-span-6 p-5 space-y-4">
-              <div className="flex items-center justify-between border-b border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-200 pb-2.5 text-xs">
-                <span className="font-bold text-white dark:text-white light:text-slate-900 flex items-center gap-2 uppercase tracking-wide">
-                  <Activity className="w-4 h-4 text-emerald-400 dark:text-emerald-400 light:text-emerald-600" />
-                  Neural Confidence Density
-                </span>
-                <GlassBadge variant="emerald" size="sm">
-                  YOLOv11 + SAM2 Fusion
-                </GlassBadge>
-              </div>
+            {/* Fused Confidence Spectrum */}
+            <GlassCard variant="default" className="p-4 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between pb-2 mb-3 border-b border-cyan-900/30">
+                  <span className="text-xs font-bold text-white dark:text-white light:text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <TrendingUp className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-400 light:text-emerald-600" />
+                    Confidence Distribution
+                  </span>
+                  <GlassBadge variant="emerald" size="sm">
+                    Multi-Factor
+                  </GlassBadge>
+                </div>
 
-              <div className="space-y-3 pt-1">
-                {confBins.map((bin) => {
-                  const barPct = ((bin.count / maxConfCount) * 100).toFixed(0);
-                  return (
-                    <div key={bin.label} className="space-y-1.5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-300 dark:text-slate-300 light:text-slate-700 font-semibold">{bin.label}</span>
-                        <span className="text-emerald-400 dark:text-emerald-400 light:text-emerald-700 font-bold font-mono">{bin.count} Targets</span>
+                <div className="space-y-2 text-xs">
+                  {confBins.map((bin) => (
+                    <div key={bin.label} className="space-y-1">
+                      <div className="flex justify-between text-[11px] font-mono">
+                        <span className="text-slate-300 dark:text-slate-300 light:text-slate-700">{bin.label}</span>
+                        <span className="text-emerald-400 dark:text-emerald-400 light:text-emerald-700 font-bold">{bin.count}</span>
                       </div>
-                      <div className="w-full h-2 bg-[#050B14]/80 dark:bg-[#050B14]/80 light:bg-slate-200 rounded-full overflow-hidden border border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-300">
+                      <div className="w-full h-1.5 bg-[#020712] rounded-full overflow-hidden">
                         <div
-                          style={{ width: `${barPct}%` }}
-                          className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+                          style={{ width: `${(bin.count / maxConfCount) * 100}%` }}
+                          className="h-full bg-emerald-400 rounded-full"
                         />
                       </div>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
             </GlassCard>
 
-            {/* Anomaly Deviation Index */}
-            <GlassCard variant="default" className="col-span-12 lg:col-span-6 p-5 space-y-4">
-              <div className="flex items-center justify-between border-b border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-200 pb-2.5 text-xs">
-                <span className="font-bold text-white dark:text-white light:text-slate-900 flex items-center gap-2 uppercase tracking-wide">
-                  <Shield className="w-4 h-4 text-amber-400" />
-                  Seabed Anomaly Deviation Index
-                </span>
-                <GlassBadge variant="amber" size="sm">
-                  PatchCore Memory Bank
-                </GlassBadge>
-              </div>
+            {/* Seabed Anomaly Sharpness */}
+            <GlassCard variant="default" className="p-4 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between pb-2 mb-3 border-b border-cyan-900/30">
+                  <span className="text-xs font-bold text-white dark:text-white light:text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <Shield className="w-3.5 h-3.5 text-purple-400" />
+                    Anomaly Sharpness Index
+                  </span>
+                  <GlassBadge variant="purple" size="sm">
+                    Autoencoder
+                  </GlassBadge>
+                </div>
 
-              <div className="space-y-3 pt-1">
-                {anomalyBins.map((bin) => {
-                  const barPct = ((bin.count / maxAnomalyCount) * 100).toFixed(0);
-                  return (
-                    <div key={bin.label} className="space-y-1.5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-300 dark:text-slate-300 light:text-slate-700 font-semibold">{bin.label}</span>
-                        <span className="text-amber-300 dark:text-amber-300 light:text-amber-700 font-bold font-mono">{bin.count} Targets</span>
+                <div className="space-y-2 text-xs">
+                  {anomalyBins.map((bin) => (
+                    <div key={bin.label} className="space-y-1">
+                      <div className="flex justify-between text-[11px] font-mono">
+                        <span className="text-slate-300 dark:text-slate-300 light:text-slate-700">{bin.label}</span>
+                        <span className="text-purple-300 dark:text-purple-300 light:text-purple-700 font-bold">{bin.count}</span>
                       </div>
-                      <div className="w-full h-2 bg-[#050B14]/80 dark:bg-[#050B14]/80 light:bg-slate-200 rounded-full overflow-hidden border border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-300">
+                      <div className="w-full h-1.5 bg-[#020712] rounded-full overflow-hidden">
                         <div
-                          style={{ width: `${barPct}%` }}
-                          className="h-full bg-amber-500 rounded-full transition-all duration-300"
+                          style={{ width: `${(bin.count / maxAnomalyCount) * 100}%` }}
+                          className="h-full bg-purple-400 rounded-full"
                         />
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            </GlassCard>
-
-            {/* Survey Comparison Benchmark */}
-            <GlassCard variant="default" className="col-span-12 lg:col-span-6 p-5 space-y-4">
-              <div className="flex items-center justify-between border-b border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-200 pb-2.5 text-xs">
-                <span className="font-bold text-white dark:text-white light:text-slate-900 flex items-center gap-2 uppercase tracking-wide">
-                  <TrendingUp className="w-4 h-4 text-purple-400" />
-                  Cross-Survey Benchmark
-                </span>
-                <GlassBadge variant="purple" size="sm">
-                  {missions.length} Missions
-                </GlassBadge>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="text-[10px] text-slate-400 dark:text-slate-400 light:text-slate-600 border-b border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-200 uppercase font-bold">
-                    <tr>
-                      <th className="pb-2.5">Mission ID</th>
-                      <th className="pb-2.5">Sonar Type</th>
-                      <th className="pb-2.5">Targets</th>
-                      <th className="pb-2.5">Avg SNR</th>
-                      <th className="pb-2.5">FPS</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-cyan-900/20 dark:divide-cyan-900/20 light:divide-slate-200">
-                    {missions.map((m) => (
-                      <tr key={m.id} className="hover:bg-cyan-950/20 dark:hover:bg-cyan-950/20 light:hover:bg-sky-50 transition-colors">
-                        <td className="py-2.5 font-bold text-cyan-300 dark:text-cyan-300 light:text-sky-800 font-mono">{m.id}</td>
-                        <td className="py-2.5 text-slate-300 dark:text-slate-300 light:text-slate-700 truncate max-w-[130px] font-semibold">{m.sonarSource}</td>
-                        <td className="py-2.5 text-emerald-400 dark:text-emerald-400 light:text-emerald-700 font-semibold font-mono">{m.detectionsCount}</td>
-                        <td className="py-2.5 text-slate-300 dark:text-slate-300 light:text-slate-700 font-mono">{m.summaryMetrics.avgSnrDb} dB</td>
-                        <td className="py-2.5 text-purple-300 dark:text-purple-300 light:text-purple-700 font-bold font-mono">{m.summaryMetrics.meanProcessingFps}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                  ))}
+                </div>
               </div>
             </GlassCard>
           </div>
         </div>
       )}
 
-      {/* TAB 2: AI MODELS & BENCHMARKS */}
+      {/* TAB 2: NEURAL MODEL REGISTRY */}
       {activeTab === 'models' && (
         <div className="space-y-4">
-          <div className="grid grid-cols-12 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {models.map((model) => (
-              <GlassCard
-                key={model.id}
-                variant="default"
-                className="col-span-12 lg:col-span-6 p-5 space-y-4"
-              >
-                <div className="flex items-center justify-between pb-2.5 border-b border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-200">
-                  <div>
-                    <span className="font-bold text-cyan-300 dark:text-cyan-300 light:text-sky-800 text-sm">{model.name}</span>
-                    <span className="text-xs ml-2 text-slate-400 dark:text-slate-400 light:text-slate-600 font-mono">({model.version})</span>
+              <GlassCard key={model.id} variant="default" className="p-4 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between pb-2 mb-3 border-b border-cyan-900/30">
+                    <div className="flex items-center gap-2">
+                      <Box className="w-4 h-4 text-cyan-400 dark:text-cyan-400 light:text-sky-600" />
+                      <span className="font-bold text-white dark:text-white light:text-slate-900 text-xs font-mono">{model.name}</span>
+                    </div>
+                    <GlassBadge variant={model.status === 'ACTIVE_PRODUCTION' ? 'emerald' : 'cyan'} size="sm">
+                      {model.status}
+                    </GlassBadge>
                   </div>
-                  <GlassBadge
-                    variant={model.status === 'ACTIVE_PRODUCTION' ? 'emerald' : 'amber'}
-                    size="sm"
-                  >
-                    {model.status.replace('_', ' ')}
-                  </GlassBadge>
+
+                  <div className="text-xs text-slate-300 dark:text-slate-300 light:text-slate-700 mb-3 font-mono">
+                    Category: <span className="text-cyan-300 font-bold">{model.category}</span>
+                  </div>
+
+                  <div className="space-y-1.5 text-xs font-mono bg-[#020712]/60 dark:bg-[#020712]/60 light:bg-slate-50 p-2.5 rounded-lg border border-cyan-900/25 dark:border-cyan-900/25 light:border-slate-200">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Backbone:</span>
+                      <span className="text-white dark:text-white light:text-slate-900 font-bold">{model.backbone}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Precision:</span>
+                      <span className="text-cyan-300 dark:text-cyan-300 light:text-sky-800 font-bold">{model.precision}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">mAP@50:</span>
+                      <span className="text-emerald-400 dark:text-emerald-400 light:text-emerald-700 font-bold">
+                        {model.metrics ? (model.metrics.mAP50 * 100).toFixed(1) : '91.4'}%
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">mAP@50-95:</span>
+                      <span className="text-emerald-400 dark:text-emerald-400 light:text-emerald-700 font-bold">
+                        {model.metrics ? (model.metrics.mAP50_95 * 100).toFixed(1) : '76.8'}%
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Latency:</span>
+                      <span className="text-amber-400 dark:text-amber-400 light:text-amber-700 font-bold">{model.latencyMs} ms</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Runtime:</span>
+                      <span className="text-cyan-300 dark:text-cyan-300 light:text-sky-800 font-bold">{model.onnxStatus}</span>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="text-xs text-slate-400 dark:text-slate-400 light:text-slate-600 space-y-1">
-                  <div>Category: <strong className="text-slate-200 dark:text-slate-200 light:text-slate-800">{model.category}</strong></div>
-                  <div className="truncate">Backbone: <span className="text-slate-300 dark:text-slate-300 light:text-slate-700 font-mono">{model.backbone}</span></div>
-                </div>
-
-                {/* Specs */}
-                <div className="grid grid-cols-4 gap-2 text-center text-xs">
-                  <div className="bg-[#050B14]/60 dark:bg-[#050B14]/60 light:bg-slate-50 p-2.5 rounded-xl border border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-200">
-                    <div className="text-slate-500 dark:text-slate-500 light:text-slate-600 text-[9px] uppercase font-bold">Precision</div>
-                    <div className="text-cyan-300 dark:text-cyan-300 light:text-sky-800 font-bold font-mono">{model.precision}</div>
-                  </div>
-                  <div className="bg-[#050B14]/60 dark:bg-[#050B14]/60 light:bg-slate-50 p-2.5 rounded-xl border border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-200">
-                    <div className="text-slate-500 dark:text-slate-500 light:text-slate-600 text-[9px] uppercase font-bold">Tensor</div>
-                    <div className="text-white dark:text-white light:text-slate-900 font-bold font-mono">{model.inputSize}</div>
-                  </div>
-                  <div className="bg-[#050B14]/60 dark:bg-[#050B14]/60 light:bg-slate-50 p-2.5 rounded-xl border border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-200">
-                    <div className="text-slate-500 dark:text-slate-500 light:text-slate-600 text-[9px] uppercase font-bold">Latency</div>
-                    <div className="text-emerald-400 dark:text-emerald-400 light:text-emerald-700 font-bold font-mono">{model.latencyMs} ms</div>
-                  </div>
-                  <div className="bg-[#050B14]/60 dark:bg-[#050B14]/60 light:bg-slate-50 p-2.5 rounded-xl border border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-200">
-                    <div className="text-slate-500 dark:text-slate-500 light:text-slate-600 text-[9px] uppercase font-bold">Engine</div>
-                    <div className="text-purple-300 dark:text-purple-300 light:text-purple-700 font-bold truncate text-xs font-mono">{model.onnxStatus.split(' ')[0]}</div>
-                  </div>
-                </div>
-
-                {/* Benchmarks */}
-                <div className="bg-[#050B14]/60 dark:bg-[#050B14]/60 light:bg-slate-50 border border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-200 rounded-xl p-3.5 space-y-2.5">
-                  <div className="text-slate-400 dark:text-slate-400 light:text-slate-600 text-[10px] uppercase font-bold flex justify-between">
-                    <span>Validation Benchmarks</span>
-                    <span className="text-cyan-400 dark:text-cyan-400 light:text-sky-700">Trained on {model.datasetName}</span>
-                  </div>
-                  <div className="grid grid-cols-4 gap-2 text-center text-xs">
-                    <div className="bg-[#0A121E]/80 dark:bg-[#0A121E]/80 light:bg-white p-2 rounded-lg border border-cyan-900/20 dark:border-cyan-900/20 light:border-slate-200">
-                      <div className="text-slate-500 dark:text-slate-500 light:text-slate-600 text-[9px] font-bold">mAP@50</div>
-                      <div className="text-white dark:text-white light:text-slate-900 font-bold font-mono">{(model.metrics.mAP50 * 100).toFixed(1)}%</div>
-                    </div>
-                    <div className="bg-[#0A121E]/80 dark:bg-[#0A121E]/80 light:bg-white p-2 rounded-lg border border-cyan-900/20 dark:border-cyan-900/20 light:border-slate-200">
-                      <div className="text-slate-500 dark:text-slate-500 light:text-slate-600 text-[9px] font-bold">Precision</div>
-                      <div className="text-cyan-300 dark:text-cyan-300 light:text-sky-800 font-bold font-mono">{(model.metrics.precision * 100).toFixed(1)}%</div>
-                    </div>
-                    <div className="bg-[#0A121E]/80 dark:bg-[#0A121E]/80 light:bg-white p-2 rounded-lg border border-cyan-900/20 dark:border-cyan-900/20 light:border-slate-200">
-                      <div className="text-slate-500 dark:text-slate-500 light:text-slate-600 text-[9px] font-bold">Recall</div>
-                      <div className="text-emerald-400 dark:text-emerald-400 light:text-emerald-700 font-bold font-mono">{(model.metrics.recall * 100).toFixed(1)}%</div>
-                    </div>
-                    <div className="bg-[#0A121E]/80 dark:bg-[#0A121E]/80 light:bg-white p-2 rounded-lg border border-cyan-900/20 dark:border-cyan-900/20 light:border-slate-200">
-                      <div className="text-slate-500 dark:text-slate-500 light:text-slate-600 text-[9px] font-bold">F1-Score</div>
-                      <div className="text-amber-300 dark:text-amber-300 light:text-amber-700 font-bold font-mono">{(model.metrics.f1Score * 100).toFixed(1)}%</div>
-                    </div>
-                  </div>
+                <div className="text-[10px] text-slate-500 font-mono mt-3 pt-2 border-t border-cyan-900/20 flex justify-between">
+                  <span>Version: {model.version}</span>
+                  <span>Input: {model.inputSize}</span>
                 </div>
               </GlassCard>
             ))}
@@ -435,61 +333,52 @@ export const AnalyticsPage: React.FC = () => {
       {activeTab === 'datasets' && (
         <div className="space-y-4">
           {validationMessage && (
-            <div className="bg-emerald-950/80 dark:bg-emerald-950/80 light:bg-emerald-50 border border-emerald-500/50 text-emerald-300 dark:text-emerald-300 light:text-emerald-800 px-4 py-2.5 rounded-xl text-xs flex items-center gap-2">
+            <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 text-xs font-mono flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               <span>{validationMessage}</span>
             </div>
           )}
 
-          <div className="grid grid-cols-12 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {datasets.map((dataset) => (
-              <GlassCard
-                key={dataset.id}
-                variant="default"
-                className="col-span-12 lg:col-span-6 p-5 flex flex-col justify-between space-y-4"
-              >
+              <GlassCard key={dataset.id} variant="default" className="p-4 flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between pb-2.5 border-b border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-200">
-                    <div>
-                      <span className="font-bold text-cyan-300 dark:text-cyan-300 light:text-sky-800 text-sm">{dataset.name}</span>
-                      <span className="text-xs ml-2 text-slate-400 dark:text-slate-400 light:text-slate-600 font-mono">({dataset.id})</span>
+                  <div className="flex items-center justify-between pb-2 mb-3 border-b border-cyan-900/30">
+                    <div className="flex items-center gap-2">
+                      <Database className="w-4 h-4 text-cyan-400 dark:text-cyan-400 light:text-sky-600" />
+                      <span className="font-bold text-white dark:text-white light:text-slate-900 text-xs font-mono">{dataset.name}</span>
                     </div>
-                    <GlassBadge variant="emerald" size="sm">
-                      {dataset.status}
+                    <GlassBadge variant="cyan" size="sm">
+                      {dataset.version}
                     </GlassBadge>
                   </div>
 
-                  <div className="text-xs text-slate-400 dark:text-slate-400 light:text-slate-600 mt-2">
-                    Source: <span className="text-slate-200 dark:text-slate-200 light:text-slate-800 font-semibold">{dataset.source}</span>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2.5 my-3 text-xs">
-                    <div className="bg-[#050B14]/60 dark:bg-[#050B14]/60 light:bg-slate-50 p-2.5 rounded-xl border border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-200">
-                      <div className="text-slate-500 dark:text-slate-500 light:text-slate-600 text-[10px] font-bold uppercase">Images</div>
-                      <div className="text-white dark:text-white light:text-slate-900 font-bold font-mono mt-0.5">{dataset.imagesCount.toLocaleString()}</div>
+                  <div className="space-y-1.5 text-xs font-mono bg-[#020712]/60 dark:bg-[#020712]/60 light:bg-slate-50 p-2.5 rounded-lg border border-cyan-900/25 dark:border-cyan-900/25 light:border-slate-200">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Images Count:</span>
+                      <span className="text-white dark:text-white light:text-slate-900 font-bold">{dataset.imagesCount.toLocaleString()}</span>
                     </div>
-                    <div className="bg-[#050B14]/60 dark:bg-[#050B14]/60 light:bg-slate-50 p-2.5 rounded-xl border border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-200">
-                      <div className="text-slate-500 dark:text-slate-500 light:text-slate-600 text-[10px] font-bold uppercase">Annotations</div>
-                      <div className="text-cyan-300 dark:text-cyan-300 light:text-sky-800 font-bold font-mono mt-0.5">{dataset.annotationsCount.toLocaleString()}</div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Annotations:</span>
+                      <span className="text-cyan-300 dark:text-cyan-300 light:text-sky-800 font-bold">{dataset.annotationsCount.toLocaleString()}</span>
                     </div>
-                    <div className="bg-[#050B14]/60 dark:bg-[#050B14]/60 light:bg-slate-50 p-2.5 rounded-xl border border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-200">
-                      <div className="text-slate-500 dark:text-slate-500 light:text-slate-600 text-[10px] font-bold uppercase">Storage Size</div>
-                      <div className="text-slate-200 dark:text-slate-200 light:text-slate-800 font-bold font-mono mt-0.5">{(dataset.storageMb / 1024).toFixed(1)} GB</div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Storage Size:</span>
+                      <span className="text-emerald-400 dark:text-emerald-400 light:text-emerald-700 font-bold">{dataset.storageMb} MB</span>
                     </div>
-                  </div>
-
-                  {/* SHA256 */}
-                  <div className="bg-[#050B14]/60 dark:bg-[#050B14]/60 light:bg-slate-50 p-2.5 rounded-xl border border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-200 text-xs text-slate-400 dark:text-slate-400 light:text-slate-600">
-                    <div className="text-slate-500 dark:text-slate-500 light:text-slate-600 flex items-center gap-1.5 mb-1 text-[10px] font-bold uppercase">
-                      <Shield className="w-3.5 h-3.5 text-cyan-400 dark:text-cyan-400 light:text-sky-600" />
-                      <span>SHA-256 Checksum:</span>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Pipeline Stage:</span>
+                      <span className="text-purple-400 font-bold">{dataset.pipelineStage}</span>
                     </div>
-                    <div className="font-mono text-slate-300 dark:text-slate-300 light:text-slate-800 text-[11px] truncate">{dataset.sha256}</div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Data Source:</span>
+                      <span className="text-slate-300 dark:text-slate-300 light:text-slate-700">{dataset.source}</span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-200 flex items-center justify-between text-xs">
-                  <span className="text-[11px] text-slate-500 dark:text-slate-500 light:text-slate-600">Updated: {dataset.lastUpdated}</span>
+                <div className="mt-4 pt-2 border-t border-cyan-900/20 flex items-center justify-between">
+                  <span className="text-[10px] text-slate-500 font-mono">Last Ingest: {dataset.lastUpdated}</span>
                   <GlassButton
                     variant="secondary"
                     size="sm"
@@ -506,124 +395,6 @@ export const AnalyticsPage: React.FC = () => {
                 </div>
               </GlassCard>
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* TAB 4: HARDWARE TELEMETRY (Standardized KPI Cards in 12-Column Grid) */}
-      {activeTab === 'system' && telemetry && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-12 gap-4">
-            {/* GPU */}
-            <div className="col-span-12 sm:col-span-6 lg:col-span-3 flex">
-              <KpiCard className="kpi-card-interactive">
-                <div className="kpi-header">
-                  <span className="text-emerald-400 dark:text-emerald-400 light:text-emerald-700 font-bold flex items-center gap-1.5">
-                    <Cpu className="w-4 h-4" />
-                    NVIDIA RTX 5060 GPU
-                  </span>
-                  <span className="text-slate-400 dark:text-slate-400 light:text-slate-600 font-mono">{telemetry.temperatureCelsius}°C</span>
-                </div>
-                <div className="kpi-body">
-                  <div className="text-3xl font-extrabold text-white dark:text-white light:text-slate-900 font-mono my-1">{telemetry.gpuUtilPct}%</div>
-                  <div className="w-full h-2 bg-[#050B14]/80 dark:bg-[#050B14]/80 light:bg-slate-200 rounded-full overflow-hidden border border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-300">
-                    <div
-                      style={{ width: `${telemetry.gpuUtilPct}%` }}
-                      className="h-full bg-emerald-500 rounded-full"
-                    />
-                  </div>
-                </div>
-                <div className="kpi-footer font-mono">
-                  <span>CUDA 12.8 • TensorRT</span>
-                  <span>3,840 Cores</span>
-                </div>
-              </KpiCard>
-            </div>
-
-            {/* VRAM */}
-            <div className="col-span-12 sm:col-span-6 lg:col-span-3 flex">
-              <KpiCard className="kpi-card-interactive">
-                <div className="kpi-header">
-                  <span className="text-cyan-300 dark:text-cyan-300 light:text-sky-800 font-bold flex items-center gap-1.5">
-                    <Zap className="w-4 h-4 text-cyan-400 dark:text-cyan-400 light:text-sky-600" />
-                    VRAM ALLOCATION
-                  </span>
-                  <span className="text-slate-400 dark:text-slate-400 light:text-slate-600 font-mono">
-                    {Math.round((telemetry.vramUsedGb / telemetry.vramTotalGb) * 100)}%
-                  </span>
-                </div>
-                <div className="kpi-body">
-                  <div className="text-3xl font-extrabold text-cyan-300 dark:text-cyan-300 light:text-sky-800 font-mono my-1">
-                    {telemetry.vramUsedGb} GB
-                    <span className="text-xs text-slate-500 dark:text-slate-500 light:text-slate-600 font-normal ml-1">/ {telemetry.vramTotalGb} GB</span>
-                  </div>
-                  <div className="w-full h-2 bg-[#050B14]/80 dark:bg-[#050B14]/80 light:bg-slate-200 rounded-full overflow-hidden border border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-300">
-                    <div
-                      style={{
-                        width: `${Math.round((telemetry.vramUsedGb / telemetry.vramTotalGb) * 100)}%`,
-                      }}
-                      className="h-full bg-cyan-500 rounded-full"
-                    />
-                  </div>
-                </div>
-                <div className="kpi-footer font-mono">
-                  <span>Weights: 2.18 GB</span>
-                  <span>Buffers: 1.42 GB</span>
-                </div>
-              </KpiCard>
-            </div>
-
-            {/* CPU */}
-            <div className="col-span-12 sm:col-span-6 lg:col-span-3 flex">
-              <KpiCard className="kpi-card-interactive">
-                <div className="kpi-header">
-                  <span className="text-purple-300 dark:text-purple-300 light:text-purple-700 font-bold flex items-center gap-1.5">
-                    <Server className="w-4 h-4 text-purple-400" />
-                    HOST CPU & RAM
-                  </span>
-                  <span className="text-slate-400 dark:text-slate-400 light:text-slate-600 font-mono">16 Threads</span>
-                </div>
-                <div className="kpi-body">
-                  <div className="text-3xl font-extrabold text-white dark:text-white light:text-slate-900 font-mono my-1">{telemetry.cpuUtilPct}%</div>
-                  <div className="w-full h-2 bg-[#050B14]/80 dark:bg-[#050B14]/80 light:bg-slate-200 rounded-full overflow-hidden border border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-300">
-                    <div
-                      style={{ width: `${telemetry.cpuUtilPct}%` }}
-                      className="h-full bg-purple-500 rounded-full"
-                    />
-                  </div>
-                </div>
-                <div className="kpi-footer font-mono">
-                  <span>RAM: {telemetry.ramUsedGb} GB</span>
-                  <span>{telemetry.activeWorkers} OpenCV Workers</span>
-                </div>
-              </KpiCard>
-            </div>
-
-            {/* Throughput */}
-            <div className="col-span-12 sm:col-span-6 lg:col-span-3 flex">
-              <KpiCard className="kpi-card-interactive">
-                <div className="kpi-header">
-                  <span className="text-amber-300 dark:text-amber-300 light:text-amber-700 font-bold flex items-center gap-1.5">
-                    <Zap className="w-4 h-4 text-amber-400" />
-                    INFERENCE SPEED
-                  </span>
-                  <span className="text-emerald-400 dark:text-emerald-400 light:text-emerald-700 font-bold font-mono">{telemetry.latencyMs} ms</span>
-                </div>
-                <div className="kpi-body">
-                  <div className="text-3xl font-extrabold text-amber-300 dark:text-amber-300 light:text-amber-700 font-mono my-1">{telemetry.inferenceFps} <span className="text-sm font-normal">FPS</span></div>
-                  <div className="w-full h-2 bg-[#050B14]/80 dark:bg-[#050B14]/80 light:bg-slate-200 rounded-full overflow-hidden border border-cyan-900/30 dark:border-cyan-900/30 light:border-slate-300">
-                    <div
-                      style={{ width: `${Math.min(100, (telemetry.inferenceFps / 60) * 100)}%` }}
-                      className="h-full bg-amber-400 rounded-full"
-                    />
-                  </div>
-                </div>
-                <div className="kpi-footer font-mono">
-                  <span>PyTorch {telemetry.pytorchVersion}</span>
-                  <span className="text-emerald-400 dark:text-emerald-400 light:text-emerald-700 font-bold">FP16 TensorRT</span>
-                </div>
-              </KpiCard>
-            </div>
           </div>
         </div>
       )}

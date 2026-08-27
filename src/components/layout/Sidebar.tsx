@@ -3,7 +3,6 @@ import { NavLink } from 'react-router-dom';
 import {
   Home,
   LayoutDashboard,
-  Compass,
   Radio,
   Crosshair,
   BarChart3,
@@ -12,7 +11,6 @@ import {
   Cpu,
   Box,
   Camera,
-  Brain,
   Shield,
 } from 'lucide-react';
 
@@ -34,13 +32,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
     { to: '/', icon: Home, label: 'OVERVIEW' },
     { to: '/dashboard', icon: LayoutDashboard, label: 'DASHBOARD' },
     { to: '/mpa', icon: Shield, label: 'MPA GEO-TAGS', badge: 'MoES', highlight: true },
-    { to: '/upload', icon: Cpu, label: 'RAW INGESTION', badge: 'YOLO', highlight: true },
+    { to: '/upload', icon: Cpu, label: 'RAW INGESTION', badge: 'XTF/AI', highlight: true },
     { to: '/digital-twin', icon: Box, label: 'DIGITAL TWIN', badge: '3D', highlight: true },
     { to: '/webcam-tracker', icon: Camera, label: 'LIVE WEBCAM AI', badge: 'LIVE', highlight: true },
-    { to: '/sonar', icon: Radio, label: 'SONAR WORKSTATION' },
-    { to: '/active-learning', icon: Brain, label: 'ACTIVE LEARNING', badge: 'HITL', highlight: true },
-    { to: '/missions', icon: Compass, label: 'MISSIONS & GIS' },
-    { to: '/detections', icon: Crosshair, label: 'DETECTIONS', badge: '142' },
+    { to: '/detections', icon: Crosshair, label: 'DETECTIONS' },
     { to: '/analytics', icon: BarChart3, label: 'INTELLIGENCE' },
   ];
 
@@ -121,7 +116,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
               </span>
             </div>
             <div className="text-slate-400 dark:text-slate-400 light:text-slate-600 text-[9px] truncate font-medium">
-              YOLOv11 + SAM2 (TensorRT)
+              HydroPhys-OmniNet (CAW-SSM)
             </div>
           </div>
         )}
@@ -129,7 +124,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
         <div className="flex items-center justify-between pt-1">
           {!collapsed && (
             <span className="text-[9px] text-slate-500 dark:text-slate-500 light:text-slate-400 font-mono tracking-wider font-semibold">
-              ECHOPULSENET v4.5 PRO
+              ECHOPULSENET SIH26057
             </span>
           )}
           <button

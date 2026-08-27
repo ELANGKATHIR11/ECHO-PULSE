@@ -37,6 +37,6 @@ class BathymetryService:
             gridWidth=width,
             gridHeight=height,
             elevations=elevations,
-            source="backend",
-            synthetic=False
+            source="procedural_demo",
+            synthetic=True
         )

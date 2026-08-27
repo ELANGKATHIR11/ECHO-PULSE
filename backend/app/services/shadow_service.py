@@ -48,48 +48,82 @@ class ShadowGeometryAnalyzer:
     def compute_acoustic_shadow(
         target_bbox: Dict[str, float],
         shadow_mask: np.ndarray,
-        sensor_altitude_m: float = 8.0,
+        sensor_altitude_m: Optional[float] = 8.0,
         slant_range_m: float = 25.0,
-        m_per_pixel: float = 0.05
+        m_per_pixel: float = 0.05,
+        is_port_channel: Optional[bool] = None
     ) -> AcousticShadow:
         tx, ty, tw, th = int(target_bbox["x"]), int(target_bbox["y"]), int(target_bbox["width"]), int(target_bbox["height"])
         img_h, img_w = shadow_mask.shape[:2]
+        center_x = img_w / 2.0
         
-        # Search region behind target along acoustic propagation axis (assuming horizontal range outwards)
-        search_x1 = min(img_w - 1, tx + tw)
-        search_x2 = min(img_w, tx + tw + int(tw * 3.5))
+        # Determine acoustic propagation vector: away from nadir centerline
+        # In standard dual-channel side-scan, nadir is at center_x.
+        # Port channel (left half): shadow casts leftwards (away from center).
+        # Starboard channel (right half): shadow casts rightwards (away from center).
+        if is_port_channel is None:
+            is_port = (tx + tw / 2.0) < center_x
+        else:
+            is_port = is_port_channel
+
+        if is_port:
+            # Shadow propagates leftwards
+            search_x1 = max(0, tx - int(tw * 3.5))
+            search_x2 = max(0, tx)
+        else:
+            # Shadow propagates rightwards
+            search_x1 = min(img_w - 1, tx + tw)
+            search_x2 = min(img_w, tx + tw + int(tw * 3.5))
+
         search_y1 = max(0, ty - 10)
         search_y2 = min(img_h, ty + th + 10)
         
+        if search_x2 <= search_x1 or search_y2 <= search_y1:
+            return AcousticShadow(
+                lengthMeters=0.0,
+                angleDeg=0.0,
+                shadowRatio=0.0,
+                shadowConfidence=0.0,
+                estimatedHeightMeters=None,
+                polygon=[]
+            )
+
         region = shadow_mask[search_y1:search_y2, search_x1:search_x2]
         if region.size == 0:
             return AcousticShadow(
-                lengthMeters=round(tw * m_per_pixel * 1.5, 2),
+                lengthMeters=0.0,
                 angleDeg=0.0,
-                shadowRatio=1.5,
-                shadowConfidence=0.75,
-                estimatedHeightMeters=1.2,
+                shadowRatio=0.0,
+                shadowConfidence=0.0,
+                estimatedHeightMeters=None,
                 polygon=[]
             )
             
         contours, _ = cv2.findContours(region, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        if not contours:
+        # Filter tiny 1-2px noise
+        valid_contours = [c for c in contours if cv2.contourArea(c) >= 12]
+        if not valid_contours:
             return AcousticShadow(
-                lengthMeters=round(tw * m_per_pixel * 1.5, 2),
+                lengthMeters=0.0,
                 angleDeg=0.0,
-                shadowRatio=1.5,
-                shadowConfidence=0.70,
-                estimatedHeightMeters=1.2,
+                shadowRatio=0.0,
+                shadowConfidence=0.0,
+                estimatedHeightMeters=None,
                 polygon=[]
             )
             
-        largest_cnt = max(contours, key=cv2.contourArea)
+        largest_cnt = max(valid_contours, key=cv2.contourArea)
         sx, sy, sw, sh = cv2.boundingRect(largest_cnt)
-        shadow_length_m = max(0.5, float(sw * m_per_pixel))
+        shadow_length_m = max(0.1, float(sw * m_per_pixel))
         
         # Physical Target Height estimation: H_t = (L_s * H_a) / (R_s + L_s)
-        estimated_height_m = (shadow_length_m * sensor_altitude_m) / max(1.0, (slant_range_m + shadow_length_m))
-        shadow_ratio = float(sw / max(1, tw))
+        if sensor_altitude_m is not None and sensor_altitude_m > 0 and slant_range_m > 0:
+            estimated_height_m = round((shadow_length_m * sensor_altitude_m) / max(1.0, (slant_range_m + shadow_length_m)), 2)
+        else:
+            estimated_height_m = None
+
+        shadow_ratio = round(float(sw / max(1, tw)), 2)
+        shadow_confidence = round(float(np.clip(0.40 + (sw / max(1, tw)) * 0.20 + (cv2.contourArea(largest_cnt) / (sw * sh + 1e-5)) * 0.20, 0.20, 0.95)), 2)
         
         # Polygon mapped back to original image space
         poly = [{"x": float(pt[0][0] + search_x1), "y": float(pt[0][1] + search_y1)} for pt in largest_cnt]
@@ -97,8 +131,8 @@ class ShadowGeometryAnalyzer:
         return AcousticShadow(
             lengthMeters=round(shadow_length_m, 2),
             angleDeg=round(float(math.degrees(math.atan2(sh, max(1, sw)))), 1),
-            shadowRatio=round(shadow_ratio, 2),
-            shadowConfidence=round(min(0.98, 0.65 + (sw / max(1, tw)) * 0.1), 2),
-            estimatedHeightMeters=round(estimated_height_m, 2),
+            shadowRatio=shadow_ratio,
+            shadowConfidence=shadow_confidence,
+            estimatedHeightMeters=estimated_height_m,
             polygon=poly[:25] # top 25 points for serialization efficiency
         )
