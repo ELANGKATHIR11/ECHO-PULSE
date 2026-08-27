@@ -1,0 +1,159 @@
+{
+  "model_name": "EchoPhys-X-SSS640 (Unified Multi-Dataset Engine)",
+  "device": "NVIDIA GeForce RTX 5060 Laptop GPU",
+  "parameters": 1289290,
+  "parameters_m": 1.29,
+  "latency_ms": 5.39,
+  "fps": 185.4,
+  "training_time_sec": 645.87,
+  "epochs": 10,
+  "batch_size": 4,
+  "num_classes": 6,
+  "class_names": [
+    "human_diver",
+    "electrical_cable",
+    "electronics_ewaste",
+    "plastic_debris",
+    "metal_wreck_scrap",
+    "geological_exclusion"
+  ],
+  "total_train_samples": 2481,
+  "total_val_samples": 1548,
+  "final_validation_metrics": {
+    "mAP50": 0.007,
+    "mAP50_95": 0.0041,
+    "precision": 0.2178,
+    "recall": 0.0188,
+    "f1": 0.0346,
+    "total_ground_truth": 2339,
+    "scale_metrics": {
+      "AP_small": 0.0,
+      "AP_medium": 0.0,
+      "AP_large": 0.0271,
+      "gt_counts": {
+        "small": 168,
+        "medium": 549,
+        "large": 1622
+      }
+    },
+    "per_class": {
+      "human_diver": {
+        "AP50": 0.0,
+        "AP50_95": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      },
+      "electrical_cable": {
+        "AP50": 0.0017,
+        "AP50_95": 0.0012,
+        "precision": 0.125,
+        "recall": 0.0019,
+        "f1": 0.0037,
+        "support": 533,
+        "predicted": 8
+      },
+      "electronics_ewaste": {
+        "AP50": 0.0,
+        "AP50_95": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      },
+      "plastic_debris": {
+        "AP50": 0.0215,
+        "AP50_95": 0.0114,
+        "precision": 0.2211,
+        "recall": 0.0638,
+        "f1": 0.0991,
+        "support": 658,
+        "predicted": 190
+      },
+      "metal_wreck_scrap": {
+        "AP50": 0.005,
+        "AP50_95": 0.004,
+        "precision": 0.25,
+        "recall": 0.001,
+        "f1": 0.002,
+        "support": 992,
+        "predicted": 4
+      },
+      "geological_exclusion": {
+        "AP50": 0.0,
+        "AP50_95": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 156,
+        "predicted": 0
+      }
+    },
+    "confusion_matrix": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        42,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        7,
+        0,
+        148,
+        3,
+        0,
+        0
+      ]
+    ]
+  }
+}

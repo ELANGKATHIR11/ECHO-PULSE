@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { GlassCard, GlassBadge, GlassButton } from '../components/glass/GlassCard';
 
-export type ModelType = 'HYDROPHYS_OMNINET' | 'ECHOPHYS_X_V3' | 'HYBRID_ENSEMBLE' | 'YOLOV12';
+export type ModelType = 'ECHOPHYS_X_SSS640' | 'ECHOPHYS_X_PHYSICS' | 'HYDROPHYS_OMNINET' | 'YOLOV12';
 
 interface SubBottomLayer {
   layer: string;
@@ -77,55 +77,55 @@ const MODEL_CONFIGS: Record<ModelType, {
   accentColor: string;
   features: string[];
 }> = {
+  ECHOPHYS_X_SSS640: {
+    name: 'EchoPhys-X-SSS640',
+    tagline: '5-Channel Acoustic Proxies + Directional SSM-Mixer + BiFPN',
+    badge: 'BENCHMARK DL',
+    badgeVariant: 'cyan',
+    params: '1.29M',
+    fps: '185.4 FPS',
+    map50: 'Evaluated (Multi-Dataset)',
+    backbone: '5-Channel Acoustic Proxies + Directional State-Space Inspired Mixer + BiFPN',
+    accentColor: 'text-cyan-400',
+    features: [
+      '5-Channel Calibrated Acoustic Backscatter & Proxies',
+      'Bounded Directional State-Space Inspired Mixer (SSM-Mixer)',
+      'Weighted Multi-Scale BiFPN (P3: 80x80, P4: 40x40, P5: 20x20)',
+      'Scale-Adaptive CIoU & Center-Region Target Assignment'
+    ]
+  },
+  ECHOPHYS_X_PHYSICS: {
+    name: 'EchoPhys-X-Physics',
+    tagline: 'In-Situ Oceanographic Telemetry Conditioned Detector',
+    badge: 'PHYSICS-CTD',
+    badgeVariant: 'purple',
+    params: '1.29M',
+    fps: '178.5 FPS',
+    map50: 'Physical In-Situ',
+    backbone: 'Mackenzie Sound Speed c(T,S,P) + Ainslie-McColm TL + Grazing Angle Field',
+    accentColor: 'text-purple-400',
+    features: [
+      'Genuine Mackenzie (1981) Seawater Sound Speed Equation',
+      'Ainslie-McColm Multirelaxation Acoustic Attenuation Field',
+      'Bathymetric Grazing Angle Geometry Correction',
+      'Dual-Swath Volumetric Geometric Ray-Projection'
+    ]
+  },
   HYDROPHYS_OMNINET: {
     name: 'HydroPhys-OmniNet Extreme',
     tagline: 'Continuous Wavelet State-Space Mamba Architecture',
     badge: 'FLAGSHIP DL',
-    badgeVariant: 'cyan',
+    badgeVariant: 'emerald',
     params: '1.61M',
     fps: '172.2 FPS',
-    map50: '83.15%',
+    map50: 'Multi-Modal',
     backbone: 'Continuous Adaptive Wavelet SSM (CAW-SSM) + Dual Swath Inversion',
-    accentColor: 'text-cyan-400',
+    accentColor: 'text-emerald-400',
     features: [
       'Dual-Swath Port/Starboard Continuous State Space',
       'Continuous Wavelet Multiresolution Strata Inversion',
       'Physics-Informed Acoustic Transmission Loss Loss-Function',
       'Multi-Scale 1D/2D/3D Direct Volumetric Projection'
-    ]
-  },
-  ECHOPHYS_X_V3: {
-    name: 'EchoPhys-X v3 Unified',
-    tagline: '8-Channel Physics-Informed Bi-Directional Mamba Scanner',
-    badge: 'PHYSICS-SSM',
-    badgeVariant: 'purple',
-    params: '1.56M',
-    fps: '173.8 FPS',
-    map50: '80.45%',
-    backbone: '8-Channel Acoustic Physics Tensor + BiMamba Spatial Vision Backbone',
-    accentColor: 'text-purple-400',
-    features: [
-      '8-Channel Spatial-Acoustic Physics Tensor Integration',
-      'Bi-Directional Mamba (BiMamba) Benthic Swath Scanning',
-      'Direct Volumetric Ray-Projector & Elevation Estimation',
-      'Lambertian Backscatter Reflectance Angle Correction'
-    ]
-  },
-  HYBRID_ENSEMBLE: {
-    name: 'Hybrid Multi-Model Cross-Fusion',
-    tagline: 'Dual Architecture Physics & Continuous Wavelet Verification',
-    badge: 'MAX ACCURACY',
-    badgeVariant: 'emerald',
-    params: '3.17M Combined',
-    fps: '148.5 FPS',
-    map50: '86.20%',
-    backbone: 'HydroPhys-OmniNet + EchoPhys-X v3 Cross-Attention Fusion',
-    accentColor: 'text-emerald-400',
-    features: [
-      'Consensus Agreement Filtering for Zero-False-Alarm Target ID',
-      'Combined 1D Acoustic Strata & 3D Bathymetric Inversion',
-      'Dynamic Physics Weight Calibration & Shadow Cross-Validation',
-      'Highest Strictness SIH26057 Industrial Verification'
     ]
   },
   YOLOV12: {
@@ -135,7 +135,7 @@ const MODEL_CONFIGS: Record<ModelType, {
     badgeVariant: 'amber',
     params: '1.12M',
     fps: '185.0 FPS',
-    map50: '78.90%',
+    map50: 'Edge Real-Time',
     backbone: 'Area-Attention A2C2F + FlashAttn-v2',
     accentColor: 'text-amber-400',
     features: [
@@ -154,7 +154,7 @@ export const RawSonarUploadPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'ANNOTATED' | '3D_INVERSION' | '1D_STRATA' | 'MODEL_METRICS'>('ANNOTATED');
   
   // Model Selection State
-  const [selectedModel, setSelectedModel] = useState<ModelType>('HYDROPHYS_OMNINET');
+  const [selectedModel, setSelectedModel] = useState<ModelType>('ECHOPHYS_X_SSS640');
 
   // Guardrail Configuration States
   const [guardrailStrictness, setGuardrailStrictness] = useState<number>(0.45);

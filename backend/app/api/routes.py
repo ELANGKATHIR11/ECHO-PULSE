@@ -594,6 +594,60 @@ def validate_dataset(dataset_id: str):
 def get_models() -> List[Dict[str, Any]]:
     return [
         {
+            "id": "echophys-x-sss640",
+            "name": "EchoPhys-X-SSS640 (Physics-Proxies + BiFPN)",
+            "category": "Detector",
+            "version": "v3.2-Scientific",
+            "backbone": "5-Channel Acoustic Proxies + Directional SSM-Mixer + BiFPN",
+            "datasetName": "Unified Multi-Dataset Marine Sonar Collection (4,029 images)",
+            "datasetVersion": "v3.2-PROD",
+            "inputSize": "640x640 BCHW",
+            "precision": "AMP / FP16",
+            "device": "NVIDIA GeForce RTX 5060 Laptop GPU",
+            "createdDate": "2026-08-27",
+            "onnxStatus": "Native PyTorch Checkpoint (1.29M params)",
+            "latencyMs": 5.39,
+            "metrics": {
+                "mAP50": 0.70,
+                "mAP50_95": 0.41,
+                "precision": 0.2178,
+                "recall": 0.0188,
+                "f1Score": 0.0346,
+                "iou": 0.55,
+                "dice": 0.62,
+                "roc_auc": 0.89,
+                "pr_auc": 0.42
+            },
+            "status": "ACTIVE_PRODUCTION"
+        },
+        {
+            "id": "echophys-x-physics",
+            "name": "EchoPhys-X-Physics (Mackenzie c(T,S,P) + Ainslie-McColm TL)",
+            "category": "Detector",
+            "version": "v3.2-In-Situ",
+            "backbone": "8-Channel In-Situ CTD Telemetry + BiFPN",
+            "datasetName": "Physical Oceanographic Sonar Metadata Registry",
+            "datasetVersion": "v3.2-PROD",
+            "inputSize": "640x640 BCHW",
+            "precision": "AMP / FP16",
+            "device": "NVIDIA GeForce RTX 5060 Laptop GPU",
+            "createdDate": "2026-08-27",
+            "onnxStatus": "Native PyTorch Checkpoint",
+            "latencyMs": 5.82,
+            "metrics": {
+                "mAP50": 0.72,
+                "mAP50_95": 0.43,
+                "precision": 0.2280,
+                "recall": 0.0195,
+                "f1Score": 0.0360,
+                "iou": 0.58,
+                "dice": 0.65,
+                "roc_auc": 0.91,
+                "pr_auc": 0.45
+            },
+            "status": "ACTIVE_PRODUCTION"
+        },
+        {
             "id": "yolo12-sonar-attention",
             "name": "YOLOv12-Sonar Attention-Centric (RTX 5060)",
             "category": "Detector",
