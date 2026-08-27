@@ -21,8 +21,8 @@ app.add_middleware(
 )
 
 # Mount uploaded crops/sonar artifacts
-os.makedirs("uploads", exist_ok=True)
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+os.makedirs(settings.UPLOADS_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=settings.UPLOADS_DIR), name="uploads")
 
 # Include routes under /api/v1 and /api
 app.include_router(router, prefix=settings.API_V1_STR)

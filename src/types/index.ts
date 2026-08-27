@@ -1,4 +1,10 @@
 export type DetectionClass =
+  | 'human'
+  | 'electrical'
+  | 'electronic'
+  | 'plastic'
+  | 'metal_scrap'
+  | 'not_a_debris'
   | 'ghost_gear'
   | 'shipwreck'
   | 'unexploded_ordnance'
@@ -70,6 +76,10 @@ export interface Detection {
   rawCropUrl?: string;
   notes?: string;
   verifiedStatus: 'UNVERIFIED' | 'CONFIRMED' | 'FALSE_POSITIVE';
+  guardrailPassed?: boolean;
+  guardrailCategory?: string;
+  isDebris?: boolean;
+  guardrailReason?: string;
 }
 
 export interface TrackPoint {

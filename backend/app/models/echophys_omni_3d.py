@@ -13,9 +13,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 # Ensure workspace root in path
-workspace_root = Path(__file__).resolve().parent.parent.parent.parent
+workspace_root = Path(__file__).resolve().parents[3]
 if str(workspace_root) not in sys.path:
     sys.path.insert(0, str(workspace_root))
+
+from scripts.train_echophys_x_v3 import EchoPhysXV3, make_physics_acoustic_tensor, AcousticBiMamba
+
 
 # ==============================================================================
 # EchoPhys-Omni-3D: Unified 1D Signal, 2D Instance Segmentation & 3D Scanning Vision Engine

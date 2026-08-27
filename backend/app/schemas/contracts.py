@@ -73,7 +73,10 @@ class DetectionSchema(BaseModel):
     verifiedStatus: str = "UNVERIFIED"
     source: str = "backend"
     synthetic: bool = False
-
+    guardrailPassed: bool = True
+    guardrailCategory: str = "PLASTIC"
+    isDebris: bool = True
+    guardrailReason: Optional[str] = None
 
     model_config = ConfigDict(populate_by_name=True)
 

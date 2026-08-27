@@ -399,42 +399,77 @@ export const RawSonarUploadPage: React.FC = () => {
                 {activeTab === 'METRICS' && (
                   <div className="space-y-2.5 max-h-[460px] overflow-y-auto pr-1">
                     {result.detections && result.detections.length > 0 ? (
-                      result.detections.map((det, idx) => (
-                        <div
-                          key={det.id || idx}
-                          className="p-3 rounded-xl bg-[#020712]/80 border border-cyan-900/40 flex items-center justify-between text-xs hover:border-cyan-500/50 transition-all"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-lg bg-black/60 border border-cyan-900/40 overflow-hidden flex items-center justify-center shrink-0">
-                              {det.imageCropUrl ? (
-                                <img src={det.imageCropUrl} alt="crop" className="w-full h-full object-cover" />
+                      result.detections.map((det, idx) => {
+                        const isDebris = det.isDebris !== false;
+                        const cat = det.guardrailCategory || (isDebris ? 'PLASTIC' : 'NOT_A_DEBRIS');
+                        const catColors: Record<string, string> = {
+                          HUMAN: 'border-emerald-500/50 text-emerald-400 bg-emerald-500/10',
+                          ELECTRICAL: 'border-amber-500/50 text-amber-400 bg-amber-500/10',
+                          ELECTRONIC: 'border-rose-500/50 text-rose-400 bg-rose-500/10',
+                          PLASTIC: 'border-cyan-500/50 text-cyan-400 bg-cyan-500/10',
+                          METAL_SCRAP: 'border-orange-500/50 text-orange-400 bg-orange-500/10',
+                          NOT_A_DEBRIS: 'border-slate-600 text-slate-400 bg-slate-800/30'
+                        };
+                        const badgeStyle = catColors[cat] || catColors.PLASTIC;
+
+                        return (
+                          <div
+                            key={det.id || idx}
+                            className={`p-3 rounded-xl bg-[#020712]/80 border ${isDebris ? 'border-cyan-900/40 hover:border-cyan-500/50' : 'border-slate-800 opacity-75'} flex items-center justify-between text-xs transition-all`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-12 h-12 rounded-lg bg-black/60 border border-cyan-900/40 overflow-hidden flex items-center justify-center shrink-0">
+                                {det.imageCropUrl ? (
+                                  <img src={det.imageCropUrl} alt="crop" className="w-full h-full object-cover" />
+                                ) : (
+                                  <Crosshair className="w-5 h-5 text-cyan-400" />
+                                )}
+                              </div>
+                              <div>
+                                <div className="font-bold text-white flex items-center gap-2">
+                                  <span>{det.classNameLabel || det.class}</span>
+                                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${badgeStyle}`}>
+                                    {cat}
+                                  </span>
+                                  <GlassBadge variant="cyan" size="sm">
+                                    {Math.round(det.confidence * 100)}% CONF
+                                  </GlassBadge>
+                                </div>
+                                <p className="text-[10px] text-slate-400 mt-0.5">
+                                  GPS: {det.latitude?.toFixed(5) || '9.15240'}, {det.longitude?.toFixed(5) || '79.28190'} • Range: {det.slantRangeMeters || 25}m • H: {det.acousticShadow?.estimatedHeightMeters || 1.2}m
+                                </p>
+                                {det.guardrailReason && (
+                                  <p className="text-[9px] text-slate-500 italic mt-0.5">
+                                    {det.guardrailReason}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="text-right">
+                              {isDebris ? (
+                                <>
+                                  <span className="text-[10px] text-emerald-400 font-mono font-bold block">
+                                    GUARDRAIL PASS
+                                  </span>
+                                  <span className="text-[10px] text-slate-400">
+                                    Verified Debris Target
+                                  </span>
+                                </>
                               ) : (
-                                <Crosshair className="w-5 h-5 text-cyan-400" />
+                                <>
+                                  <span className="text-[10px] text-slate-400 font-mono font-bold block">
+                                    NOT A DEBRIS
+                                  </span>
+                                  <span className="text-[10px] text-slate-500">
+                                    Natural / Excluded Clutter
+                                  </span>
+                                </>
                               )}
                             </div>
-                            <div>
-                              <div className="font-bold text-white flex items-center gap-2">
-                                <span>{det.classNameLabel || det.class}</span>
-                                <GlassBadge variant="cyan" size="sm">
-                                  {Math.round(det.confidence * 100)}% CONF
-                                </GlassBadge>
-                              </div>
-                              <p className="text-[10px] text-slate-400 mt-0.5">
-                                GPS: {det.latitude?.toFixed(5) || '9.15240'}, {det.longitude?.toFixed(5) || '79.28190'} • Range: {det.slantRangeMeters || 25}m • H: {det.acousticShadow?.estimatedHeightMeters || 1.2}m
-                              </p>
-                            </div>
                           </div>
-
-                          <div className="text-right">
-                            <span className="text-[10px] text-emerald-400 font-mono font-bold block">
-                              GUARDRAIL PASS
-                            </span>
-                            <span className="text-[10px] text-slate-500">
-                              Verified Debris
-                            </span>
-                          </div>
-                        </div>
-                      ))
+                        );
+                      })
                     ) : (
                       <div className="p-8 text-center text-slate-500 text-xs">
                         No targets passed the strict debris guardrail threshold.

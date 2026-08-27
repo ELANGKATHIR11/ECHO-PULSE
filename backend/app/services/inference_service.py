@@ -13,6 +13,8 @@ from ..models.ai_models import (
     AcousticAngularReflectanceAttention, ShadowHighlightCrossAttention
 )
 from ..schemas.contracts import DetectionSchema, BoundingBox, DetectionGeometry
+from ..services.guardrails_service import HeavyDebrisGuardrailEngine, TARGET_CLASS_MAPPING
+from ..core.config import settings
 
 try:
     from ultralytics import YOLO
@@ -119,7 +121,7 @@ class UnifiedInferenceService:
         }
         
         detections: List[DetectionSchema] = []
-        os.makedirs("uploads", exist_ok=True)
+        os.makedirs(settings.UPLOADS_DIR, exist_ok=True)
         
         # 1. Primary Object Detection via HydroPhys-OmniNet & Attention-Centric YOLOv12
         yolo_boxes = []
@@ -212,19 +214,12 @@ class UnifiedInferenceService:
 
                 
         # 3. Process candidate bounding boxes with HEAVY DEBRIS GUARDRAILS
-        # Guardrail criteria:
-        # - Must exhibit compact highlight signature (not broad natural sand wave)
-        # - Must have acoustic shadow or distinct morphological edge (reject flat clutter)
-        # - Aspect ratio and size must match anthropogenic profiles
-        # - High multi-factor fusion confidence (>= 0.40)
-        
+        # Strict 5-Class Target Policy: Humans, Electrical, Electronic, Plastic, Metal Scraps
         annotated_img = cv2.cvtColor(enhanced, cv2.COLOR_GRAY2BGR)
         
         for idx, (x, y, w, h, cls_idx, det_confidence) in enumerate(yolo_boxes[:12]):
-            # Guardrail 1: Minimum & Maximum Dimension Filter
-            if w < 8 or h < 8 or (w > enhanced.shape[1] * 0.7 and h > enhanced.shape[0] * 0.7):
-                continue # Reject full-screen gradients or microscopic single-pixel noise
-                
+            raw_class_key, raw_class_label = CLASS_MAPPINGS.get(cls_idx, ("marine_debris", "Marine Anthropogenic Debris"))
+            
             # Synthesize contour mask for geometry analyzer
             dummy_cnt = np.array([[[x, y]], [[x+w, y]], [[x+w, y+h]], [[x, y+h]]], dtype=np.int32)
             geometry = ShadowGeometryAnalyzer.analyze_geometry(dummy_cnt)
@@ -261,14 +256,23 @@ class UnifiedInferenceService:
                 quality_score=quality_score
             )
             
-            # Guardrail 2: Hard Confidence & Debris Separation Threshold
-            if fused_confidence < 0.38:
-                continue # Suppress non-debris geological clutter
-                
-            class_id, class_label = CLASS_MAPPINGS.get(cls_idx, ("marine_debris", "Marine Anthropogenic Debris"))
+            # --- EVALUATE THROUGH HEAVY DEBRIS GUARDRAIL ENGINE ---
+            guardrail_res = HeavyDebrisGuardrailEngine.evaluate_target(
+                raw_class_name=raw_class_key,
+                confidence=fused_confidence,
+                bbox=(x, y, w, h),
+                image_shape=enhanced.shape,
+                shadow_strength=shadow_score,
+                anomaly_sharpness=anomaly_score
+            )
             
-            # Guardrail 3: Filter out purely biological/geological if user demands debris-only focus
-            is_anthropogenic = class_id in ["ghost_gear", "marine_debris", "shipwreck", "unexploded_ordnance", "pipeline_anomaly", "subsea_cable"]
+            is_debris = guardrail_res["is_debris"]
+            guardrail_passed = guardrail_res["passed"]
+            guardrail_cat = guardrail_res["target_category"]
+            class_id = guardrail_res["class_id"]
+            class_label = guardrail_res["class_label"]
+            r_c, g_c, b_c = guardrail_res["color_rgb"]
+            box_color = (b_c, g_c, r_c) # OpenCV BGR
             
             # Geotagging WGS84
             target_lat, target_lng, geo_conf = GeotaggingService.calculate_wgs84_position(
@@ -280,43 +284,34 @@ class UnifiedInferenceService:
                 is_port_channel=(x < enhanced.shape[1] / 2)
             )
             
-            # Draw Bounding Box & HUD Label directly on Annotated Image
-            # Color palette (BGR): Ghost Gear = Emerald (0, 220, 80), Shipwreck = Amber (0, 140, 255), Debris = Cyan (255, 200, 0), UXO = Crimson (40, 40, 240)
-            if class_id == "ghost_gear":
-                box_color = (80, 220, 0)
-            elif class_id == "shipwreck":
-                box_color = (0, 140, 255)
-            elif class_id == "unexploded_ordnance":
-                box_color = (40, 40, 240)
+            # Draw visual bounding box & HUD label on Annotated Image
+            line_thickness = 2 if is_debris else 1
+            cv2.rectangle(annotated_img, (x, y), (x + w, y + h), box_color, line_thickness)
+
+            if is_debris:
+                # Draw corner brackets for cyber HUD visual effect
+                c_len = min(16, max(4, int(min(w, h) * 0.25)))
+                cv2.line(annotated_img, (x, y), (x + c_len, y), (255, 255, 255), 3)
+                cv2.line(annotated_img, (x, y), (x, y + c_len), (255, 255, 255), 3)
+                cv2.line(annotated_img, (x + w, y), (x + w - c_len, y), (255, 255, 255), 3)
+                cv2.line(annotated_img, (x + w, y), (x + w, y + c_len), (255, 255, 255), 3)
+                cv2.line(annotated_img, (x, y + h), (x + c_len, y + h), (255, 255, 255), 3)
+                cv2.line(annotated_img, (x, y + h), (x, y + h - c_len), (255, 255, 255), 3)
+                cv2.line(annotated_img, (x + w, y + h), (x + w - c_len, y + h), (255, 255, 255), 3)
+                cv2.line(annotated_img, (x + w, y + h), (x + w, y + h - c_len), (255, 255, 255), 3)
+                label_text = f"[{guardrail_cat}] {class_label.split('/')[0].strip()} ({int(fused_confidence*100)}%)"
             else:
-                box_color = (255, 180, 0)
+                label_text = f"[NOT DEBRIS] {class_label.split('/')[0].strip()}"
 
-            # Draw prominent outer box with thickness
-            cv2.rectangle(annotated_img, (x, y), (x + w, y + h), box_color, 2)
-
-            # Draw corner brackets for cyber HUD visual effect
-            c_len = min(16, max(4, int(min(w, h) * 0.25)))
-            cv2.line(annotated_img, (x, y), (x + c_len, y), (255, 255, 255), 3)
-            cv2.line(annotated_img, (x, y), (x, y + c_len), (255, 255, 255), 3)
-            cv2.line(annotated_img, (x + w, y), (x + w - c_len, y), (255, 255, 255), 3)
-            cv2.line(annotated_img, (x + w, y), (x + w, y + c_len), (255, 255, 255), 3)
-            cv2.line(annotated_img, (x, y + h), (x + c_len, y + h), (255, 255, 255), 3)
-            cv2.line(annotated_img, (x, y + h), (x, y + h - c_len), (255, 255, 255), 3)
-            cv2.line(annotated_img, (x + w, y + h), (x + w - c_len, y + h), (255, 255, 255), 3)
-            cv2.line(annotated_img, (x + w, y + h), (x + w, y + h - c_len), (255, 255, 255), 3)
-
-            # Label badge with dark background for crystal clear readability
-            label_text = f"{class_label.split('/')[0].strip()} ({int(fused_confidence*100)}%)"
-            (lbl_w, lbl_h), baseline = cv2.getTextSize(label_text, cv2.FONT_HERSHEY_SIMPLEX, 0.42, 1)
+            (lbl_w, lbl_h), baseline = cv2.getTextSize(label_text, cv2.FONT_HERSHEY_SIMPLEX, 0.40, 1)
             lbl_y = max(lbl_h + 4, y - 4)
             cv2.rectangle(annotated_img, (x, lbl_y - lbl_h - 4), (x + lbl_w + 6, lbl_y + baseline), (2, 7, 18), -1)
             cv2.rectangle(annotated_img, (x, lbl_y - lbl_h - 4), (x + lbl_w + 6, lbl_y + baseline), box_color, 1)
-            cv2.putText(annotated_img, label_text, (x + 3, lbl_y - 2), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (255, 255, 255), 1, cv2.LINE_AA)
-
+            cv2.putText(annotated_img, label_text, (x + 3, lbl_y - 2), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (255, 255, 255), 1, cv2.LINE_AA)
             
             # Crop image save
             crop_filename = f"crop_{uuid.uuid4().hex[:8]}.png"
-            crop_path = os.path.join("uploads", crop_filename)
+            crop_path = os.path.join(settings.UPLOADS_DIR, crop_filename)
             crop_img = enhanced[max(0, y-10):min(enhanced.shape[0], y+h+10), max(0, x-10):min(enhanced.shape[1], x+w+10)]
             if crop_img.size > 0:
                 cv2.imwrite(crop_path, crop_img)
@@ -346,14 +341,18 @@ class UnifiedInferenceService:
                 pingIndex=nav["ping"],
                 modelVersion="YOLOv12-Sonar Attention RTX5060",
                 imageCropUrl=f"/uploads/{crop_filename}",
-                verificationStatus="UNVERIFIED",
-                operatorNotes=f"Guardrail verified anthropogenic debris. Estimated height: {shadow_obj.estimatedHeightMeters or 1.2}m"
+                verificationStatus="CONFIRMED" if is_debris else "FALSE_POSITIVE",
+                guardrailPassed=guardrail_passed,
+                guardrailCategory=guardrail_cat,
+                isDebris=is_debris,
+                guardrailReason=guardrail_res["reason"],
+                notes=f"Heavy Guardrail: {guardrail_res['reason']}"
             ))
 
             
         # Save full annotated image
         annotated_filename = f"annotated_{uuid.uuid4().hex[:8]}.png"
-        cv2.imwrite(os.path.join("uploads", annotated_filename), annotated_img)
+        cv2.imwrite(os.path.join(settings.UPLOADS_DIR, annotated_filename), annotated_img)
         self.last_annotated_url = f"/uploads/{annotated_filename}"
 
         # Sync detections to PostgreSQL / PostGIS Spatial Database

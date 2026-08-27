@@ -1,0 +1,126 @@
+{
+  "generated_at": "2026-08-27T03:55:25Z",
+  "scraper_version": "2.6.0-SONAR-DEBRIS-ACQ",
+  "git_datasets": [
+    {
+      "dataset_name": "MarineDebrisFLS",
+      "source_url": "https://github.com/mvaldenegro/marine-debris-fls-datasets.git",
+      "description": "Forward-Looking Sonar Marine Debris Dataset (bottles, cans, pipes, plastic, tires) - Valdenegro-Toro et al.",
+      "status": "ACQUIRED",
+      "file_count": 18252,
+      "total_megabytes": 1460.13,
+      "elapsed_seconds": 4.91,
+      "sample_files": [
+        "data\\downloaded\\MarineDebrisFLS\\md_fls_dataset\\data\\watertank-segmentation\\img.png",
+        "data\\downloaded\\MarineDebrisFLS\\md_fls_dataset\\data\\quarry-fullsize\\2016-06-22_113541\\2016-06-22_113541-frame00000.png",
+        "data\\downloaded\\MarineDebrisFLS\\md_fls_dataset\\data\\quarry-fullsize\\2016-06-22_113541\\2016-06-22_113541-frame00001.png",
+        "data\\downloaded\\MarineDebrisFLS\\md_fls_dataset\\data\\quarry-fullsize\\2016-06-22_113541\\2016-06-22_113541-frame00002.png",
+        "data\\downloaded\\MarineDebrisFLS\\md_fls_dataset\\data\\quarry-fullsize\\2016-06-22_113541\\2016-06-22_113541-frame00003.png"
+      ]
+    },
+    {
+      "dataset_name": "SeabedObjects_KLSG",
+      "source_url": "https://github.com/huoguanying/SeabedObjects-Ship-and-Airplane-dataset.git",
+      "description": "Side-Scan Sonar Seabed Targets: Shipwrecks, Aircraft, Seafloor metallic structures and debris.",
+      "status": "ACQUIRED",
+      "file_count": 0,
+      "total_megabytes": 47.78,
+      "elapsed_seconds": 1.03,
+      "sample_files": []
+    },
+    {
+      "dataset_name": "GhostVision_CrabPots",
+      "source_url": "https://github.com/cameronbodine/GhostVision.git",
+      "description": "PINGEcosystem SSS derelict fishing gear (ghost pots, nets) annotations and acoustic samples.",
+      "status": "ACQUIRED",
+      "file_count": 1,
+      "total_megabytes": 0.11,
+      "elapsed_seconds": 1.05,
+      "sample_files": [
+        "data\\downloaded\\GhostVision\\ghostvision\\default_params.json"
+      ]
+    },
+    {
+      "dataset_name": "NNSSS_Seabed",
+      "source_url": "https://github.com/aburguera/NNSSS.git",
+      "description": "Real side-scan sonar acoustic survey segmentation data (rock, sand, ripple fields, seafloor anomalies).",
+      "status": "ACQUIRED",
+      "file_count": 21,
+      "total_megabytes": 3.39,
+      "elapsed_seconds": 0.88,
+      "sample_files": [
+        "data\\downloaded\\NNSSS\\RESULTS\\CONFMATR.TXT",
+        "data\\downloaded\\NNSSS\\DATASET\\DATA\\TRAN00.png",
+        "data\\downloaded\\NNSSS\\DATASET\\DATA\\TRAN01.png",
+        "data\\downloaded\\NNSSS\\DATASET\\DATA\\TRAN02.png",
+        "data\\downloaded\\NNSSS\\DATASET\\DATA\\TRAN03.png"
+      ]
+    },
+    {
+      "dataset_name": "OpenSonarDatasets_Registry",
+      "source_url": "https://github.com/remaro-network/OpenSonarDatasets.git",
+      "description": "REMARO open sonar benchmark dataset registry and underwater robotics sensor logs.",
+      "status": "ACQUIRED",
+      "file_count": 1,
+      "total_megabytes": 0.11,
+      "elapsed_seconds": 0.86,
+      "sample_files": [
+        "data\\downloaded\\OpenSonarDatasets\\images\\remaro-right-1024.png"
+      ]
+    },
+    {
+      "dataset_name": "AwesomeSonarResources",
+      "source_url": "https://github.com/Jorwnpay/Awesome-Sonar-Image-Resources.git",
+      "description": "Comprehensive index and curated samples of side-scan, forward-looking, and synthetic aperture sonar datasets.",
+      "status": "ACQUIRED",
+      "file_count": 0,
+      "total_megabytes": 0.01,
+      "elapsed_seconds": 0.88,
+      "sample_files": []
+    }
+  ],
+  "direct_samples": [
+    {
+      "name": "sss_shipwreck_anomaly_01.png",
+      "url": "https://raw.githubusercontent.com/huoguanying/SeabedObjects-Ship-and-Airplane-dataset/master/images/ship/ship1.jpg",
+      "category": "metal_scrap",
+      "status": "FAILED",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "name": "sss_airplane_anomaly_01.png",
+      "url": "https://raw.githubusercontent.com/huoguanying/SeabedObjects-Ship-and-Airplane-dataset/master/images/airplane/airplane1.jpg",
+      "category": "metal_scrap",
+      "status": "FAILED",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "name": "fls_marine_debris_bottle.png",
+      "url": "https://raw.githubusercontent.com/mvaldenegro/marine-debris-fls-datasets/master/images/sample.png",
+      "category": "plastic",
+      "status": "FAILED",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "name": "sss_crabpot_ghost_gear.png",
+      "url": "https://raw.githubusercontent.com/cameronbodine/GhostVision/main/assets/ghostvision_logo.png",
+      "category": "plastic",
+      "status": "FAILED",
+      "error": "HTTP Error 404: Not Found"
+    }
+  ],
+  "aggregate_summary": {
+    "total_files_acquired": 20220,
+    "total_size_mb": 1512.3,
+    "data_modalities": [
+      "acoustic_imagery",
+      "debris_annotations"
+    ],
+    "target_domains": [
+      "Side-Scan Sonar (SSS) Seabed & Shipwrecks",
+      "Forward-Looking Sonar (FLS) Marine Debris (Plastic, Metal, Polymers)",
+      "Derelict Fishing Gear (Ghost Pots & Synthetic Nets)",
+      "Acoustic Seabed Morphology & Anomaly Classification"
+    ]
+  }
+}

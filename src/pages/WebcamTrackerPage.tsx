@@ -32,50 +32,72 @@ import { DigitalTwinCanvas } from '../components/three/DigitalTwinCanvas';
 import { sensorFusion, Projected3DObject, SystemGpsState } from '../services/sensorFusionService';
 import { Detection } from '../types';
 
-// Marine Debris Class Mapping Schema
+// Heavy Debris Guardrail Taxonomy Schema (Strict 5 Target Classes + Not a Debris)
 interface DebrisMapping {
   marineLabel: string;
-  category: 'PLASTIC' | 'METAL' | 'GHOST_GEAR' | 'ELECTRONICS' | 'ANTHROPOGENIC' | 'ORGANIC' | 'GENERAL';
+  category: 'HUMAN' | 'ELECTRICAL' | 'ELECTRONIC' | 'PLASTIC' | 'METAL_SCRAP' | 'NOT_A_DEBRIS';
   threatLevel: 'HIGH' | 'MEDIUM' | 'LOW' | 'CRITICAL';
   color: string;
+  isDebris: boolean;
 }
 
 const DEBRIS_TAXONOMY: Record<string, DebrisMapping> = {
-  // HydroPhys-OmniNet & EchoPhys-X Marine Taxonomy
-  ghost_gear: { marineLabel: 'Derelict Ghost Gear & Fishing Net', category: 'GHOST_GEAR', threatLevel: 'CRITICAL', color: '#2ECC71' },
-  shipwreck: { marineLabel: 'Shipwreck / Submerged Vessel Structure', category: 'ANTHROPOGENIC', threatLevel: 'HIGH', color: '#E67E22' },
-  unexploded_ordnance: { marineLabel: 'Unexploded Ordnance (UXO Hazard)', category: 'ANTHROPOGENIC', threatLevel: 'CRITICAL', color: '#E74C3C' },
-  pipeline_anomaly: { marineLabel: 'Pipeline Scour / Anchor Drag Anomaly', category: 'ANTHROPOGENIC', threatLevel: 'HIGH', color: '#3498DB' },
-  marine_debris: { marineLabel: 'Marine Anthropogenic Debris / Solid Waste', category: 'PLASTIC', threatLevel: 'HIGH', color: '#9B59B6' },
-  subsea_cable: { marineLabel: 'Subsea Power & Telecommunication Cable', category: 'ANTHROPOGENIC', threatLevel: 'HIGH', color: '#F1C40F' },
-  biological_cluster: { marineLabel: 'Benthic Biological Cluster / Coral Bed', category: 'ORGANIC', threatLevel: 'LOW', color: '#1ABC9C' },
-  geological_formation: { marineLabel: 'Geological Rock Outcrop (Natural Exclusion)', category: 'ORGANIC', threatLevel: 'LOW', color: '#95A5A6' },
-  scuba_diver: { marineLabel: 'Scuba Diver / Human SAR Target', category: 'GENERAL', threatLevel: 'LOW', color: '#2ECC71' },
+  // 1. Humans (Subsea Divers / Operators / SAR)
+  human: { marineLabel: 'Subsea Diver / Human Presence', category: 'HUMAN', threatLevel: 'LOW', color: '#10b981', isDebris: true },
+  person: { marineLabel: 'Diver / Human Operator in Survey Zone', category: 'HUMAN', threatLevel: 'LOW', color: '#10b981', isDebris: true },
+  scuba_diver: { marineLabel: 'Scuba Diver / SAR Operator', category: 'HUMAN', threatLevel: 'LOW', color: '#10b981', isDebris: true },
 
-  // Everyday Optical Proxy & COCO Debris Mapping
-  bottle: { marineLabel: 'Plastic Bottle / Marine Polymer', category: 'PLASTIC', threatLevel: 'HIGH', color: '#22d3ee' },
-  cup: { marineLabel: 'Single-Use Cup / Container', category: 'PLASTIC', threatLevel: 'MEDIUM', color: '#38bdf8' },
-  bowl: { marineLabel: 'Plastic Food Ware / Microplastic Source', category: 'PLASTIC', threatLevel: 'MEDIUM', color: '#0ea5e9' },
-  fork: { marineLabel: 'Plastic Cutlery / Marine Litter', category: 'PLASTIC', threatLevel: 'HIGH', color: '#38bdf8' },
-  knife: { marineLabel: 'Rigid Plastic / Metallic Debris', category: 'METAL', threatLevel: 'MEDIUM', color: '#f59e0b' },
-  spoon: { marineLabel: 'Synthetic Plastic Debris', category: 'PLASTIC', threatLevel: 'MEDIUM', color: '#38bdf8' },
-  backpack: { marineLabel: 'Submerged Fabric / Gear Pack', category: 'GHOST_GEAR', threatLevel: 'HIGH', color: '#ec4899' },
-  handbag: { marineLabel: 'Synthetic Bag / Entanglement Threat', category: 'PLASTIC', threatLevel: 'HIGH', color: '#f43f5e' },
-  suitcase: { marineLabel: 'Large Solid Waste Cargo / Container', category: 'ANTHROPOGENIC', threatLevel: 'HIGH', color: '#a855f7' },
-  sports_ball: { marineLabel: 'Buoyant Polymer Spherical Floater', category: 'PLASTIC', threatLevel: 'LOW', color: '#10b981' },
-  frisbee: { marineLabel: 'Rigid High-Density Polyethylene', category: 'PLASTIC', threatLevel: 'MEDIUM', color: '#06b6d4' },
-  cell_phone: { marineLabel: 'Subsea Battery / Electronic Waste', category: 'ELECTRONICS', threatLevel: 'CRITICAL', color: '#ef4444' },
-  laptop: { marineLabel: 'Lithium Battery Hazard / E-Waste', category: 'ELECTRONICS', threatLevel: 'CRITICAL', color: '#dc2626' },
-  mouse: { marineLabel: 'Electronic Debris / Polymer Shell', category: 'ELECTRONICS', threatLevel: 'MEDIUM', color: '#f97316' },
-  remote: { marineLabel: 'Electronic Sensor / Circuit Litter', category: 'ELECTRONICS', threatLevel: 'HIGH', color: '#f59e0b' },
-  keyboard: { marineLabel: 'Submerged Electronic Equipment', category: 'ELECTRONICS', threatLevel: 'HIGH', color: '#e11d48' },
-  book: { marineLabel: 'Organic Cellulose / Compact Litter', category: 'ORGANIC', threatLevel: 'LOW', color: '#84cc16' },
-  vase: { marineLabel: 'Ceramic / Glass Marine Substrate', category: 'ANTHROPOGENIC', threatLevel: 'LOW', color: '#14b8a6' },
-  scissors: { marineLabel: 'Sharp Metallic Salvage Hazard', category: 'METAL', threatLevel: 'HIGH', color: '#f59e0b' },
-  toothbrush: { marineLabel: 'Polypropylene Marine Micro-Litter', category: 'PLASTIC', threatLevel: 'HIGH', color: '#06b6d4' },
-  chair: { marineLabel: 'Submerged Structural Debris', category: 'ANTHROPOGENIC', threatLevel: 'MEDIUM', color: '#8b5cf6' },
-  boat: { marineLabel: 'Vessel / Marine Hull Feature', category: 'ANTHROPOGENIC', threatLevel: 'LOW', color: '#3b82f6' },
-  person: { marineLabel: 'Diver / Human Operator in Survey Zone', category: 'GENERAL', threatLevel: 'LOW', color: '#10b981' },
+  // 2. Electrical (Power Cables, Conduits, Electrical Harnesses)
+  electrical: { marineLabel: 'Subsea Power & Electrical Cable', category: 'ELECTRICAL', threatLevel: 'HIGH', color: '#f59e0b', isDebris: true },
+  subsea_cable: { marineLabel: 'Subsea High-Voltage Power Cable', category: 'ELECTRICAL', threatLevel: 'HIGH', color: '#f59e0b', isDebris: true },
+  power_cable: { marineLabel: 'Submerged Power Cable', category: 'ELECTRICAL', threatLevel: 'HIGH', color: '#f59e0b', isDebris: true },
+  cable: { marineLabel: 'Subsea Electrical Conduit', category: 'ELECTRICAL', threatLevel: 'HIGH', color: '#f59e0b', isDebris: true },
+
+  // 3. Electronic (Batteries, E-Waste, Transponders, Sonar Beacons, Hardware)
+  electronic: { marineLabel: 'Subsea Electronic Hardware & E-Waste', category: 'ELECTRONIC', threatLevel: 'CRITICAL', color: '#ef4444', isDebris: true },
+  electronics: { marineLabel: 'Electronic Debris / Circuit Waste', category: 'ELECTRONIC', threatLevel: 'CRITICAL', color: '#ef4444', isDebris: true },
+  e_waste: { marineLabel: 'Subsea Battery / Hazardous E-Waste', category: 'ELECTRONIC', threatLevel: 'CRITICAL', color: '#ef4444', isDebris: true },
+  cell_phone: { marineLabel: 'Subsea Battery / Electronic Litter', category: 'ELECTRONIC', threatLevel: 'CRITICAL', color: '#ef4444', isDebris: true },
+  laptop: { marineLabel: 'Lithium Battery Hazard / E-Waste', category: 'ELECTRONIC', threatLevel: 'CRITICAL', color: '#dc2626', isDebris: true },
+  mouse: { marineLabel: 'Electronic Debris / Polymer Shell', category: 'ELECTRONIC', threatLevel: 'MEDIUM', color: '#f97316', isDebris: true },
+  remote: { marineLabel: 'Electronic Sensor / Circuit Litter', category: 'ELECTRONIC', threatLevel: 'HIGH', color: '#f59e0b', isDebris: true },
+  keyboard: { marineLabel: 'Submerged Electronic Equipment', category: 'ELECTRONIC', threatLevel: 'HIGH', color: '#e11d48', isDebris: true },
+  transponder: { marineLabel: 'Acoustic Transponder / Sonar Beacon', category: 'ELECTRONIC', threatLevel: 'HIGH', color: '#ef4444', isDebris: true },
+
+  // 4. Plastic (Ghost Nets, Polymers, Plastic Bottles, Synthetic Waste)
+  plastic: { marineLabel: 'Synthetic Polymer / Marine Plastic Waste', category: 'PLASTIC', threatLevel: 'HIGH', color: '#06b6d4', isDebris: true },
+  plastic_waste: { marineLabel: 'Marine Anthropogenic Plastic Debris', category: 'PLASTIC', threatLevel: 'HIGH', color: '#06b6d4', isDebris: true },
+  ghost_gear: { marineLabel: 'Derelict Ghost Gear & Synthetic Fishing Net', category: 'PLASTIC', threatLevel: 'CRITICAL', color: '#06b6d4', isDebris: true },
+  marine_debris: { marineLabel: 'Marine Anthropogenic Plastic Debris', category: 'PLASTIC', threatLevel: 'HIGH', color: '#06b6d4', isDebris: true },
+  bottle: { marineLabel: 'Plastic Bottle / Marine Polymer', category: 'PLASTIC', threatLevel: 'HIGH', color: '#06b6d4', isDebris: true },
+  cup: { marineLabel: 'Single-Use Polymer Container', category: 'PLASTIC', threatLevel: 'MEDIUM', color: '#38bdf8', isDebris: true },
+  bowl: { marineLabel: 'Plastic Food Ware / Microplastic Source', category: 'PLASTIC', threatLevel: 'MEDIUM', color: '#0ea5e9', isDebris: true },
+  fork: { marineLabel: 'Plastic Cutlery / Marine Litter', category: 'PLASTIC', threatLevel: 'HIGH', color: '#38bdf8', isDebris: true },
+  spoon: { marineLabel: 'Synthetic Plastic Debris', category: 'PLASTIC', threatLevel: 'MEDIUM', color: '#38bdf8', isDebris: true },
+  handbag: { marineLabel: 'Synthetic Polymer Bag / Entanglement Threat', category: 'PLASTIC', threatLevel: 'HIGH', color: '#f43f5e', isDebris: true },
+  backpack: { marineLabel: 'Submerged Synthetic Gear Pack', category: 'PLASTIC', threatLevel: 'HIGH', color: '#ec4899', isDebris: true },
+  toothbrush: { marineLabel: 'Polypropylene Marine Micro-Litter', category: 'PLASTIC', threatLevel: 'HIGH', color: '#06b6d4', isDebris: true },
+  frisbee: { marineLabel: 'Rigid High-Density Polyethylene Plastic', category: 'PLASTIC', threatLevel: 'MEDIUM', color: '#06b6d4', isDebris: true },
+  sports_ball: { marineLabel: 'Buoyant Polymer Spherical Floater', category: 'PLASTIC', threatLevel: 'LOW', color: '#10b981', isDebris: true },
+
+  // 5. Metal Scraps (Shipwreck Hull Fragments, UXO, Structural Scrap)
+  metal_scrap: { marineLabel: 'Ferrous Metal Scrap & Structural Steel', category: 'METAL_SCRAP', threatLevel: 'HIGH', color: '#e67e22', isDebris: true },
+  metal: { marineLabel: 'Metallic Debris & Salvage Scrap', category: 'METAL_SCRAP', threatLevel: 'HIGH', color: '#e67e22', isDebris: true },
+  shipwreck: { marineLabel: 'Submerged Metallic Hull / Vessel Scrap', category: 'METAL_SCRAP', threatLevel: 'HIGH', color: '#e67e22', isDebris: true },
+  unexploded_ordnance: { marineLabel: 'Unexploded Ordnance (UXO) Metallic Hazard', category: 'METAL_SCRAP', threatLevel: 'CRITICAL', color: '#dc2626', isDebris: true },
+  pipeline_anomaly: { marineLabel: 'Metallic Pipeline Scour / Anchor Drag Scrap', category: 'METAL_SCRAP', threatLevel: 'HIGH', color: '#e67e22', isDebris: true },
+  knife: { marineLabel: 'Metallic Scrap / Salvage Hazard', category: 'METAL_SCRAP', threatLevel: 'MEDIUM', color: '#f59e0b', isDebris: true },
+  scissors: { marineLabel: 'Sharp Metallic Salvage Hazard', category: 'METAL_SCRAP', threatLevel: 'HIGH', color: '#f59e0b', isDebris: true },
+  structural_metal: { marineLabel: 'Structural Steel / Metallic Pipe Scrap', category: 'METAL_SCRAP', threatLevel: 'HIGH', color: '#e67e22', isDebris: true },
+
+  // --- STRICT EXCLUSIONS (NOT A DEBRIS) ---
+  biological_cluster: { marineLabel: 'Not a Debris (Benthic Biological Reef)', category: 'NOT_A_DEBRIS', threatLevel: 'LOW', color: '#64748b', isDebris: false },
+  geological_formation: { marineLabel: 'Not a Debris (Geological Rock Outcrop)', category: 'NOT_A_DEBRIS', threatLevel: 'LOW', color: '#64748b', isDebris: false },
+  book: { marineLabel: 'Not a Debris (Organic Cellulose Litter)', category: 'NOT_A_DEBRIS', threatLevel: 'LOW', color: '#64748b', isDebris: false },
+  vase: { marineLabel: 'Not a Debris (Ceramic / Glass Mineral)', category: 'NOT_A_DEBRIS', threatLevel: 'LOW', color: '#64748b', isDebris: false },
+  chair: { marineLabel: 'Not a Debris (Excluded Object)', category: 'NOT_A_DEBRIS', threatLevel: 'LOW', color: '#64748b', isDebris: false },
+  boat: { marineLabel: 'Not a Debris (Surface Vessel Hull)', category: 'NOT_A_DEBRIS', threatLevel: 'LOW', color: '#64748b', isDebris: false },
+  suitcase: { marineLabel: 'Not a Debris (Generic Non-Target Container)', category: 'NOT_A_DEBRIS', threatLevel: 'LOW', color: '#64748b', isDebris: false },
 };
 
 export interface LiveCapturedTarget {

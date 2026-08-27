@@ -2,18 +2,25 @@ import os
 from pydantic import BaseModel
 from typing import Optional
 
+from pathlib import Path
+
+# Resolve workspace root (3 levels up from backend/app/core)
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
 class Settings(BaseModel):
     PROJECT_NAME: str = "EchoPulseNet Marine Sonar Intelligence Platform"
     API_V1_STR: str = "/api/v1"
     
-    # Environment & Paths
-    DATA_ROOT: str = os.getenv("DATA_ROOT", "data")
-    MODEL_ROOT: str = os.getenv("MODEL_ROOT", "models_checkpoints")
-    CACHE_ROOT: str = os.getenv("CACHE_ROOT", "cache")
-    REPORTS_ROOT: str = os.getenv("REPORTS_ROOT", "reports")
+    # Environment & Canonical Paths
+    PROJECT_ROOT: str = str(PROJECT_ROOT)
+    DATA_ROOT: str = os.getenv("DATA_ROOT", str(PROJECT_ROOT / "data"))
+    MODEL_ROOT: str = os.getenv("MODEL_ROOT", str(PROJECT_ROOT / "models_checkpoints"))
+    CACHE_ROOT: str = os.getenv("CACHE_ROOT", str(PROJECT_ROOT / "cache"))
+    REPORTS_ROOT: str = os.getenv("REPORTS_ROOT", str(PROJECT_ROOT / "reports"))
+    UPLOADS_DIR: str = os.getenv("UPLOADS_DIR", str(PROJECT_ROOT / "uploads"))
     
     # Database
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./echopulsenet.db")
+    DATABASE_URL: str = os.getenv("DATABASE_URL", f"sqlite:///{PROJECT_ROOT}/echopulsenet.db")
     
     # AI / Inference
     CONFIDENCE_THRESHOLD: float = float(os.getenv("CONFIDENCE_THRESHOLD", "0.50"))
@@ -24,23 +31,12 @@ class Settings(BaseModel):
 
 settings = Settings()
 
-# Ensure directories exist
+# Ensure essential directories exist at canonical locations
 for folder in [
-    os.path.join(settings.DATA_ROOT, "raw"),
-    os.path.join(settings.DATA_ROOT, "downloaded"),
-    os.path.join(settings.DATA_ROOT, "extracted"),
-    os.path.join(settings.DATA_ROOT, "validated"),
-    os.path.join(settings.DATA_ROOT, "unified"),
-    os.path.join(settings.DATA_ROOT, "processed"),
-    os.path.join(settings.DATA_ROOT, "tiles"),
-    os.path.join(settings.DATA_ROOT, "synthetic"),
-    os.path.join(settings.DATA_ROOT, "rejected"),
-    os.path.join(settings.DATA_ROOT, "manifests"),
-    os.path.join(settings.DATA_ROOT, "cache"),
+    settings.DATA_ROOT,
     settings.MODEL_ROOT,
-    settings.CACHE_ROOT,
     settings.REPORTS_ROOT,
-    "uploads",
-    "bathymetry_grids"
+    settings.UPLOADS_DIR
 ]:
     os.makedirs(folder, exist_ok=True)
+

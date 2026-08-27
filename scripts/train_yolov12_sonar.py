@@ -8,17 +8,35 @@ from pathlib import Path
 import torch
 from ultralytics import YOLO
 
+import gc
 import ultralytics.utils.patches as patches
+import ultralytics.data.base as data_base
 from PIL import Image
 import numpy as np
 
-# Zero-leak PIL-based image loader to replace cv2.imdecode
+# Zero-leak PIL-based image loader with proactive garbage collection
+_IMG_LOAD_COUNT = 0
+
 def _pil_imread(filename, flags=None):
+    global _IMG_LOAD_COUNT
+    _IMG_LOAD_COUNT += 1
+    if _IMG_LOAD_COUNT % 100 == 0:
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            
     with Image.open(str(filename)) as img:
         img_rgb = img.convert('RGB')
-        return np.array(img_rgb)[:, :, ::-1]
+        arr = np.asarray(img_rgb)[:, :, ::-1].copy()
+        return arr
 
 patches.imread = _pil_imread
+data_base.imread = _pil_imread
+try:
+    import ultralytics.data.dataset as data_dataset
+    data_dataset.imread = _pil_imread
+except Exception:
+    pass
 
 import ultralytics.engine.trainer as trainer
 from datetime import datetime

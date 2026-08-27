@@ -1,4 +1,3 @@
-from IPython.core import oinspect
 import cv2
 import os
 import psutil
@@ -8,13 +7,15 @@ import numpy as np
 from PIL import Image
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Response, Body
 from typing import List, Dict, Any, Optional
+from pathlib import Path
 import json
 
-
+from ..core.config import settings
 from ..schemas.contracts import (
     GpuTelemetry, MissionSchema, DetectionSchema, ModelInfo, DatasetInfo, BathymetryGrid
 )
 from ..services.inference_service import UnifiedInferenceService
+from ..services.guardrails_service import HeavyDebrisGuardrailEngine, TARGET_CLASS_MAPPING
 from ..services.bathymetry_service import BathymetryService
 from ..services.postgis_service import postgis_connector
 from ..utils.reports import ReportGenerator
@@ -219,8 +220,8 @@ def delete_detection(detection_id: str):
 
 @router.post("/sonar/upload")
 async def upload_sonar(file: UploadFile = File(...), missionId: Optional[str] = Form("MSN-2026-0884")):
-    os.makedirs("uploads", exist_ok=True)
-    file_path = os.path.join("uploads", file.filename)
+    os.makedirs(settings.UPLOADS_DIR, exist_ok=True)
+    file_path = os.path.join(settings.UPLOADS_DIR, file.filename)
     with open(file_path, "wb") as f:
         content = await file.read()
         f.write(content)
@@ -238,7 +239,7 @@ async def upload_sonar(file: UploadFile = File(...), missionId: Optional[str] = 
                 # Synthesize acoustic waterfall representation
                 preview_img = np.random.randint(40, 180, (512, 1024), dtype=np.uint8)
             preview_filename = f"waterfall_{uuid.uuid4().hex[:8]}.png"
-            preview_path = os.path.join("uploads", preview_filename)
+            preview_path = os.path.join(settings.UPLOADS_DIR, preview_filename)
             cv2.imwrite(preview_path, preview_img)
             infer_target_path = preview_path
         else:
@@ -340,23 +341,36 @@ async def infer_live_frame(
                 x1, y1, x2, y2 = d["bbox_2d_pixels"]
                 w = max(1, x2 - x1)
                 h = max(1, y2 - y1)
-                r, g, b = d["color_rgb"]
-                hex_color = f"#{r:02X}{g:02X}{b:02X}"
+                conf = float(d["confidence"])
+                
+                # Evaluate through Heavy Debris Guardrail Engine
+                gr_eval = HeavyDebrisGuardrailEngine.evaluate_target(
+                    raw_class_name=d["category"],
+                    confidence=conf,
+                    bbox=(x1, y1, w, h),
+                    image_shape=gray.shape,
+                    shadow_strength=0.85,
+                    anomaly_sharpness=0.8
+                )
 
                 dets.append({
                     "bbox": [x1, y1, w, h],
-                    "class": d["category"],
-                    "classNameLabel": d["category"].replace('_', ' ').title(),
-                    "score": round(float(d["confidence"]), 3),
-                    "rawDetectorScore": round(float(d["confidence"]), 3),
+                    "class": gr_eval["class_id"],
+                    "classNameLabel": gr_eval["class_label"],
+                    "category": gr_eval["target_category"],
+                    "guardrailPassed": gr_eval["passed"],
+                    "isDebris": gr_eval["is_debris"],
+                    "guardrailReason": gr_eval["reason"],
+                    "score": round(conf, 3),
+                    "rawDetectorScore": round(conf, 3),
                     "height3d_m": round(float(d["target_height_m"]), 2),
                     "position3d": [round(float(v), 2) for v in d["center_3d_m"]],
                     "dimensions3d": [round(float(v), 2) for v in d["dimensions_3d_m"]],
-                    "colorHex": hex_color,
-                    "colorRgb": list(d["color_rgb"]),
+                    "colorHex": gr_eval["color_hex"],
+                    "colorRgb": list(gr_eval["color_rgb"]),
                     "naturalMimicProb": round(float(d.get("natural_mimic_probability", 0.0)), 3),
                     "biofoulingCover": round(float(d.get("biofouling_cover", 0.0)), 3),
-                    "isArtificialAnomaly": True,
+                    "isArtificialAnomaly": gr_eval["is_debris"],
                     "shadowStrength": 0.85
                 })
             engine_name = "HydroPhys-OmniNet (Extreme CAW-SSM)"
@@ -394,11 +408,25 @@ async def infer_live_frame(
                         class_key, class_label = class_key
                     elif isinstance(class_key, str):
                         class_label = class_key.replace('_', ' ').title()
+
+                    # Evaluate through Heavy Debris Guardrail Engine
+                    gr_eval = HeavyDebrisGuardrailEngine.evaluate_target(
+                        raw_class_name=str(class_key),
+                        confidence=fused_conf,
+                        bbox=(x1, y1, w, h),
+                        image_shape=gray.shape,
+                        shadow_strength=shadow_strength,
+                        anomaly_sharpness=anomaly_sharpness
+                    )
                         
                     dets.append({
                         "bbox": [x1, y1, w, h],
-                        "class": str(class_key),
-                        "classNameLabel": str(class_label),
+                        "class": gr_eval["class_id"],
+                        "classNameLabel": gr_eval["class_label"],
+                        "category": gr_eval["target_category"],
+                        "guardrailPassed": gr_eval["passed"],
+                        "isDebris": gr_eval["is_debris"],
+                        "guardrailReason": gr_eval["reason"],
                         "score": round(fused_conf, 3),
                         "rawDetectorScore": round(conf, 3),
                         "shadowStrength": round(shadow_strength, 3),
@@ -406,9 +434,9 @@ async def infer_live_frame(
                         "height3d_m": round(float(h * 0.05), 2),
                         "position3d": [round(float(x1 * 0.1), 2), round(float(y1 * 0.1), 2), round(float(h * 0.05), 2)],
                         "dimensions3d": [round(float(w * 0.08), 2), round(float(h * 0.08), 2), round(float(h * 0.05), 2)],
-                        "colorHex": "#3498DB",
-                        "colorRgb": [52, 152, 219],
-                        "isArtificialAnomaly": bool(anomaly_sharpness > 0.35)
+                        "colorHex": gr_eval["color_hex"],
+                        "colorRgb": list(gr_eval["color_rgb"]),
+                        "isArtificialAnomaly": gr_eval["is_debris"]
                     })
         except Exception as e:
             print(f"[!] Live Frame YOLOv12 inference error: {e}")
@@ -711,7 +739,7 @@ async def parse_raw_sonar(file: UploadFile = File(...)):
     from ..services.sonar_parsers import UniversalSonarParser
     import shutil
     
-    upload_dir = Path("uploads/raw_sonar")
+    upload_dir = Path(settings.UPLOADS_DIR) / "raw_sonar"
     upload_dir.mkdir(parents=True, exist_ok=True)
     temp_path = upload_dir / file.filename
     with open(temp_path, "wb") as f:

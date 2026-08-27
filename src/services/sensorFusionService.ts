@@ -35,18 +35,38 @@ export interface Projected3DObject {
 
 // Known physical reference heights (meters) for optical pinhole depth estimation
 const OBJECT_PHYSICAL_HEIGHT_MAP: Record<string, number> = {
-  ghost_gear: 1.4,
+  // 1. Humans
+  human: 1.8,
+  person: 1.8,
+  scuba_diver: 1.8,
+  // 2. Electrical
+  electrical: 0.4,
+  subsea_cable: 0.4,
+  power_cable: 0.4,
+  cable: 0.4,
+  // 3. Electronic
+  electronic: 0.3,
+  cell_phone: 0.15,
+  laptop: 0.25,
+  e_waste: 0.35,
+  remote: 0.2,
+  transponder: 0.6,
+  // 4. Plastic
+  plastic: 0.5,
+  ghost_gear: 1.5,
+  marine_debris: 0.6,
+  bottle: 0.25,
+  cup: 0.15,
+  backpack: 0.55,
+  handbag: 0.4,
+  // 5. Metal Scraps
+  metal_scrap: 1.2,
+  metal: 1.0,
   shipwreck: 8.5,
   unexploded_ordnance: 0.9,
   pipeline_anomaly: 1.2,
-  marine_debris: 0.6,
-  subsea_cable: 0.4,
-  bottle: 0.25,
-  cup: 0.15,
   knife: 0.22,
-  backpack: 0.55,
-  handbag: 0.4,
-  scuba_diver: 1.8,
+  scissors: 0.20,
   default: 0.5,
 };
 
@@ -156,11 +176,19 @@ class SensorFusionService {
       this.gpsState.longitude + deltaEastMeters / (111320.0 * Math.cos((this.gpsState.latitude * Math.PI) / 180.0));
     const targetDepthMeters = Math.round((this.gpsState.altitudeMeters + distanceMeters * 0.3) * 10) / 10;
 
+    const norm = className.toLowerCase();
+    let targetCat = 'PLASTIC';
+    if (['human', 'person', 'scuba_diver'].includes(norm)) targetCat = 'HUMAN';
+    else if (['electrical', 'subsea_cable', 'power_cable', 'cable'].includes(norm)) targetCat = 'ELECTRICAL';
+    else if (['electronic', 'cell_phone', 'laptop', 'e_waste', 'remote', 'transponder', 'mouse', 'keyboard'].includes(norm)) targetCat = 'ELECTRONIC';
+    else if (['metal_scrap', 'metal', 'shipwreck', 'unexploded_ordnance', 'pipeline_anomaly', 'knife', 'scissors'].includes(norm)) targetCat = 'METAL_SCRAP';
+    else if (['biological_cluster', 'geological_formation', 'book', 'vase', 'chair', 'boat'].includes(norm)) targetCat = 'NOT_A_DEBRIS';
+
     return {
       id: `OPTIC-3D-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
       className,
       label: className.replace('_', ' ').toUpperCase(),
-      category: 'OPTICAL_AUV_TRACK',
+      category: targetCat,
       confidence: Math.round(confidence * 100) / 100,
       distanceMeters: Math.round(distanceMeters * 10) / 10,
       irSensorRangeMeters: Math.round((customIrRangeMeters || distanceMeters) * 10) / 10,
