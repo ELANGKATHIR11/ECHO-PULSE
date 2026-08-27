@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   MapContainer,
   TileLayer,
@@ -7,7 +7,8 @@ import {
   Polygon,
   Polyline,
   Tooltip,
-  useMap
+  useMap,
+  ScaleControl
 } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -18,19 +19,17 @@ import {
   Layers,
   Filter,
   Download,
-  Info,
   Compass,
   Radio,
   Sparkles,
   Search,
   CheckCircle2,
-  ExternalLink,
-  ChevronRight,
   Maximize2,
-  Anchor,
   FileText,
-  Activity,
-  Cpu
+  RefreshCw,
+  Globe,
+  Navigation,
+  Anchor
 } from 'lucide-react';
 import { GlassCard, GlassBadge, GlassButton } from '../components/glass/GlassCard';
 import { mpaApi, MpaZone, MpaDebrisGeoTag, MpaSummaryMetrics } from '../services/mpaApi';
@@ -54,17 +53,17 @@ const CATEGORY_COLORS: Record<string, { bg: string; border: string; text: string
 };
 
 const THREAT_HALOS: Record<string, string> = {
-  CRITICAL: 'rgba(239, 68, 68, 0.75)',
-  HIGH: 'rgba(245, 158, 11, 0.70)',
-  MEDIUM: 'rgba(6, 182, 212, 0.65)',
-  LOW: 'rgba(16, 185, 129, 0.50)'
+  CRITICAL: 'rgba(239, 68, 68, 0.85)',
+  HIGH: 'rgba(245, 158, 11, 0.80)',
+  MEDIUM: 'rgba(6, 182, 212, 0.75)',
+  LOW: 'rgba(16, 185, 129, 0.60)'
 };
 
-// Custom Marker Pin Generator
+// Custom Marker Pin Generator using pure HTML & SVG
 const createGeoTagIcon = (targetClass: string, threatLevel: string, isSelected: boolean) => {
   const color = CATEGORY_COLORS[targetClass]?.hex || '#06b6d4';
   const haloColor = THREAT_HALOS[threatLevel] || 'rgba(6,182,212,0.6)';
-  const size = isSelected ? 34 : 26;
+  const size = isSelected ? 36 : 28;
 
   return L.divIcon({
     className: 'custom-debris-geotag-icon',
@@ -72,8 +71,8 @@ const createGeoTagIcon = (targetClass: string, threatLevel: string, isSelected: 
       <div style="
         width: ${size}px;
         height: ${size}px;
-        background: radial-gradient(circle, ${color} 30%, rgba(2,7,18,0.9) 90%);
-        border: 2px solid ${color};
+        background: radial-gradient(circle, ${color} 40%, #020712 90%);
+        border: 2.5px solid ${color};
         border-radius: 50%;
         box-shadow: 0 0 16px ${haloColor}, inset 0 0 8px ${color};
         display: flex;
@@ -81,24 +80,61 @@ const createGeoTagIcon = (targetClass: string, threatLevel: string, isSelected: 
         justify-content: center;
         cursor: pointer;
         position: relative;
-        transition: transform 0.2s ease;
       ">
-        <div style="width: 8px; height: 8px; background: #fff; border-radius: 50%; box-shadow: 0 0 4px #fff;"></div>
-        ${threatLevel === 'CRITICAL' ? `<div style="position: absolute; inset: -4px; border: 1.5px dashed #ef4444; border-radius: 50%; animation: spin 4s linear infinite;"></div>` : ''}
+        <div style="width: 8px; height: 8px; background: #ffffff; border-radius: 50%; box-shadow: 0 0 6px #fff;"></div>
+        ${threatLevel === 'CRITICAL' ? `<div style="position: absolute; inset: -4px; border: 2px dashed #ef4444; border-radius: 50%;"></div>` : ''}
       </div>
     `,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
+    popupAnchor: [0, -size / 2],
   });
 };
 
-// Map Recenter Controller Helper
+// Map Recenter Controller Helper with Invalidation
 const MapController: React.FC<{ center: [number, number]; zoom: number }> = ({ center, zoom }) => {
   const map = useMap();
   useEffect(() => {
-    map.flyTo(center, zoom, { duration: 1.2 });
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+      map.setView(center, zoom, { animate: true });
+    }, 150);
+    return () => clearTimeout(timer);
   }, [center, zoom, map]);
+
+  useEffect(() => {
+    const handleResize = () => map.invalidateSize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [map]);
+
   return null;
+};
+
+// Basemap Tiles Options
+type BasemapType = 'VOYAGER' | 'DARK' | 'ESRI_OCEAN' | 'OSM';
+
+const BASEMAP_URLS: Record<BasemapType, { url: string; name: string; attribution: string }> = {
+  VOYAGER: {
+    name: 'CartoDB Voyager (Marine/Coast)',
+    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap'
+  },
+  DARK: {
+    name: 'CartoDB Dark Matter',
+    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap'
+  },
+  ESRI_OCEAN: {
+    name: 'Esri World Ocean Bathymetry',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri &mdash; Sources: GEBCO, NOAA, CHS, OSU, UNH, CSUMB'
+  },
+  OSM: {
+    name: 'OpenStreetMap Standard',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }
 };
 
 export const MpaDebrisMapPage: React.FC = () => {
@@ -108,6 +144,9 @@ export const MpaDebrisMapPage: React.FC = () => {
   const [eezCoords, setEezCoords] = useState<[number, number][]>([]);
   const [summary, setSummary] = useState<MpaSummaryMetrics | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+
+  // Basemap Tile Choice
+  const [basemap, setBasemap] = useState<BasemapType>('VOYAGER');
 
   // Filters
   const [selectedMpaId, setSelectedMpaId] = useState<string>('ALL');
@@ -273,7 +312,7 @@ export const MpaDebrisMapPage: React.FC = () => {
             {summary?.total_mpas || mpaZones.length || 10}
           </div>
           <div className="text-[10px] text-slate-400 mt-1">
-            Covering {summary?.total_mpa_area_sq_km?.toLocaleString() || '30,000+'} sq.km Seafloor
+            Covering {summary?.total_mpa_area_sq_km?.toLocaleString() || '29,365'} sq.km Seafloor
           </div>
         </GlassCard>
 
@@ -318,14 +357,16 @@ export const MpaDebrisMapPage: React.FC = () => {
       </div>
 
       {/* Main Map & Geospatial Operations Workspace */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: Interactive Leaflet Map */}
-        <div className="lg:col-span-2 space-y-3">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left 8 Cols: Interactive Leaflet Map */}
+        <div className="lg:col-span-8 space-y-3">
           {/* Map Controls Header Bar */}
           <GlassCard className="p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2">
+            {/* Layer Toggles */}
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-slate-400 font-mono font-bold">LAYERS:</span>
               <button
+                type="button"
                 onClick={() => setShowMpaPolygons(!showMpaPolygons)}
                 className={`px-2.5 py-1 rounded-lg border text-[11px] font-mono transition-all ${
                   showMpaPolygons
@@ -336,6 +377,7 @@ export const MpaDebrisMapPage: React.FC = () => {
                 MPA Boundaries ({mpaZones.length})
               </button>
               <button
+                type="button"
                 onClick={() => setShowEezBoundary(!showEezBoundary)}
                 className={`px-2.5 py-1 rounded-lg border text-[11px] font-mono transition-all ${
                   showEezBoundary
@@ -346,6 +388,7 @@ export const MpaDebrisMapPage: React.FC = () => {
                 Indian 200NM EEZ
               </button>
               <button
+                type="button"
                 onClick={() => setShowDebrisPins(!showDebrisPins)}
                 className={`px-2.5 py-1 rounded-lg border text-[11px] font-mono transition-all ${
                   showDebrisPins
@@ -357,31 +400,43 @@ export const MpaDebrisMapPage: React.FC = () => {
               </button>
             </div>
 
+            {/* Basemap Selector */}
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-              <span className="font-mono text-[11px] text-slate-300">WGS84 EPSG:4326</span>
+              <Globe className="w-3.5 h-3.5 text-cyan-400" />
+              <select
+                value={basemap}
+                onChange={(e) => setBasemap(e.target.value as BasemapType)}
+                className="bg-[#020712]/90 border border-cyan-900/60 rounded-lg px-2 py-1 text-[11px] font-mono text-cyan-300 focus:outline-none focus:border-cyan-400"
+              >
+                <option value="VOYAGER">Voyager Marine</option>
+                <option value="DARK">Dark Matter</option>
+                <option value="ESRI_OCEAN">Esri Ocean Bathymetry</option>
+                <option value="OSM">OpenStreetMap</option>
+              </select>
             </div>
           </GlassCard>
 
-          {/* Leaflet Map Canvas Container */}
-          <GlassCard className="p-1 h-[540px] relative overflow-hidden rounded-2xl border border-cyan-900/40">
+          {/* Leaflet Map Canvas Container with Explicit Height */}
+          <div
+            className="w-full relative rounded-2xl overflow-hidden border border-cyan-500/40 shadow-2xl bg-[#020814]"
+            style={{ height: '560px', minHeight: '560px' }}
+          >
             <MapContainer
               center={mapCenter}
               zoom={mapZoom}
               scrollWheelZoom={true}
-              className="w-full h-full rounded-xl z-0"
-              style={{ background: '#020814' }}
+              style={{ height: '100%', width: '100%', zIndex: 1 }}
+              className="w-full h-full"
             >
               <MapController center={mapCenter} zoom={mapZoom} />
+              <ScaleControl position="bottomright" />
 
-              {/* High-Resolution Bathymetric / Ocean CartoDB Tiles */}
+              {/* Selected Basemap TileLayer */}
               <TileLayer
-                attribution='&copy; <a href="https://carto.com/">CARTO</a> | NCCR MoES India'
-                url={
-                  isDark
-                    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-                    : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-                }
+                key={basemap}
+                url={BASEMAP_URLS[basemap].url}
+                attribution={BASEMAP_URLS[basemap].attribution}
+                maxZoom={18}
               />
 
               {/* Indian 200 NM Exclusive Economic Zone (EEZ) Polyline */}
@@ -390,15 +445,15 @@ export const MpaDebrisMapPage: React.FC = () => {
                   positions={eezCoords}
                   pathOptions={{
                     color: '#f59e0b',
-                    weight: 2,
+                    weight: 2.5,
                     dashArray: '6, 8',
-                    opacity: 0.85
+                    opacity: 0.9
                   }}
                 >
                   <Tooltip sticky>
-                    <div className="font-mono text-xs">
-                      <strong>Indian 200 NM EEZ Maritime Boundary</strong>
-                      <div>Territorial Sea & Contiguous Fishery Zone</div>
+                    <div className="font-mono text-xs p-1">
+                      <strong className="text-amber-400">Indian 200 NM EEZ Maritime Boundary</strong>
+                      <div className="text-slate-300 text-[10px]">Territorial Waters & Contiguous Zone</div>
                     </div>
                   </Tooltip>
                 </Polyline>
@@ -411,9 +466,9 @@ export const MpaDebrisMapPage: React.FC = () => {
                     key={mpa.id}
                     positions={mpa.boundary_polygon}
                     pathOptions={{
-                      color: selectedMpaId === mpa.id ? '#06b6d4' : '#38bdf8',
+                      color: selectedMpaId === mpa.id ? '#06b6d4' : '#0ea5e9',
                       fillColor: selectedMpaId === mpa.id ? '#06b6d4' : '#0284c7',
-                      fillOpacity: selectedMpaId === mpa.id ? 0.35 : 0.15,
+                      fillOpacity: selectedMpaId === mpa.id ? 0.35 : 0.20,
                       weight: selectedMpaId === mpa.id ? 3 : 1.5
                     }}
                     eventHandlers={{
@@ -423,9 +478,9 @@ export const MpaDebrisMapPage: React.FC = () => {
                     <Tooltip sticky>
                       <div className="font-mono text-xs p-1">
                         <div className="font-bold text-cyan-400">{mpa.name}</div>
-                        <div className="text-slate-300">State: {mpa.state} ({mpa.sea_sector})</div>
-                        <div className="text-slate-400">Area: {mpa.area_sq_km} sq.km | Est: {mpa.established_year}</div>
-                        <div className="text-amber-300 text-[10px] mt-0.5">{mpa.threat_status}</div>
+                        <div className="text-slate-300">{mpa.state} • {mpa.sea_sector}</div>
+                        <div className="text-slate-400 text-[10px]">Area: {mpa.area_sq_km} sq.km | Est: {mpa.established_year}</div>
+                        <div className="text-amber-300 text-[10px] mt-0.5 font-bold">{mpa.threat_status}</div>
                       </div>
                     </Tooltip>
                   </Polygon>
@@ -445,16 +500,16 @@ export const MpaDebrisMapPage: React.FC = () => {
                     <Popup>
                       <div className="p-1 font-mono text-xs space-y-1">
                         <div className="font-bold text-cyan-400">{tag.official_agency_ref}</div>
-                        <div className="text-white font-semibold">{tag.marine_label}</div>
-                        <div className="text-slate-400">MPA: {tag.mpa_name}</div>
-                        <div className="text-slate-400">Depth: {tag.depth_meters}m | Conf: {(tag.detection_confidence * 100).toFixed(1)}%</div>
+                        <div className="text-slate-900 font-semibold">{tag.marine_label}</div>
+                        <div className="text-slate-600">MPA: {tag.mpa_name}</div>
+                        <div className="text-slate-600">Depth: {tag.depth_meters}m | Conf: {(tag.detection_confidence * 100).toFixed(1)}%</div>
                         <div className="flex items-center gap-1.5 mt-1">
                           <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
                             tag.threat_level === 'CRITICAL' ? 'bg-red-500 text-white' : 'bg-amber-500 text-black'
                           }`}>
                             {tag.threat_level}
                           </span>
-                          <span className="text-[10px] text-slate-300">Agency: {tag.certifying_agency}</span>
+                          <span className="text-[10px] text-slate-700 font-bold">{tag.certifying_agency}</span>
                         </div>
                       </div>
                     </Popup>
@@ -463,14 +518,14 @@ export const MpaDebrisMapPage: React.FC = () => {
             </MapContainer>
 
             {/* Map Legend Overlay */}
-            <div className="absolute bottom-3 left-3 z-[1000] p-2.5 rounded-xl bg-[#020712]/85 backdrop-blur-md border border-cyan-900/50 text-[10px] font-mono space-y-1.5 shadow-xl max-w-xs">
+            <div className="absolute bottom-4 left-4 z-[500] p-3 rounded-xl bg-[#020712]/90 backdrop-blur-md border border-cyan-500/40 text-[10px] font-mono space-y-1.5 shadow-2xl max-w-xs pointer-events-auto">
               <div className="font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1">
-                <Layers className="w-3 h-3" /> MAP CLASSIFICATION LEGEND
+                <Layers className="w-3.5 h-3.5" /> CLASSIFICATION LEGEND
               </div>
               <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-slate-300">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 border border-cyan-300" />
-                  <span>PLASTIC (Nets/ALDFG)</span>
+                  <span>PLASTIC (Nets)</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-amber-300" />
@@ -478,11 +533,11 @@ export const MpaDebrisMapPage: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-yellow-400 border border-yellow-300" />
-                  <span>ELECTRICAL (Cables)</span>
+                  <span>ELECTRICAL (Cable)</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-red-400 border border-red-300" />
-                  <span>ELECTRONIC (E-Waste)</span>
+                  <span>ELECTRONIC</span>
                 </div>
               </div>
               <div className="pt-1 border-t border-cyan-900/40 text-[9px] text-slate-400 flex items-center justify-between">
@@ -490,11 +545,11 @@ export const MpaDebrisMapPage: React.FC = () => {
                 <span>■ Protected MPA Zone</span>
               </div>
             </div>
-          </GlassCard>
+          </div>
         </div>
 
-        {/* Right Col: Filters, Official Agency Accreditation & Tag Inspector */}
-        <div className="space-y-4">
+        {/* Right 4 Cols: Filters, Official Agency Accreditation & Tag Inspector */}
+        <div className="lg:col-span-4 space-y-4">
           {/* Search & Filter Toolbar */}
           <GlassCard className="p-4 space-y-3">
             <div className="flex items-center justify-between border-b border-cyan-900/30 pb-2">
@@ -701,3 +756,5 @@ export const MpaDebrisMapPage: React.FC = () => {
     </div>
   );
 };
+
+export default MpaDebrisMapPage;
