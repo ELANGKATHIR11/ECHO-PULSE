@@ -17,7 +17,17 @@ workspace_root = Path(__file__).resolve().parents[3]
 if str(workspace_root) not in sys.path:
     sys.path.insert(0, str(workspace_root))
 
-from scripts.train_echophys_x_v3 import EchoPhysXV3, make_physics_acoustic_tensor, AcousticBiMamba
+try:
+    from scripts.train_echophys_x_v3 import EchoPhysXV3, make_physics_acoustic_tensor, AcousticBiMamba
+    ECHOPHYS_V3_AVAILABLE = True
+except ImportError as _e:
+    EchoPhysXV3 = None
+    make_physics_acoustic_tensor = None
+    AcousticBiMamba = None
+    ECHOPHYS_V3_AVAILABLE = False
+    print(f"[!] EchoPhys-X v3 components unavailable: {_e}")
+
+
 
 
 # ==============================================================================

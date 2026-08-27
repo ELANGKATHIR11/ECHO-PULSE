@@ -4,6 +4,7 @@ import psutil
 import torch
 import uuid
 import numpy as np
+from datetime import datetime
 from PIL import Image
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Response, Body
 from typing import List, Dict, Any, Optional
@@ -191,9 +192,9 @@ def get_detection(detection_id: str) -> DetectionSchema:
 def verify_detection(detection_id: str, payload: Dict[str, Any] = Body(...)) -> DetectionSchema:
     for d in _DETECTIONS:
         if d.id == detection_id:
-            d.verificationStatus = payload.get("status", d.verificationStatus)
+            d.verifiedStatus = payload.get("status", d.verifiedStatus)
             if "notes" in payload:
-                d.operatorNotes = payload.get("notes")
+                d.notes = payload.get("notes")
             return d
     raise HTTPException(status_code=404, detail="Detection not found")
 
@@ -248,7 +249,7 @@ def sync_live_target(payload: Dict[str, Any] = Body(...)):
     
     # Also add to in-memory active list
     try:
-        from ..schemas.contracts import DetectionSchema, BoundingBox
+        from ..schemas.contracts import DetectionSchema, BoundingBox, DetectionGeometry
         box = target_dict.get("bbox", [0,0,1,1])
         d_obj = DetectionSchema(
             id=det_id,
@@ -258,11 +259,20 @@ def sync_live_target(payload: Dict[str, Any] = Body(...)):
             classNameLabel=target_dict["classNameLabel"],
             confidence=target_dict["confidence"],
             detectorScore=target_dict["detectorScore"],
+            shadowScore=target_dict.get("shadowScore", 0.0),
+            geometryScore=target_dict.get("geometryScore", 0.0),
+            anomalyScore=target_dict.get("anomalyScore", 0.0),
+            qualityScore=target_dict.get("qualityScore", 0.0),
             latitude=target_dict["latitude"],
             longitude=target_dict["longitude"],
             depthMeters=target_dict["depthMeters"],
-            slantRangeMeters=target_dict["slantRangeMeters"],
+            slantRangeMeters=target_dict.get("slantRangeMeters", 0.0),
+            geotagConfidence=target_dict.get("geotagConfidence", 0.99),
             bbox=BoundingBox(x=box[0], y=box[1], width=box[2] if len(box)>2 else 10, height=box[3] if len(box)>3 else 10),
+            geometry=DetectionGeometry(
+                areaPixels=0.0, perimeterPixels=0.0, aspectRatio=1.0,
+                solidity=1.0, extent=1.0, orientationDeg=0.0, compactness=1.0
+            ),
             isDebris=True,
             guardrailCategory=payload.get("category", "PLASTIC"),
             guardrailPassed=True,
