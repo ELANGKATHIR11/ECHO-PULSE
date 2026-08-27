@@ -31,8 +31,27 @@ app.mount("/uploads", StaticFiles(directory=settings.UPLOADS_DIR), name="uploads
 app.include_router(router, prefix=settings.API_V1_STR)
 app.include_router(router, prefix="/api")
 
+import sys
+
 # Mount Static Frontend Distribution for Unified Single-Server Serving
-DIST_DIR = Path(__file__).resolve().parents[2] / "dist"
+def get_dist_dir() -> Path:
+    candidates = [
+        Path(getattr(sys, "_MEIPASS", "")) / "dist",
+        Path(sys.executable).parent / "_internal" / "dist",
+        Path(sys.executable).parent / "dist",
+        Path(__file__).resolve().parents[2] / "dist",
+        Path(__file__).resolve().parents[1] / "dist",
+        Path.cwd() / "dist",
+    ]
+    for c in candidates:
+        if c.exists() and (c / "index.html").exists():
+            return c
+    for c in candidates:
+        if c.exists():
+            return c
+    return Path(__file__).resolve().parents[2] / "dist"
+
+DIST_DIR = get_dist_dir()
 
 if DIST_DIR.exists():
     # Mount assets folder if present
