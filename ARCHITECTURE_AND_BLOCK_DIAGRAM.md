@@ -7,124 +7,75 @@ This document provides a comprehensive technical reference for the **EchoPulseNe
 ## 1. Functional System Block Diagram
 
 ```mermaid
-graph LR
-    %% Data Ingestion & Sensors Block
-    subgraph BLOCK_1 ["BLOCK 1: SONAR & SENSOR INGESTION LAYER"]
-        direction TB
-        B1_1["Side-Scan Sonar (SSS) / SAS\n(100 kHz – 900 kHz)"]
-        B1_2["Raw Sonar Files\n(.XTF / .JSF / .SEGY / Binary Matrices)"]
-        B1_3["AUV / Vessel INS Telemetry\n(GPS, Heading, Speed, Depth, Altitude)"]
-        B1_4["Edge Optical / Optical-Acoustic Camera Feed"]
+graph TD
+    %% 1. Marine & Optical Sensor Ingestion Layer
+    subgraph SENSOR_INGESTION["1. Marine & Optical Sensor Ingestion"]
+        RawSonar["Acoustic Sonar Files (.XTF / .JSF / .SL2 / .DAT)"]
+        WebcamFeed["Live Optical Environmental Camera Stream"]
+        HardwareGps["System WGS84 GPS Telemetry + Gyro Heading"]
+        HardwareIR["Hardware IR / ToF Distance Calibrator"]
     end
 
-    %% Presentation / Frontend UI Block
-    subgraph BLOCK_2 ["BLOCK 2: PRESENTATION & CLIENT PLATFORM (React 18 + Vite)"]
-        direction TB
-        subgraph FE_VIEWS ["Interactive Workspaces & HUDs"]
-            B2_1["Sonar Waterfall & Ingestion Viewer"]
-            B2_2["Interactive MPA & Hazard Map (MapLibre / Leaflet)"]
-            B2_3["3D Bathymetric Digital Twin (WebGL / Three.js)"]
-            B2_4["Telemetry, Active Learning & Command HUD"]
-        end
-        subgraph FE_SVC ["Frontend Network Client (src/services/api.ts)"]
-            B2_5["Unified API Dispatcher\n(fetchWithTimeout + AbortController + VITE_API_URL)"]
-        end
-        FE_VIEWS --> B2_5
-    end
-
-    %% Desktop Edge Runtime Wrapper
-    subgraph BLOCK_WRAPPER ["NATIVE DESKTOP EDGE RUNTIME"]
-        direction TB
-        W1["Tauri Native Rust Shell\n(src-tauri)"]
-        W2["Electron Process\n(electron_main.js)"]
-        W3["PyInstaller Single Executable\n(desktop_app.py)"]
-    end
-
-    %% API Gateway & Server Core
-    subgraph BLOCK_3 ["BLOCK 3: API GATEWAY & ROUTING (FastAPI Server)"]
-        direction TB
-        B3_1["FastAPI Application (Port: 8000)\n(backend/app/main.py)"]
-        B3_2["CORS Middleware\n(Localhost, 127.0.0.1, Tauri Origins)"]
-        B3_3["Static Assets & Artifact Mounts\n(/dist SPA + /uploads Sonar Crops)"]
-        B3_4["API v1 & /api Endpoint Router\n(backend/app/api/routes.py)"]
-        B3_1 --> B3_2
-        B3_1 --> B3_3
-        B3_1 --> B3_4
-    end
-
-    %% Intelligence & Physics Processing Pipeline
-    subgraph BLOCK_4 ["BLOCK 4: INTELLIGENCE & PHYSICS ENGINE (backend/app/services)"]
-        direction TB
-        subgraph GUARD_ENGINE ["Guardrail Verification Subsystem"]
-            B4_1["HeavyDebrisGuardrailEngine\n• Acoustic Domain OOD Check (GLCM / FFT Entropy)\n• Natural Benthic Filter (Coral/Rock Protection)"]
-        end
-        subgraph AI_ENGINE ["Detection & Classification Subsystem"]
-            B4_2["UnifiedInferenceService\n• YOLOv12-Sonar Deep Neural Net\n• 9 Marine Debris Canonical Classes\n• Autoencoder Anomaly Scoring"]
-        end
-        subgraph PHYS_ENGINE ["Physics-Informed Acoustic Tensor Engine"]
-            B4_3["EchoPhysOmni3D & HydroPhysOmniNet\n• Multi-Frequency Backscatter Tensor\n• Slant-Range Geometric Unwarping\n• Acoustic Shadow Raymarching (Target Height Recovery)"]
-        end
-        subgraph BATHY_REPORT ["Spatial Bathymetry & Reports"]
-            B4_4["BathymetryService (Seabed Mesh Synthesis)"]
-            B4_5["ReportGenerator (PDF / GeoJSON / Shapefile / CSV)"]
-            B4_6["ActiveLearningService (Hard-sample Mining)"]
-        end
-        GUARD_ENGINE --> AI_ENGINE
-        AI_ENGINE --> PHYS_ENGINE
-        PHYS_ENGINE --> BATHY_REPORT
-    end
-
-    %% Security & Encryption Block
-    subgraph BLOCK_5 ["BLOCK 5: SECURITY & CREDENTIAL ENGINE (backend/app/core/security.py)"]
-        direction TB
-        B5_1["Fernet Symmetric Cryptography Engine"]
-        B5_2["Key Derivation: ECHOPULSENET_SECRET_KEY"]
-        B5_3["Dynamic Decryptor: resolve_db_connection_url()"]
-        B5_1 --- B5_2
-        B5_2 --- B5_3
-    end
-
-    %% Data Persistence & Spatial DB Block
-    subgraph BLOCK_6 ["BLOCK 6: PERSISTENCE & POSTGIS SPATIAL DATABASE LAYER"]
-        direction TB
-        B6_POOL["DatabaseManager & PostGISConnector\n(SQLAlchemy Connection Pool: size=10, timeout=3s)"]
+    %% 2. Hydrographic Digital Signal Processing (DSP)
+    subgraph EDGE_DSP["2. Hydrographic Digital Signal Processing (DSP)"]
+        BLD["Bottom-Line Detection\n(BLD) & Water-Column\nRemoval"]
+        SRC["Slant-Range to Ground-\nRange Geometric Transform"]
+        FFT["2D-FFT Notch De-striping\n& Empirical Gain\nNormalization (EGN)"]
         
-        subgraph PG_DB ["Primary: PostgreSQL 15+ & PostGIS Extension"]
-            T_DET[("sonar_spatial_detections\n• Target Class, Confidences\n• WGS84 Lat/Lng/Depth/Alt\n• BBox, Contour & Shadow Meta")]
-            T_MSN[("sonar_spatial_missions\n• Survey Transects & Tracks\n• Ping Metrics, SNR, Vessel Info")]
-            T_MPA[("mpa_geotags\n• MPA Zones & Official Refs\n• Threat Levels & Hazard Tags")]
-            ST_FUNC["Spatial Analysis Engine\n• ST_DWithin (Radial Proximity Alerts)\n• Hazard Cluster Hull Generation"]
-        end
-
-        subgraph SQLITE_DB ["Fallback: Local Embedded SQLite WAL"]
-            L_SQLITE[("echopulsenet.db\n(Zero-config Offline Edge Storage)")]
-        end
-        
-        B6_POOL -- "Online Connection" --> PG_DB
-        B6_POOL -- "Offline Fallback" --> SQLITE_DB
+        BLD --> SRC
+        SRC --> FFT
     end
 
-    %% Flow Connections between Blocks
-    BLOCK_1 ==> |"Raw Files / Streams / GPS"| BLOCK_2
-    BLOCK_WRAPPER -.-> |"Hosts & Executes"| BLOCK_2
-    BLOCK_WRAPPER -.-> |"Launches Backend Process"| BLOCK_3
-    
-    B2_5 ==> |"REST HTTP / Multipart Form Data"| B3_1
-    B3_4 ==> |"Dispatches Request"| GUARD_ENGINE
-    
-    BLOCK_5 -.-> |"Decrypted DB Credentials"| B6_POOL
-    B3_4 ==> |"Read / Write Missions & Detections"| B6_POOL
-    B4_5 ==> |"Fetches Audit Records"| B6_POOL
-    POSTGIS_SRV["PostGIS Spatial Analytics"] --- ST_FUNC
+    %% 3. Deep Learning Inference Core (Proprietary Models)
+    subgraph AI_CORE["3. Deep Learning Inference Core (Proprietary Models)"]
+        EchoPhys["EchoPhys-X (Dual-Head U-\nNet Shadow & Seabed\nAutoencoder)"]
+        HydroPhys["HydroPhys-OmniNet v4\n(Attention-Centric\nYOLOv12 Detector)"]
+        MultiFusion["Homoscedastic Multi-Task\nUncertainty Loss & Fusion"]
+        SensorFusion["Sensor Fusion & 3D Optical\nRay Triangulation Engine"]
+        
+        EchoPhys --> MultiFusion
+        HydroPhys --> MultiFusion
+    end
 
-    %% Styling
-    style BLOCK_1 fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#f8fafc
-    style BLOCK_2 fill:#0f172a,stroke:#3b82f6,stroke-width:2px,color:#f8fafc
-    style BLOCK_WRAPPER fill:#1e1b4b,stroke:#818cf8,stroke-width:1px,stroke-dasharray: 4 4,color:#f8fafc
-    style BLOCK_3 fill:#0f172a,stroke:#10b981,stroke-width:2px,color:#f8fafc
-    style BLOCK_4 fill:#0f172a,stroke:#f59e0b,stroke-width:2px,color:#f8fafc
-    style BLOCK_5 fill:#0f172a,stroke:#ec4899,stroke-width:2px,color:#f8fafc
-    style BLOCK_6 fill:#0f172a,stroke:#06b6d4,stroke-width:2px,color:#f8fafc
+    %% 4. Spatial Geospatial Intelligence Database
+    subgraph POSTGIS_DB["4. Spatial Geospatial Intelligence Database"]
+        PostGIS["PostgreSQL 16 / PostGIS\n(Encrypted Connection)"]
+        GeoJSON["Spatial Hazard Matrix &\nCoastal Geofencing"]
+        
+        PostGIS --> GeoJSON
+    end
+
+    %% 5. Interactive Mission Control HUD & Digital Twin
+    subgraph MISSION_CONTROL["5. Interactive Mission Control HUD & Digital Twin"]
+        HITL["Active Learning & Local\nGPU Retrain Studio"]
+        CommandCenter["Defense Command Center\nHUD (4-Quadrant)"]
+        Waterfall["60 FPS Cascading Sonar\nWaterfall & Calipers"]
+        WebcamHUD["Webcam Real-Time 3D\nMulti-Object Projector"]
+        Twin3D["3D Bathymetric Subsea\nDigital Twin Mesh (Three.js)"]
+    end
+
+    %% Cross-Subgraph Dataflow Links (Matching Image Flow)
+    RawSonar --> BLD
+    
+    FFT --> EchoPhys
+    FFT --> HydroPhys
+    
+    WebcamFeed --> SensorFusion
+    HardwareGps --> SensorFusion
+    HardwareIR --> SensorFusion
+    
+    MultiFusion --> PostGIS
+    SensorFusion --> PostGIS
+    
+    MultiFusion --> HITL
+    MultiFusion --> CommandCenter
+    MultiFusion --> Waterfall
+    
+    SensorFusion --> WebcamHUD
+    SensorFusion --> Twin3D
+    
+    GeoJSON --> Twin3D
+    GeoJSON --> CommandCenter
 ```
 
 ---
