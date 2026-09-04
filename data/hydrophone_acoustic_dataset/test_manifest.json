@@ -1,0 +1,1502 @@
+[
+  {
+    "id": "HYD_TAC_050",
+    "filename": "tac_unmanned_050.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_unmanned_050.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Unmanned Surface Vehicle (USV) High-Speed Jet",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 2393.0,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 1495.6,
+      "harmonic_hz": 3101.7
+    }
+  },
+  {
+    "id": "HYD_BIO_013",
+    "filename": "bio_dolphin_013.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Biophonic/bio_dolphin_013.wav",
+    "category": "Biophonic",
+    "subclass": "Dolphin Echolocation Clicks & Whistles",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 9806.2,
+      "ndsi_index": 0.75,
+      "base_frequency_hz": 6128.9,
+      "harmonic_hz": 12621.7
+    }
+  },
+  {
+    "id": "HYD_TAC_062",
+    "filename": "tac_unmanned_062.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_unmanned_062.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Unmanned Underwater Drone (UUV) Low-RPM Thruster",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 1054.0,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 658.7,
+      "harmonic_hz": 1156.5
+    }
+  },
+  {
+    "id": "HYD_ANT_051",
+    "filename": "ant_commercial_051.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Anthropogenic/ant_commercial_051.wav",
+    "category": "Anthropogenic",
+    "subclass": "Commercial Cargo Ship Cavitation",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 273.6,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 171.0,
+      "harmonic_hz": 349.4
+    }
+  },
+  {
+    "id": "HYD_GEO_019",
+    "filename": "geo_underwater_019.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Geophonic/geo_underwater_019.wav",
+    "category": "Geophonic",
+    "subclass": "Underwater Tectonic / Seismic Rumbling",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 69.1,
+      "ndsi_index": 0.1,
+      "base_frequency_hz": 43.2,
+      "harmonic_hz": 85.3
+    }
+  },
+  {
+    "id": "HYD_GEO_004",
+    "filename": "geo_glacial_004.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Geophonic/geo_glacial_004.wav",
+    "category": "Geophonic",
+    "subclass": "Glacial Iceberg Calving & Cracking",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 523.9,
+      "ndsi_index": 0.1,
+      "base_frequency_hz": 327.4,
+      "harmonic_hz": 668.2
+    }
+  },
+  {
+    "id": "HYD_TAC_028",
+    "filename": "tac_unmanned_028.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_unmanned_028.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Unmanned Underwater Drone (UUV) Low-RPM Thruster",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 937.6,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 586.0,
+      "harmonic_hz": 1324.4
+    }
+  },
+  {
+    "id": "HYD_TAC_048",
+    "filename": "tac_diver_048.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_diver_048.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Diver Propulsion Vehicle (DPV) / SCUBA Signature",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 583.8,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 364.9,
+      "harmonic_hz": 750.3
+    }
+  },
+  {
+    "id": "HYD_TAC_056",
+    "filename": "tac_autonomous_056.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_autonomous_056.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Autonomous Underwater Vehicle (AUV) Electric Propulsion",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 719.1,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 449.4,
+      "harmonic_hz": 876.7
+    }
+  },
+  {
+    "id": "HYD_BIO_059",
+    "filename": "bio_dolphin_059.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Biophonic/bio_dolphin_059.wav",
+    "category": "Biophonic",
+    "subclass": "Dolphin Echolocation Clicks & Whistles",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 10823.1,
+      "ndsi_index": 0.75,
+      "base_frequency_hz": 6764.4,
+      "harmonic_hz": 12079.4
+    }
+  },
+  {
+    "id": "HYD_ANT_054",
+    "filename": "ant_commercial_054.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Anthropogenic/ant_commercial_054.wav",
+    "category": "Anthropogenic",
+    "subclass": "Commercial Cargo Ship Cavitation",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 310.1,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 193.8,
+      "harmonic_hz": 364.8
+    }
+  },
+  {
+    "id": "HYD_BIO_020",
+    "filename": "bio_dolphin_020.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Biophonic/bio_dolphin_020.wav",
+    "category": "Biophonic",
+    "subclass": "Dolphin Echolocation Clicks & Whistles",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 11040.0,
+      "ndsi_index": 0.75,
+      "base_frequency_hz": 6900.0,
+      "harmonic_hz": 11161.7
+    }
+  },
+  {
+    "id": "HYD_GEO_024",
+    "filename": "geo_subsea_024.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Geophonic/geo_subsea_024.wav",
+    "category": "Geophonic",
+    "subclass": "Subsea Hydrothermal Venting",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 1710.3,
+      "ndsi_index": 0.1,
+      "base_frequency_hz": 1069.0,
+      "harmonic_hz": 2322.5
+    }
+  },
+  {
+    "id": "HYD_TAC_005",
+    "filename": "tac_diver_005.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_diver_005.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Diver Propulsion Vehicle (DPV) / SCUBA Signature",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 580.9,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 363.1,
+      "harmonic_hz": 742.7
+    }
+  },
+  {
+    "id": "HYD_TAC_039",
+    "filename": "tac_unmanned_039.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_unmanned_039.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Unmanned Surface Vehicle (USV) High-Speed Jet",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 2357.7,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 1473.6,
+      "harmonic_hz": 2759.0
+    }
+  },
+  {
+    "id": "HYD_BIO_024",
+    "filename": "bio_humpback_024.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Biophonic/bio_humpback_024.wav",
+    "category": "Biophonic",
+    "subclass": "Humpback Whale Song / Vocalization",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 3575.7,
+      "ndsi_index": 0.75,
+      "base_frequency_hz": 2234.8,
+      "harmonic_hz": 4714.4
+    }
+  },
+  {
+    "id": "HYD_ANT_028",
+    "filename": "ant_marine_028.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Anthropogenic/ant_marine_028.wav",
+    "category": "Anthropogenic",
+    "subclass": "Marine Seismic Exploration Airgun",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 134.3,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 83.9,
+      "harmonic_hz": 185.2
+    }
+  },
+  {
+    "id": "HYD_TAC_031",
+    "filename": "tac_unmanned_031.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_unmanned_031.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Unmanned Underwater Drone (UUV) Low-RPM Thruster",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 1041.0,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 650.7,
+      "harmonic_hz": 1175.3
+    }
+  },
+  {
+    "id": "HYD_TAC_021",
+    "filename": "tac_high-speed_021.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_high-speed_021.wav",
+    "category": "Tactical Intruder",
+    "subclass": "High-Speed Torpedo Propulsion Acoustic Signature",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 3624.2,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 2265.1,
+      "harmonic_hz": 4671.3
+    }
+  },
+  {
+    "id": "HYD_ANT_010",
+    "filename": "ant_commercial_010.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Anthropogenic/ant_commercial_010.wav",
+    "category": "Anthropogenic",
+    "subclass": "Commercial Cargo Ship Cavitation",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 280.4,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 175.3,
+      "harmonic_hz": 334.3
+    }
+  },
+  {
+    "id": "HYD_TAC_013",
+    "filename": "tac_unmanned_013.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_unmanned_013.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Unmanned Underwater Drone (UUV) Low-RPM Thruster",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 1040.5,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 650.3,
+      "harmonic_hz": 1234.8
+    }
+  },
+  {
+    "id": "HYD_GEO_001",
+    "filename": "geo_underwater_001.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Geophonic/geo_underwater_001.wav",
+    "category": "Geophonic",
+    "subclass": "Underwater Tectonic / Seismic Rumbling",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 76.1,
+      "ndsi_index": 0.1,
+      "base_frequency_hz": 47.6,
+      "harmonic_hz": 92.8
+    }
+  },
+  {
+    "id": "HYD_BIO_002",
+    "filename": "bio_marine_002.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Biophonic/bio_marine_002.wav",
+    "category": "Biophonic",
+    "subclass": "Marine Fish Biological Chorus",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 1076.7,
+      "ndsi_index": 0.75,
+      "base_frequency_hz": 672.9,
+      "harmonic_hz": 1222.4
+    }
+  },
+  {
+    "id": "HYD_TAC_046",
+    "filename": "tac_high-speed_046.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_high-speed_046.wav",
+    "category": "Tactical Intruder",
+    "subclass": "High-Speed Torpedo Propulsion Acoustic Signature",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 3364.3,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 2102.7,
+      "harmonic_hz": 4084.8
+    }
+  },
+  {
+    "id": "HYD_GEO_013",
+    "filename": "geo_underwater_013.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Geophonic/geo_underwater_013.wav",
+    "category": "Geophonic",
+    "subclass": "Underwater Tectonic / Seismic Rumbling",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 68.2,
+      "ndsi_index": 0.1,
+      "base_frequency_hz": 42.6,
+      "harmonic_hz": 85.2
+    }
+  },
+  {
+    "id": "HYD_TAC_055",
+    "filename": "tac_unmanned_055.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_unmanned_055.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Unmanned Surface Vehicle (USV) High-Speed Jet",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 2318.9,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 1449.3,
+      "harmonic_hz": 2673.7
+    }
+  },
+  {
+    "id": "HYD_ANT_015",
+    "filename": "ant_offshore_015.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Anthropogenic/ant_offshore_015.wav",
+    "category": "Anthropogenic",
+    "subclass": "Offshore Wind Turbine Piling Noise",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 392.2,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 245.1,
+      "harmonic_hz": 717.3
+    }
+  },
+  {
+    "id": "HYD_TAC_030",
+    "filename": "tac_high-speed_030.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_high-speed_030.wav",
+    "category": "Tactical Intruder",
+    "subclass": "High-Speed Torpedo Propulsion Acoustic Signature",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 3599.2,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 2249.5,
+      "harmonic_hz": 4297.0
+    }
+  },
+  {
+    "id": "HYD_GEO_024",
+    "filename": "geo_glacial_024.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Geophonic/geo_glacial_024.wav",
+    "category": "Geophonic",
+    "subclass": "Glacial Iceberg Calving & Cracking",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 539.7,
+      "ndsi_index": 0.1,
+      "base_frequency_hz": 337.3,
+      "harmonic_hz": 675.4
+    }
+  },
+  {
+    "id": "HYD_GEO_031",
+    "filename": "geo_subsea_031.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Geophonic/geo_subsea_031.wav",
+    "category": "Geophonic",
+    "subclass": "Subsea Hydrothermal Venting",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 1655.8,
+      "ndsi_index": 0.1,
+      "base_frequency_hz": 1034.9,
+      "harmonic_hz": 2196.6
+    }
+  },
+  {
+    "id": "HYD_GEO_047",
+    "filename": "geo_heavy_047.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Geophonic/geo_heavy_047.wav",
+    "category": "Geophonic",
+    "subclass": "Heavy Sea Surface Rain / Wave Action",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 4959.3,
+      "ndsi_index": 0.1,
+      "base_frequency_hz": 3099.6,
+      "harmonic_hz": 6773.9
+    }
+  },
+  {
+    "id": "HYD_ANT_024",
+    "filename": "ant_offshore_024.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Anthropogenic/ant_offshore_024.wav",
+    "category": "Anthropogenic",
+    "subclass": "Offshore Wind Turbine Piling Noise",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 409.8,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 256.1,
+      "harmonic_hz": 736.6
+    }
+  },
+  {
+    "id": "HYD_ANT_044",
+    "filename": "ant_marine_044.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Anthropogenic/ant_marine_044.wav",
+    "category": "Anthropogenic",
+    "subclass": "Marine Seismic Exploration Airgun",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 146.6,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 91.6,
+      "harmonic_hz": 189.9
+    }
+  },
+  {
+    "id": "HYD_ANT_035",
+    "filename": "ant_marine_035.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Anthropogenic/ant_marine_035.wav",
+    "category": "Anthropogenic",
+    "subclass": "Marine Seismic Exploration Airgun",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 146.4,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 91.5,
+      "harmonic_hz": 172.9
+    }
+  },
+  {
+    "id": "HYD_BIO_019",
+    "filename": "bio_snapping_019.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Biophonic/bio_snapping_019.wav",
+    "category": "Biophonic",
+    "subclass": "Snapping Shrimp High-Frequency Crackle",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 13627.1,
+      "ndsi_index": 0.75,
+      "base_frequency_hz": 8516.9,
+      "harmonic_hz": 15939.1
+    }
+  },
+  {
+    "id": "HYD_GEO_045",
+    "filename": "geo_underwater_045.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Geophonic/geo_underwater_045.wav",
+    "category": "Geophonic",
+    "subclass": "Underwater Tectonic / Seismic Rumbling",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 70.0,
+      "ndsi_index": 0.1,
+      "base_frequency_hz": 43.8,
+      "harmonic_hz": 89.3
+    }
+  },
+  {
+    "id": "HYD_GEO_030",
+    "filename": "geo_heavy_030.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Geophonic/geo_heavy_030.wav",
+    "category": "Geophonic",
+    "subclass": "Heavy Sea Surface Rain / Wave Action",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 4989.1,
+      "ndsi_index": 0.1,
+      "base_frequency_hz": 3118.2,
+      "harmonic_hz": 5953.3
+    }
+  },
+  {
+    "id": "HYD_GEO_029",
+    "filename": "geo_subsea_029.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Geophonic/geo_subsea_029.wav",
+    "category": "Geophonic",
+    "subclass": "Subsea Hydrothermal Venting",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 1777.0,
+      "ndsi_index": 0.1,
+      "base_frequency_hz": 1110.7,
+      "harmonic_hz": 2124.3
+    }
+  },
+  {
+    "id": "HYD_ANT_043",
+    "filename": "ant_commercial_043.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Anthropogenic/ant_commercial_043.wav",
+    "category": "Anthropogenic",
+    "subclass": "Commercial Cargo Ship Cavitation",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 299.5,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 187.2,
+      "harmonic_hz": 372.8
+    }
+  },
+  {
+    "id": "HYD_ANT_022",
+    "filename": "ant_offshore_022.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Anthropogenic/ant_offshore_022.wav",
+    "category": "Anthropogenic",
+    "subclass": "Offshore Wind Turbine Piling Noise",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 402.6,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 251.6,
+      "harmonic_hz": 757.4
+    }
+  },
+  {
+    "id": "HYD_GEO_007",
+    "filename": "geo_glacial_007.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Geophonic/geo_glacial_007.wav",
+    "category": "Geophonic",
+    "subclass": "Glacial Iceberg Calving & Cracking",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 489.4,
+      "ndsi_index": 0.1,
+      "base_frequency_hz": 305.9,
+      "harmonic_hz": 642.2
+    }
+  },
+  {
+    "id": "HYD_BIO_023",
+    "filename": "bio_snapping_023.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Biophonic/bio_snapping_023.wav",
+    "category": "Biophonic",
+    "subclass": "Snapping Shrimp High-Frequency Crackle",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 13093.4,
+      "ndsi_index": 0.75,
+      "base_frequency_hz": 8183.4,
+      "harmonic_hz": 15327.3
+    }
+  },
+  {
+    "id": "HYD_GEO_035",
+    "filename": "geo_subsea_035.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Geophonic/geo_subsea_035.wav",
+    "category": "Geophonic",
+    "subclass": "Subsea Hydrothermal Venting",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 1898.9,
+      "ndsi_index": 0.1,
+      "base_frequency_hz": 1186.8,
+      "harmonic_hz": 2189.9
+    }
+  },
+  {
+    "id": "HYD_TAC_040",
+    "filename": "tac_high-speed_040.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_high-speed_040.wav",
+    "category": "Tactical Intruder",
+    "subclass": "High-Speed Torpedo Propulsion Acoustic Signature",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 3754.1,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 2346.3,
+      "harmonic_hz": 4671.8
+    }
+  },
+  {
+    "id": "HYD_TAC_038",
+    "filename": "tac_high-speed_038.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_high-speed_038.wav",
+    "category": "Tactical Intruder",
+    "subclass": "High-Speed Torpedo Propulsion Acoustic Signature",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 3647.9,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 2279.9,
+      "harmonic_hz": 4294.0
+    }
+  },
+  {
+    "id": "HYD_GEO_049",
+    "filename": "geo_glacial_049.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Geophonic/geo_glacial_049.wav",
+    "category": "Geophonic",
+    "subclass": "Glacial Iceberg Calving & Cracking",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 474.6,
+      "ndsi_index": 0.1,
+      "base_frequency_hz": 296.7,
+      "harmonic_hz": 627.1
+    }
+  },
+  {
+    "id": "HYD_ANT_017",
+    "filename": "ant_commercial_017.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Anthropogenic/ant_commercial_017.wav",
+    "category": "Anthropogenic",
+    "subclass": "Commercial Cargo Ship Cavitation",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 298.6,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 186.6,
+      "harmonic_hz": 354.9
+    }
+  },
+  {
+    "id": "HYD_ANT_003",
+    "filename": "ant_offshore_003.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Anthropogenic/ant_offshore_003.wav",
+    "category": "Anthropogenic",
+    "subclass": "Offshore Wind Turbine Piling Noise",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 399.7,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 249.8,
+      "harmonic_hz": 698.4
+    }
+  },
+  {
+    "id": "HYD_TAC_005",
+    "filename": "tac_unmanned_005.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_unmanned_005.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Unmanned Underwater Drone (UUV) Low-RPM Thruster",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 964.6,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 602.8,
+      "harmonic_hz": 1216.7
+    }
+  },
+  {
+    "id": "HYD_TAC_059",
+    "filename": "tac_autonomous_059.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_autonomous_059.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Autonomous Underwater Vehicle (AUV) Electric Propulsion",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 668.7,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 417.9,
+      "harmonic_hz": 838.2
+    }
+  },
+  {
+    "id": "HYD_GEO_026",
+    "filename": "geo_subsea_026.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Geophonic/geo_subsea_026.wav",
+    "category": "Geophonic",
+    "subclass": "Subsea Hydrothermal Venting",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 1625.5,
+      "ndsi_index": 0.1,
+      "base_frequency_hz": 1015.9,
+      "harmonic_hz": 2319.2
+    }
+  },
+  {
+    "id": "HYD_ANT_032",
+    "filename": "ant_marine_032.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Anthropogenic/ant_marine_032.wav",
+    "category": "Anthropogenic",
+    "subclass": "Marine Seismic Exploration Airgun",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 149.2,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 93.2,
+      "harmonic_hz": 177.7
+    }
+  },
+  {
+    "id": "HYD_TAC_048",
+    "filename": "tac_high-speed_048.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_high-speed_048.wav",
+    "category": "Tactical Intruder",
+    "subclass": "High-Speed Torpedo Propulsion Acoustic Signature",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 3392.9,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 2120.6,
+      "harmonic_hz": 4713.6
+    }
+  },
+  {
+    "id": "HYD_TAC_043",
+    "filename": "tac_diver_043.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_diver_043.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Diver Propulsion Vehicle (DPV) / SCUBA Signature",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 649.1,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 405.7,
+      "harmonic_hz": 763.4
+    }
+  },
+  {
+    "id": "HYD_GEO_021",
+    "filename": "geo_heavy_021.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Geophonic/geo_heavy_021.wav",
+    "category": "Geophonic",
+    "subclass": "Heavy Sea Surface Rain / Wave Action",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 5288.1,
+      "ndsi_index": 0.1,
+      "base_frequency_hz": 3305.0,
+      "harmonic_hz": 6560.8
+    }
+  },
+  {
+    "id": "HYD_BIO_048",
+    "filename": "bio_dolphin_048.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Biophonic/bio_dolphin_048.wav",
+    "category": "Biophonic",
+    "subclass": "Dolphin Echolocation Clicks & Whistles",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 10648.3,
+      "ndsi_index": 0.75,
+      "base_frequency_hz": 6655.2,
+      "harmonic_hz": 12875.0
+    }
+  },
+  {
+    "id": "HYD_ANT_015",
+    "filename": "ant_outboard_015.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Anthropogenic/ant_outboard_015.wav",
+    "category": "Anthropogenic",
+    "subclass": "Outboard Motor / Recreational Boat",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 1271.5,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 794.7,
+      "harmonic_hz": 1640.7
+    }
+  },
+  {
+    "id": "HYD_TAC_018",
+    "filename": "tac_high-speed_018.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_high-speed_018.wav",
+    "category": "Tactical Intruder",
+    "subclass": "High-Speed Torpedo Propulsion Acoustic Signature",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 3440.1,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 2150.1,
+      "harmonic_hz": 4295.3
+    }
+  },
+  {
+    "id": "HYD_GEO_022",
+    "filename": "geo_underwater_022.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Geophonic/geo_underwater_022.wav",
+    "category": "Geophonic",
+    "subclass": "Underwater Tectonic / Seismic Rumbling",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 69.9,
+      "ndsi_index": 0.1,
+      "base_frequency_hz": 43.7,
+      "harmonic_hz": 89.7
+    }
+  },
+  {
+    "id": "HYD_GEO_046",
+    "filename": "geo_heavy_046.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Geophonic/geo_heavy_046.wav",
+    "category": "Geophonic",
+    "subclass": "Heavy Sea Surface Rain / Wave Action",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 4912.0,
+      "ndsi_index": 0.1,
+      "base_frequency_hz": 3070.0,
+      "harmonic_hz": 6882.9
+    }
+  },
+  {
+    "id": "HYD_ANT_047",
+    "filename": "ant_commercial_047.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Anthropogenic/ant_commercial_047.wav",
+    "category": "Anthropogenic",
+    "subclass": "Commercial Cargo Ship Cavitation",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 274.2,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 171.4,
+      "harmonic_hz": 335.0
+    }
+  },
+  {
+    "id": "HYD_TAC_029",
+    "filename": "tac_autonomous_029.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_autonomous_029.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Autonomous Underwater Vehicle (AUV) Electric Propulsion",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 716.2,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 447.6,
+      "harmonic_hz": 809.6
+    }
+  },
+  {
+    "id": "HYD_GEO_004",
+    "filename": "geo_underwater_004.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Geophonic/geo_underwater_004.wav",
+    "category": "Geophonic",
+    "subclass": "Underwater Tectonic / Seismic Rumbling",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 72.0,
+      "ndsi_index": 0.1,
+      "base_frequency_hz": 45.0,
+      "harmonic_hz": 86.9
+    }
+  },
+  {
+    "id": "HYD_ANT_049",
+    "filename": "ant_marine_049.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Anthropogenic/ant_marine_049.wav",
+    "category": "Anthropogenic",
+    "subclass": "Marine Seismic Exploration Airgun",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 149.1,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 93.2,
+      "harmonic_hz": 174.7
+    }
+  },
+  {
+    "id": "HYD_BIO_033",
+    "filename": "bio_humpback_033.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Biophonic/bio_humpback_033.wav",
+    "category": "Biophonic",
+    "subclass": "Humpback Whale Song / Vocalization",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 3570.4,
+      "ndsi_index": 0.75,
+      "base_frequency_hz": 2231.5,
+      "harmonic_hz": 4982.5
+    }
+  },
+  {
+    "id": "HYD_TAC_036",
+    "filename": "tac_autonomous_036.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_autonomous_036.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Autonomous Underwater Vehicle (AUV) Electric Propulsion",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 673.1,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 420.7,
+      "harmonic_hz": 887.7
+    }
+  },
+  {
+    "id": "HYD_TAC_006",
+    "filename": "tac_unmanned_006.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_unmanned_006.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Unmanned Underwater Drone (UUV) Low-RPM Thruster",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 1064.8,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 665.5,
+      "harmonic_hz": 1309.1
+    }
+  },
+  {
+    "id": "HYD_ANT_045",
+    "filename": "ant_offshore_045.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Anthropogenic/ant_offshore_045.wav",
+    "category": "Anthropogenic",
+    "subclass": "Offshore Wind Turbine Piling Noise",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 373.6,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 233.5,
+      "harmonic_hz": 665.4
+    }
+  },
+  {
+    "id": "HYD_GEO_004",
+    "filename": "geo_heavy_004.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Geophonic/geo_heavy_004.wav",
+    "category": "Geophonic",
+    "subclass": "Heavy Sea Surface Rain / Wave Action",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 5231.5,
+      "ndsi_index": 0.1,
+      "base_frequency_hz": 3269.7,
+      "harmonic_hz": 6577.8
+    }
+  },
+  {
+    "id": "HYD_GEO_013",
+    "filename": "geo_glacial_013.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Geophonic/geo_glacial_013.wav",
+    "category": "Geophonic",
+    "subclass": "Glacial Iceberg Calving & Cracking",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 510.1,
+      "ndsi_index": 0.1,
+      "base_frequency_hz": 318.8,
+      "harmonic_hz": 647.7
+    }
+  },
+  {
+    "id": "HYD_BIO_012",
+    "filename": "bio_snapping_012.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Biophonic/bio_snapping_012.wav",
+    "category": "Biophonic",
+    "subclass": "Snapping Shrimp High-Frequency Crackle",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 12849.8,
+      "ndsi_index": 0.75,
+      "base_frequency_hz": 8031.1,
+      "harmonic_hz": 14853.5
+    }
+  },
+  {
+    "id": "HYD_BIO_001",
+    "filename": "bio_marine_001.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Biophonic/bio_marine_001.wav",
+    "category": "Biophonic",
+    "subclass": "Marine Fish Biological Chorus",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 1088.2,
+      "ndsi_index": 0.75,
+      "base_frequency_hz": 680.1,
+      "harmonic_hz": 1372.6
+    }
+  },
+  {
+    "id": "HYD_BIO_014",
+    "filename": "bio_humpback_014.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Biophonic/bio_humpback_014.wav",
+    "category": "Biophonic",
+    "subclass": "Humpback Whale Song / Vocalization",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 3662.2,
+      "ndsi_index": 0.75,
+      "base_frequency_hz": 2288.9,
+      "harmonic_hz": 5019.5
+    }
+  },
+  {
+    "id": "HYD_TAC_061",
+    "filename": "tac_unmanned_061.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_unmanned_061.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Unmanned Underwater Drone (UUV) Low-RPM Thruster",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 971.1,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 607.0,
+      "harmonic_hz": 1157.6
+    }
+  },
+  {
+    "id": "HYD_TAC_013",
+    "filename": "tac_high-speed_013.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_high-speed_013.wav",
+    "category": "Tactical Intruder",
+    "subclass": "High-Speed Torpedo Propulsion Acoustic Signature",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 3293.1,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 2058.2,
+      "harmonic_hz": 4462.2
+    }
+  },
+  {
+    "id": "HYD_GEO_003",
+    "filename": "geo_glacial_003.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Geophonic/geo_glacial_003.wav",
+    "category": "Geophonic",
+    "subclass": "Glacial Iceberg Calving & Cracking",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 490.2,
+      "ndsi_index": 0.1,
+      "base_frequency_hz": 306.4,
+      "harmonic_hz": 624.7
+    }
+  },
+  {
+    "id": "HYD_ANT_026",
+    "filename": "ant_outboard_026.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Anthropogenic/ant_outboard_026.wav",
+    "category": "Anthropogenic",
+    "subclass": "Outboard Motor / Recreational Boat",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 1269.4,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 793.4,
+      "harmonic_hz": 1741.1
+    }
+  },
+  {
+    "id": "HYD_TAC_032",
+    "filename": "tac_unmanned_032.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_unmanned_032.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Unmanned Underwater Drone (UUV) Low-RPM Thruster",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 938.0,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 586.3,
+      "harmonic_hz": 1284.5
+    }
+  },
+  {
+    "id": "HYD_BIO_044",
+    "filename": "bio_snapping_044.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Biophonic/bio_snapping_044.wav",
+    "category": "Biophonic",
+    "subclass": "Snapping Shrimp High-Frequency Crackle",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 13096.1,
+      "ndsi_index": 0.75,
+      "base_frequency_hz": 8185.1,
+      "harmonic_hz": 17193.7
+    }
+  },
+  {
+    "id": "HYD_BIO_013",
+    "filename": "bio_marine_013.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Biophonic/bio_marine_013.wav",
+    "category": "Biophonic",
+    "subclass": "Marine Fish Biological Chorus",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 1044.5,
+      "ndsi_index": 0.75,
+      "base_frequency_hz": 652.8,
+      "harmonic_hz": 1395.4
+    }
+  },
+  {
+    "id": "HYD_TAC_016",
+    "filename": "tac_unmanned_016.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_unmanned_016.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Unmanned Surface Vehicle (USV) High-Speed Jet",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 2267.5,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 1417.2,
+      "harmonic_hz": 2701.2
+    }
+  },
+  {
+    "id": "HYD_GEO_020",
+    "filename": "geo_glacial_020.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Geophonic/geo_glacial_020.wav",
+    "category": "Geophonic",
+    "subclass": "Glacial Iceberg Calving & Cracking",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 515.2,
+      "ndsi_index": 0.1,
+      "base_frequency_hz": 322.0,
+      "harmonic_hz": 641.7
+    }
+  },
+  {
+    "id": "HYD_TAC_074",
+    "filename": "tac_autonomous_074.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_autonomous_074.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Autonomous Underwater Vehicle (AUV) Electric Propulsion",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 649.3,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 405.8,
+      "harmonic_hz": 795.0
+    }
+  },
+  {
+    "id": "HYD_BIO_034",
+    "filename": "bio_marine_034.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Biophonic/bio_marine_034.wav",
+    "category": "Biophonic",
+    "subclass": "Marine Fish Biological Chorus",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 970.6,
+      "ndsi_index": 0.75,
+      "base_frequency_hz": 606.7,
+      "harmonic_hz": 1211.6
+    }
+  },
+  {
+    "id": "HYD_TAC_056",
+    "filename": "tac_unmanned_056.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_unmanned_056.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Unmanned Underwater Drone (UUV) Low-RPM Thruster",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 929.9,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 581.2,
+      "harmonic_hz": 1252.5
+    }
+  },
+  {
+    "id": "HYD_TAC_017",
+    "filename": "tac_autonomous_017.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_autonomous_017.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Autonomous Underwater Vehicle (AUV) Electric Propulsion",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 697.5,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 435.9,
+      "harmonic_hz": 776.4
+    }
+  },
+  {
+    "id": "HYD_ANT_029",
+    "filename": "ant_commercial_029.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Anthropogenic/ant_commercial_029.wav",
+    "category": "Anthropogenic",
+    "subclass": "Commercial Cargo Ship Cavitation",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 270.3,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 168.9,
+      "harmonic_hz": 352.3
+    }
+  },
+  {
+    "id": "HYD_TAC_001",
+    "filename": "tac_diver_001.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_diver_001.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Diver Propulsion Vehicle (DPV) / SCUBA Signature",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 561.1,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 350.7,
+      "harmonic_hz": 783.1
+    }
+  },
+  {
+    "id": "HYD_TAC_047",
+    "filename": "tac_unmanned_047.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_unmanned_047.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Unmanned Underwater Drone (UUV) Low-RPM Thruster",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 966.6,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 604.1,
+      "harmonic_hz": 1206.6
+    }
+  },
+  {
+    "id": "HYD_GEO_011",
+    "filename": "geo_heavy_011.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Geophonic/geo_heavy_011.wav",
+    "category": "Geophonic",
+    "subclass": "Heavy Sea Surface Rain / Wave Action",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 5354.1,
+      "ndsi_index": 0.1,
+      "base_frequency_hz": 3346.3,
+      "harmonic_hz": 6263.8
+    }
+  },
+  {
+    "id": "HYD_TAC_021",
+    "filename": "tac_diver_021.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_diver_021.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Diver Propulsion Vehicle (DPV) / SCUBA Signature",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 607.1,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 379.5,
+      "harmonic_hz": 764.6
+    }
+  },
+  {
+    "id": "HYD_ANT_028",
+    "filename": "ant_commercial_028.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Anthropogenic/ant_commercial_028.wav",
+    "category": "Anthropogenic",
+    "subclass": "Commercial Cargo Ship Cavitation",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 293.3,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 183.3,
+      "harmonic_hz": 337.1
+    }
+  },
+  {
+    "id": "HYD_TAC_022",
+    "filename": "tac_diver_022.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_diver_022.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Diver Propulsion Vehicle (DPV) / SCUBA Signature",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 591.6,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 369.7,
+      "harmonic_hz": 755.9
+    }
+  },
+  {
+    "id": "HYD_ANT_032",
+    "filename": "ant_outboard_032.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Anthropogenic/ant_outboard_032.wav",
+    "category": "Anthropogenic",
+    "subclass": "Outboard Motor / Recreational Boat",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 1448.7,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 905.5,
+      "harmonic_hz": 1788.9
+    }
+  },
+  {
+    "id": "HYD_ANT_060",
+    "filename": "ant_outboard_060.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Anthropogenic/ant_outboard_060.wav",
+    "category": "Anthropogenic",
+    "subclass": "Outboard Motor / Recreational Boat",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 1352.0,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 845.0,
+      "harmonic_hz": 1670.8
+    }
+  },
+  {
+    "id": "HYD_TAC_010",
+    "filename": "tac_autonomous_010.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_autonomous_010.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Autonomous Underwater Vehicle (AUV) Electric Propulsion",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 647.8,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 404.9,
+      "harmonic_hz": 792.5
+    }
+  },
+  {
+    "id": "HYD_TAC_069",
+    "filename": "tac_unmanned_069.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_unmanned_069.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Unmanned Underwater Drone (UUV) Low-RPM Thruster",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 1064.4,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 665.2,
+      "harmonic_hz": 1192.3
+    }
+  },
+  {
+    "id": "HYD_BIO_047",
+    "filename": "bio_dolphin_047.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Biophonic/bio_dolphin_047.wav",
+    "category": "Biophonic",
+    "subclass": "Dolphin Echolocation Clicks & Whistles",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 9597.4,
+      "ndsi_index": 0.75,
+      "base_frequency_hz": 5998.4,
+      "harmonic_hz": 11991.2
+    }
+  },
+  {
+    "id": "HYD_TAC_066",
+    "filename": "tac_autonomous_066.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_autonomous_066.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Autonomous Underwater Vehicle (AUV) Electric Propulsion",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 684.2,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 427.7,
+      "harmonic_hz": 778.4
+    }
+  },
+  {
+    "id": "HYD_TAC_015",
+    "filename": "tac_unmanned_015.wav",
+    "filepath": "data/hydrophone_acoustic_dataset/audio/Tactical_Intruder/tac_unmanned_015.wav",
+    "category": "Tactical Intruder",
+    "subclass": "Unmanned Underwater Drone (UUV) Low-RPM Thruster",
+    "sample_rate": 44100,
+    "duration_sec": 3.0,
+    "features": {
+      "spectral_centroid_hz": 943.1,
+      "ndsi_index": -0.75,
+      "base_frequency_hz": 589.5,
+      "harmonic_hz": 1297.7
+    }
+  }
+]

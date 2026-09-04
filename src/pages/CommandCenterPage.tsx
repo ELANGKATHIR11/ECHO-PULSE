@@ -82,7 +82,7 @@ export const CommandCenterPage: React.FC = () => {
 
   // Load PostGIS Hazard Zones
   useEffect(() => {
-    fetch('http://localhost:8000/api/v1/gis/hazard-zones')
+    fetch('/api/v1/gis/hazard-zones')
       .then((res) => res.json())
       .then((data) => {
         if (data.zones) setHazardZones(data.zones);

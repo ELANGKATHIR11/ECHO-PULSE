@@ -24,7 +24,7 @@ class Settings(BaseModel):
     
     # AI / Inference
     CONFIDENCE_THRESHOLD: float = float(os.getenv("CONFIDENCE_THRESHOLD", "0.50"))
-    DEVICE: str = os.getenv("DEVICE", "auto") # auto, cuda, cpu
+    DEVICE: str = os.getenv("DEVICE", "npu") # npu (Intel AI Boost NPU), cuda, cpu
     
     # CORS Trusted Origins (Strict Configuration - No '*' in Production)
     BACKEND_CORS_ORIGINS: list[str] = [

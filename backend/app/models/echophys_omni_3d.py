@@ -247,7 +247,8 @@ class RealTimeOverlayRenderer:
 # ------------------------------------------------------------------------------
 class EchoPhysOmni3DInference:
     def __init__(self, checkpoint_path: str = "models_checkpoints/echophys_x_v3_unified_best.pt", device: str = None):
-        self.device = torch.device(device if device else ("cuda" if torch.cuda.is_available() else "cpu"))
+        dev_str = str(device) if device else "NPU"
+        self.device = torch.device("cuda" if torch.cuda.is_available() and dev_str.lower() != "npu" else "cpu")
         
         # Load Architecture
         from scripts.train_echophys_x_v3 import EchoPhysXV3

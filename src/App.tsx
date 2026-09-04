@@ -13,6 +13,10 @@ import { RawSonarUploadPage } from './pages/RawSonarUploadPage';
 import { CommandCenterPage } from './pages/CommandCenterPage';
 import { MpaDebrisMapPage } from './pages/MpaDebrisMapPage';
 import { PostgresSpatialDataPage } from './pages/PostgresSpatialDataPage';
+import { HydrophoneStudioPage } from './pages/HydrophoneStudioPage';
+import { AvsSurveillancePage } from './pages/AvsSurveillancePage';
+import { ModelRetrainPage } from './pages/ModelRetrainPage';
+import { OceanPhysNetStudioPage } from './pages/OceanPhysNetStudioPage';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 const PageFallback = () => (
@@ -120,8 +124,47 @@ export default function App() {
                   </Suspense>
                 }
               />
+              <Route
+                path="/hydrophone"
+                element={
+                  <Suspense fallback={<PageFallback />}>
+                    <HydrophoneStudioPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/avs-surveillance"
+                element={
+                  <Suspense fallback={<PageFallback />}>
+                    <AvsSurveillancePage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/model-retrain"
+                element={
+                  <Suspense fallback={<PageFallback />}>
+                    <ModelRetrainPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/ocean-physnet"
+                element={
+                  <Suspense fallback={<PageFallback />}>
+                    <OceanPhysNetStudioPage />
+                  </Suspense>
+                }
+              />
 
               {/* Clean Aliases for streamlined architecture */}
+              <Route path="/physnet" element={<Navigate to="/ocean-physnet" replace />} />
+              <Route path="/physics" element={<Navigate to="/ocean-physnet" replace />} />
+              <Route path="/ssp" element={<Navigate to="/ocean-physnet" replace />} />
+              <Route path="/avs" element={<Navigate to="/avs-surveillance" replace />} />
+              <Route path="/drone-defense" element={<Navigate to="/avs-surveillance" replace />} />
+              <Route path="/acoustic" element={<Navigate to="/hydrophone" replace />} />
+              <Route path="/retrain" element={<Navigate to="/model-retrain" replace />} />
               <Route path="/postgis" element={<Navigate to="/postgres" replace />} />
               <Route path="/database" element={<Navigate to="/postgres" replace />} />
               <Route path="/sql" element={<Navigate to="/postgres" replace />} />

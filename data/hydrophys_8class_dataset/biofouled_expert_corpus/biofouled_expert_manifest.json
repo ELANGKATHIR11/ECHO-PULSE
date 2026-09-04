@@ -1,0 +1,15 @@
+{
+  "name": "HydroPhys Expert Biofouled Debris vs Natural Mimics Corpus",
+  "total_samples": 1000,
+  "class_distribution": {
+    "ghost_gear": 128,
+    "shipwreck": 130,
+    "unexploded_ordnance": 139,
+    "pipeline_anomaly": 105,
+    "marine_debris": 115,
+    "subsea_cable": 129,
+    "biological_cluster": 385,
+    "geological_formation": 367
+  },
+  "records_count": 1000
+}

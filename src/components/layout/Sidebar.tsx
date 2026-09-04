@@ -13,6 +13,7 @@ import {
   Camera,
   Shield,
   Database,
+  Waves,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -32,6 +33,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
   const navItems: NavItem[] = [
     { to: '/', icon: Home, label: 'OVERVIEW' },
     { to: '/dashboard', icon: LayoutDashboard, label: 'DASHBOARD' },
+    { to: '/ocean-physnet', icon: Waves, label: 'OCEAN-PHYSNET', badge: 'PHYSICS', highlight: true },
+    { to: '/hydrophone', icon: Radio, label: 'HYDROPHONE AI', badge: 'AUDIO', highlight: true },
+    { to: '/avs-surveillance', icon: Crosshair, label: 'AVS DEFENSE', badge: '3D DOA', highlight: true },
+    { to: '/model-retrain', icon: Cpu, label: 'MODEL STUDIO', badge: 'RETRAIN', highlight: true },
     { to: '/postgres', icon: Database, label: 'POSTGRES DB', badge: 'SQL', highlight: true },
     { to: '/mpa', icon: Shield, label: 'MPA GEO-TAGS', badge: 'MoES', highlight: true },
     { to: '/upload', icon: Cpu, label: 'RAW INGESTION', badge: 'XTF/AI', highlight: true },

@@ -23,6 +23,7 @@ export interface Projected3DObject {
   confidence: number;
   distanceMeters: number;
   irSensorRangeMeters: number;
+  isPrimaryGeoTag?: boolean;
   world3D: [number, number, number]; // [X, Y, Z] in Three.js coordinates
   wgs84: {
     lat: number;
@@ -59,54 +60,57 @@ const OBJECT_PHYSICAL_HEIGHT_MAP: Record<string, number> = {
   cup: 0.15,
   backpack: 0.55,
   handbag: 0.4,
-  // 5. Metal Scraps
-  metal_scrap: 1.2,
-  metal: 1.0,
-  shipwreck: 8.5,
-  unexploded_ordnance: 0.9,
+  sports_ball: 0.22,
+  frisbee: 0.25,
+  // 5. Metal
+  metal_scrap: 0.6,
+  metal: 0.6,
+  shipwreck: 2.5,
+  unexploded_ordnance: 0.8,
   pipeline_anomaly: 1.2,
-  knife: 0.22,
-  scissors: 0.20,
-  default: 0.5,
+  knife: 0.2,
+  scissors: 0.15,
+  // Default
+  default: 0.4,
 };
 
-class SensorFusionService {
+export class SensorFusionService {
+  private cameraFocalLengthPx: number = 720.0; // Nominal calibrated optical focal length
   private gpsState: SystemGpsState = {
-    latitude: 9.1524,
-    longitude: 79.2819,
-    altitudeMeters: 14.5,
-    headingDeg: 84.0,
-    accuracyMeters: 2.5,
+    latitude: 9.15240, // Default Gulf of Mannar Marine Biosphere
+    longitude: 79.28190,
+    altitudeMeters: 4.2,
+    headingDeg: 38.0,
+    accuracyMeters: 0.4,
     isLiveGps: false,
   };
 
   private watchId: number | null = null;
-  private cameraFocalLengthPx: number = 650.0; // Standard calibrated 720p webcam focal length
 
   constructor() {
-    this.initSystemGps();
+    this.initHardwareGpsWatch();
   }
 
   /**
-   * Initializes Web Geolocation API for real-time system GPS coordinates
+   * Initializes real-time hardware Geolocation API from Browser / OS GPS
    */
-  public initSystemGps() {
+  private initHardwareGpsWatch() {
     if (typeof window !== 'undefined' && 'geolocation' in navigator) {
       this.watchId = navigator.geolocation.watchPosition(
         (pos) => {
           this.gpsState = {
             latitude: pos.coords.latitude,
             longitude: pos.coords.longitude,
-            altitudeMeters: pos.coords.altitude || 14.5,
+            altitudeMeters: pos.coords.altitude || 3.8,
             headingDeg: pos.coords.heading || this.gpsState.headingDeg,
-            accuracyMeters: pos.coords.accuracy || 2.0,
+            accuracyMeters: pos.coords.accuracy || 1.0,
             isLiveGps: true,
           };
         },
         (err) => {
-          console.debug('[GPS] Geolocation fallback to simulated coastal WGS84 coordinates:', err.message);
+          console.debug('[SensorFusion] GPS fallback to coastal simulation:', err.message);
         },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 1000 }
+        { enableHighAccuracy: true, maximumAge: 2000, timeout: 5000 }
       );
     }
   }
@@ -128,7 +132,8 @@ class SensorFusionService {
     canvasHeight: number,
     className: string,
     confidence: number,
-    customIrRangeMeters?: number
+    customIrRangeMeters?: number,
+    isPrimaryGeoTag: boolean = false
   ): Projected3DObject {
     const [x, y, w, h] = bbox;
     const cx = x + w / 2;
@@ -192,6 +197,7 @@ class SensorFusionService {
       confidence: Math.round(confidence * 100) / 100,
       distanceMeters: Math.round(distanceMeters * 10) / 10,
       irSensorRangeMeters: Math.round((customIrRangeMeters || distanceMeters) * 10) / 10,
+      isPrimaryGeoTag,
       world3D: [worldX, worldY, worldZ],
       wgs84: {
         lat: parseFloat(latTarget.toFixed(6)),

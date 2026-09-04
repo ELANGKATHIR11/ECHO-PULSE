@@ -1,0 +1,23 @@
+{
+  "model": "EchoPhys-Lite",
+  "optimal_threshold": 0.35,
+  "total_samples": 1950,
+  "classes": [
+    "Negative (Not a Debris)",
+    "Positive (Marine Debris)"
+  ],
+  "raw_confusion_matrix": {
+    "TN": 4,
+    "FP": 3,
+    "FN": 192,
+    "TP": 1751
+  },
+  "metrics": {
+    "accuracy": 0.9,
+    "precision": 0.9983,
+    "recall_sensitivity": 0.9012,
+    "specificity": 0.5714,
+    "f1_score": 0.9473,
+    "roc_auc": 0.8095
+  }
+}

@@ -25,22 +25,26 @@ import {
   Boxes
 } from 'lucide-react';
 import { GlassCard, GlassBadge, GlassButton, GlassPanel } from '../components/glass/GlassCard';
+import { OceanSceneHero3D } from '../components/three/OceanSceneHero3D';
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="flex-1 min-h-screen bg-[#020611] dark:bg-[#020611] light:bg-[#f0f7fc] text-slate-100 dark:text-slate-100 light:text-slate-800 font-sans pb-20 selection:bg-cyan-500/30 selection:text-cyan-200 relative overflow-hidden transition-colors duration-300">
+    <div className="flex-1 min-h-screen bg-transparent text-slate-100 dark:text-slate-100 light:text-slate-800 font-sans pb-20 selection:bg-cyan-500/30 selection:text-cyan-200 relative overflow-hidden transition-colors duration-300">
       {/* Background Ambient Glow & Waves */}
       <div className="absolute top-0 left-1/4 w-[700px] h-[500px] bg-radial from-cyan-500/15 dark:from-cyan-500/15 light:from-sky-400/20 via-sky-600/5 to-transparent blur-3xl pointer-events-none" />
       <div className="absolute top-1/3 right-10 w-[600px] h-[600px] bg-radial from-emerald-500/10 dark:from-emerald-500/10 light:from-teal-400/20 via-teal-600/5 to-transparent blur-3xl pointer-events-none" />
       <div className="absolute bottom-10 left-10 w-[800px] h-[500px] bg-radial from-blue-600/10 dark:from-blue-600/10 light:from-cyan-300/20 to-transparent blur-3xl pointer-events-none" />
 
       {/* HERO SECTION */}
-      <section className="relative pt-12 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="flex flex-col items-center text-center space-y-6">
+      <section className="relative pt-8 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        {/* Floating 3D Ocean Acoustic Wave Orb */}
+        <OceanSceneHero3D className="mb-[-40px]" />
+
+        <div className="flex flex-col items-center text-center space-y-6 relative z-10">
           {/* National Initiative Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-950/60 dark:bg-cyan-950/60 light:bg-sky-100 border border-cyan-400/40 dark:border-cyan-400/40 light:border-sky-300 backdrop-blur-xl shadow-[0_0_20px_rgba(34,211,238,0.2)]">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-950/60 dark:bg-cyan-950/60 light:bg-sky-100 border border-cyan-400/40 dark:border-cyan-400/40 light:border-sky-300 backdrop-blur-xl shadow-[0_0_20px_rgba(34,211,238,0.2)] animate-float-3d">
             <span className="w-2 h-2 rounded-full bg-emerald-400 dark:bg-emerald-400 light:bg-emerald-600 animate-ping" />
             <span className="text-xs font-mono font-bold tracking-wider text-cyan-300 dark:text-cyan-300 light:text-[#00639b] uppercase">
               Maritime India Vision 2030 & Deep Ocean Mission Platform

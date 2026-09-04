@@ -27,14 +27,16 @@ from scripts.train_echophys_x_v3 import EchoPhysXV3, UnifiedOceanDataset, collat
 # ==============================================================================
 def get_all_dataset_pairs():
     train_pairs = [
+        (Path("data/hydrophys_8class_dataset/unified/images/train"), Path("data/hydrophys_8class_dataset/unified/labels/train")),
         (Path("data/yolo_sonar_dataset/images/train"), Path("data/yolo_sonar_dataset/labels/train")),
         (Path("data/side-scan-sonar-object-detection-challenge/train/images"), Path("data/side-scan-sonar-object-detection-challenge/train/labels")),
         (Path("data/unified/augmented_multimodal/images"), Path("data/unified/augmented_multimodal/labels"))
     ]
     val_pairs = [
+        (Path("data/hydrophys_8class_dataset/unified/images/val"), Path("data/hydrophys_8class_dataset/unified/labels/val")),
         (Path("data/yolo_sonar_dataset/images/val"), Path("data/yolo_sonar_dataset/labels/val")),
         (Path("data/side-scan-sonar-object-detection-challenge/valid/images"), Path("data/side-scan-sonar-object-detection-challenge/valid/labels")),
-        (Path("data/yolo_sonar_dataset/images/test"), Path("data/yolo_sonar_dataset/labels/test"))
+        (Path("data/hydrophys_8class_dataset/unified/images/test"), Path("data/hydrophys_8class_dataset/unified/labels/test"))
     ]
     return train_pairs, val_pairs
 
@@ -58,10 +60,15 @@ def train_dual_models_grand_corpus(
     train_ds = UnifiedOceanDataset(train_pairs, num_classes=num_classes, train=True)
     val_ds = UnifiedOceanDataset(val_pairs, num_classes=num_classes, train=False)
 
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, collate_fn=collate_ocean_fn, num_workers=0, pin_memory=True)
-    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, collate_fn=collate_ocean_fn, num_workers=0, pin_memory=True)
+    # Micro-batching for 8GB VRAM RTX 5060 stability
+    micro_batch = min(4, batch_size)
+    accum_steps = max(1, batch_size // micro_batch)
+    
+    train_loader = DataLoader(train_ds, batch_size=micro_batch, shuffle=True, collate_fn=collate_ocean_fn, num_workers=0, pin_memory=False)
+    val_loader = DataLoader(val_ds, batch_size=micro_batch, shuffle=False, collate_fn=collate_ocean_fn, num_workers=0, pin_memory=False)
 
     print(f"[*] Total Training Dataset Corpus: {len(train_ds)} images | Validation Corpus: {len(val_ds)} images")
+    print(f"[*] Batch Config: Micro-Batch {micro_batch} x Accumulation {accum_steps} = Effective Batch {micro_batch * accum_steps}")
 
     # --------------------------------------------------------------------------
     # Model 1: HydroPhys-OmniNet (Extreme CAW-SSM 1D/2D/3D Engine)
@@ -78,7 +85,7 @@ def train_dual_models_grand_corpus(
         hydro_model.load_state_dict(c.get("model_state_dict", c), strict=False)
         print(f"[PASS] Pre-loaded warm weights into HydroPhys-OmniNet from {hydro_ckpt_path}")
 
-    optimizer_hydro = torch.optim.AdamW(hydro_model.parameters(), lr=6e-4, weight_decay=1e-4)
+    optimizer_hydro = torch.optim.AdamW(hydro_model.parameters(), lr=5e-4, weight_decay=1e-4)
     scheduler_hydro = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_hydro, T_max=epochs, eta_min=1e-5)
     scaler_hydro = torch.amp.GradScaler('cuda', enabled=torch.cuda.is_available())
 
@@ -89,20 +96,28 @@ def train_dual_models_grand_corpus(
         hydro_model.train()
         train_loss = 0.0
         ep_t0 = time.time()
-        for xb, labs, _ in train_loader:
+        optimizer_hydro.zero_grad(set_to_none=True)
+        
+        for step, (xb, labs, _) in enumerate(train_loader):
             xb = xb.to(device, non_blocking=True)
-            optimizer_hydro.zero_grad(set_to_none=True)
             with torch.amp.autocast('cuda', enabled=torch.cuda.is_available()):
                 outputs = hydro_model(xb)
                 loss, _ = compute_v3_loss(outputs, labs, num_classes, device)
+                loss = loss / accum_steps
+                
             scaler_hydro.scale(loss).backward()
-            scaler_hydro.step(optimizer_hydro)
-            scaler_hydro.update()
-            train_loss += float(loss.detach())
+            
+            if (step + 1) % accum_steps == 0 or (step + 1) == len(train_loader):
+                scaler_hydro.step(optimizer_hydro)
+                scaler_hydro.update()
+                optimizer_hydro.zero_grad(set_to_none=True)
+
+            train_loss += float(loss.detach()) * accum_steps
 
         scheduler_hydro.step()
         train_loss /= len(train_loader)
         ep_dur = time.time() - ep_t0
+        torch.cuda.empty_cache()
 
         # Validate
         hydro_model.eval()
@@ -111,8 +126,9 @@ def train_dual_models_grand_corpus(
         with torch.no_grad():
             for v_xb, v_labs, _ in val_loader:
                 v_xb = v_xb.to(device, non_blocking=True)
-                v_out = hydro_model(v_xb)
-                vl, _ = compute_v3_loss(v_out, v_labs, num_classes, device)
+                with torch.amp.autocast('cuda', enabled=torch.cuda.is_available()):
+                    v_out = hydro_model(v_xb)
+                    vl, _ = compute_v3_loss(v_out, v_labs, num_classes, device)
                 v_loss_tot += float(vl.detach())
                 n_vb += 1
         val_loss = v_loss_tot / max(1, n_vb)
@@ -132,6 +148,8 @@ def train_dual_models_grand_corpus(
             }, hydro_ckpt_path)
             print(f"  --> [SAVED EXTREME BEST] Checkpoint to {hydro_ckpt_path}")
 
+    torch.cuda.empty_cache()
+
     # --------------------------------------------------------------------------
     # Model 2: EchoPhys-X V3 (Unified Best Checkpoint)
     # --------------------------------------------------------------------------
@@ -147,7 +165,7 @@ def train_dual_models_grand_corpus(
         v3_model.load_state_dict(c.get("model_state_dict", c), strict=False)
         print(f"[PASS] Pre-loaded warm weights into EchoPhys-X V3 from {v3_ckpt_path}")
 
-    optimizer_v3 = torch.optim.AdamW(v3_model.parameters(), lr=6e-4, weight_decay=1e-4)
+    optimizer_v3 = torch.optim.AdamW(v3_model.parameters(), lr=5e-4, weight_decay=1e-4)
     scheduler_v3 = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_v3, T_max=epochs, eta_min=1e-5)
     scaler_v3 = torch.amp.GradScaler('cuda', enabled=torch.cuda.is_available())
 
@@ -158,20 +176,28 @@ def train_dual_models_grand_corpus(
         v3_model.train()
         train_loss = 0.0
         ep_t0 = time.time()
-        for xb, labs, _ in train_loader:
+        optimizer_v3.zero_grad(set_to_none=True)
+        
+        for step, (xb, labs, _) in enumerate(train_loader):
             xb = xb.to(device, non_blocking=True)
-            optimizer_v3.zero_grad(set_to_none=True)
             with torch.amp.autocast('cuda', enabled=torch.cuda.is_available()):
                 outputs = v3_model(xb)
                 loss, _ = compute_v3_loss(outputs, labs, num_classes, device)
+                loss = loss / accum_steps
+                
             scaler_v3.scale(loss).backward()
-            scaler_v3.step(optimizer_v3)
-            scaler_v3.update()
-            train_loss += float(loss.detach())
+            
+            if (step + 1) % accum_steps == 0 or (step + 1) == len(train_loader):
+                scaler_v3.step(optimizer_v3)
+                scaler_v3.update()
+                optimizer_v3.zero_grad(set_to_none=True)
+
+            train_loss += float(loss.detach()) * accum_steps
 
         scheduler_v3.step()
         train_loss /= len(train_loader)
         ep_dur = time.time() - ep_t0
+        torch.cuda.empty_cache()
 
         # Validate
         v3_model.eval()
@@ -180,8 +206,9 @@ def train_dual_models_grand_corpus(
         with torch.no_grad():
             for v_xb, v_labs, _ in val_loader:
                 v_xb = v_xb.to(device, non_blocking=True)
-                v_out = v3_model(v_xb)
-                vl, _ = compute_v3_loss(v_out, v_labs, num_classes, device)
+                with torch.amp.autocast('cuda', enabled=torch.cuda.is_available()):
+                    v_out = v3_model(v_xb)
+                    vl, _ = compute_v3_loss(v_out, v_labs, num_classes, device)
                 v_loss_tot += float(vl.detach())
                 n_vb += 1
         val_loss = v_loss_tot / max(1, n_vb)

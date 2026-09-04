@@ -1,0 +1,1202 @@
+[
+  {
+    "packet_id": "AVS_PKT_0001",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0001.json",
+    "ground_truth": {
+      "azimuth_deg": 231.86,
+      "elevation_deg": -40.44,
+      "range_m": 957.5,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0002",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0002.json",
+    "ground_truth": {
+      "azimuth_deg": 273.86,
+      "elevation_deg": 0.98,
+      "range_m": 2934.2,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0003",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0003.json",
+    "ground_truth": {
+      "azimuth_deg": 98.42,
+      "elevation_deg": -26.18,
+      "range_m": 3683.5,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0004",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0004.json",
+    "ground_truth": {
+      "azimuth_deg": 208.58,
+      "elevation_deg": -7.75,
+      "range_m": 1738.1,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0005",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0005.json",
+    "ground_truth": {
+      "azimuth_deg": 50.57,
+      "elevation_deg": 4.39,
+      "range_m": 4585.7,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0006",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0006.json",
+    "ground_truth": {
+      "azimuth_deg": 138.52,
+      "elevation_deg": -17.39,
+      "range_m": 1623.9,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0007",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0007.json",
+    "ground_truth": {
+      "azimuth_deg": 329.57,
+      "elevation_deg": 4.27,
+      "range_m": 2333.3,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0008",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0008.json",
+    "ground_truth": {
+      "azimuth_deg": 316.99,
+      "elevation_deg": -8.83,
+      "range_m": 4667.1,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0009",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0009.json",
+    "ground_truth": {
+      "azimuth_deg": 190.42,
+      "elevation_deg": -8.95,
+      "range_m": 1449.2,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0010",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0010.json",
+    "ground_truth": {
+      "azimuth_deg": 30.32,
+      "elevation_deg": -0.96,
+      "range_m": 4253.2,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0011",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0011.json",
+    "ground_truth": {
+      "azimuth_deg": 173.69,
+      "elevation_deg": -1.88,
+      "range_m": 4829.9,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0012",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0012.json",
+    "ground_truth": {
+      "azimuth_deg": 302.93,
+      "elevation_deg": -22.49,
+      "range_m": 4284.6,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0013",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0013.json",
+    "ground_truth": {
+      "azimuth_deg": 91.12,
+      "elevation_deg": -19.82,
+      "range_m": 1808.8,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0014",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0014.json",
+    "ground_truth": {
+      "azimuth_deg": 298.46,
+      "elevation_deg": 14.18,
+      "range_m": 1705.5,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0015",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0015.json",
+    "ground_truth": {
+      "azimuth_deg": 83.64,
+      "elevation_deg": -24.85,
+      "range_m": 431.6,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0016",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0016.json",
+    "ground_truth": {
+      "azimuth_deg": 246.13,
+      "elevation_deg": 13.48,
+      "range_m": 1138.9,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0017",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0017.json",
+    "ground_truth": {
+      "azimuth_deg": 52.57,
+      "elevation_deg": -31.1,
+      "range_m": 2124.1,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0018",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0018.json",
+    "ground_truth": {
+      "azimuth_deg": 340.99,
+      "elevation_deg": -17.8,
+      "range_m": 1740.0,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0019",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0019.json",
+    "ground_truth": {
+      "azimuth_deg": 57.8,
+      "elevation_deg": -20.19,
+      "range_m": 3326.8,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0020",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0020.json",
+    "ground_truth": {
+      "azimuth_deg": 25.24,
+      "elevation_deg": -43.13,
+      "range_m": 1716.2,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0021",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0021.json",
+    "ground_truth": {
+      "azimuth_deg": 40.84,
+      "elevation_deg": -11.0,
+      "range_m": 1481.9,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0022",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0022.json",
+    "ground_truth": {
+      "azimuth_deg": 232.45,
+      "elevation_deg": -9.73,
+      "range_m": 3762.0,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0023",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0023.json",
+    "ground_truth": {
+      "azimuth_deg": 112.87,
+      "elevation_deg": -9.19,
+      "range_m": 2720.0,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0024",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0024.json",
+    "ground_truth": {
+      "azimuth_deg": 302.59,
+      "elevation_deg": -33.99,
+      "range_m": 1708.7,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0025",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0025.json",
+    "ground_truth": {
+      "azimuth_deg": 253.65,
+      "elevation_deg": -28.59,
+      "range_m": 4747.4,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0026",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0026.json",
+    "ground_truth": {
+      "azimuth_deg": 115.08,
+      "elevation_deg": -17.9,
+      "range_m": 563.7,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0027",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0027.json",
+    "ground_truth": {
+      "azimuth_deg": 325.34,
+      "elevation_deg": 4.9,
+      "range_m": 4582.1,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0028",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0028.json",
+    "ground_truth": {
+      "azimuth_deg": 126.68,
+      "elevation_deg": 1.02,
+      "range_m": 1606.1,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0029",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0029.json",
+    "ground_truth": {
+      "azimuth_deg": 5.44,
+      "elevation_deg": -15.16,
+      "range_m": 3384.7,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0030",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0030.json",
+    "ground_truth": {
+      "azimuth_deg": 210.91,
+      "elevation_deg": -40.94,
+      "range_m": 4198.9,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0031",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0031.json",
+    "ground_truth": {
+      "azimuth_deg": 339.04,
+      "elevation_deg": 13.88,
+      "range_m": 1258.2,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0032",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0032.json",
+    "ground_truth": {
+      "azimuth_deg": 163.05,
+      "elevation_deg": -14.21,
+      "range_m": 1799.6,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0033",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0033.json",
+    "ground_truth": {
+      "azimuth_deg": 211.53,
+      "elevation_deg": 5.94,
+      "range_m": 1359.5,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0034",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0034.json",
+    "ground_truth": {
+      "azimuth_deg": 207.01,
+      "elevation_deg": -15.09,
+      "range_m": 2046.8,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0035",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0035.json",
+    "ground_truth": {
+      "azimuth_deg": 204.5,
+      "elevation_deg": -6.49,
+      "range_m": 2700.7,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0036",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0036.json",
+    "ground_truth": {
+      "azimuth_deg": 313.76,
+      "elevation_deg": -20.61,
+      "range_m": 501.7,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0037",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0037.json",
+    "ground_truth": {
+      "azimuth_deg": 95.37,
+      "elevation_deg": -23.39,
+      "range_m": 3644.2,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0038",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0038.json",
+    "ground_truth": {
+      "azimuth_deg": 6.85,
+      "elevation_deg": 5.72,
+      "range_m": 1409.7,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0039",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0039.json",
+    "ground_truth": {
+      "azimuth_deg": 32.35,
+      "elevation_deg": -27.6,
+      "range_m": 1940.3,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0040",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0040.json",
+    "ground_truth": {
+      "azimuth_deg": 178.7,
+      "elevation_deg": 0.35,
+      "range_m": 928.0,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0041",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0041.json",
+    "ground_truth": {
+      "azimuth_deg": 81.24,
+      "elevation_deg": 10.8,
+      "range_m": 164.9,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0042",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0042.json",
+    "ground_truth": {
+      "azimuth_deg": 141.33,
+      "elevation_deg": -19.63,
+      "range_m": 3051.7,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0043",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0043.json",
+    "ground_truth": {
+      "azimuth_deg": 101.64,
+      "elevation_deg": -24.97,
+      "range_m": 1816.8,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0044",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0044.json",
+    "ground_truth": {
+      "azimuth_deg": 62.58,
+      "elevation_deg": -13.37,
+      "range_m": 556.8,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0045",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0045.json",
+    "ground_truth": {
+      "azimuth_deg": 186.61,
+      "elevation_deg": 9.25,
+      "range_m": 3638.4,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0046",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0046.json",
+    "ground_truth": {
+      "azimuth_deg": 343.2,
+      "elevation_deg": -0.84,
+      "range_m": 350.6,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0047",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0047.json",
+    "ground_truth": {
+      "azimuth_deg": 16.65,
+      "elevation_deg": -18.84,
+      "range_m": 3204.8,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0048",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0048.json",
+    "ground_truth": {
+      "azimuth_deg": 176.69,
+      "elevation_deg": -15.83,
+      "range_m": 3697.8,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0049",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0049.json",
+    "ground_truth": {
+      "azimuth_deg": 124.2,
+      "elevation_deg": -25.5,
+      "range_m": 2804.0,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0050",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0050.json",
+    "ground_truth": {
+      "azimuth_deg": 46.32,
+      "elevation_deg": 14.07,
+      "range_m": 3203.2,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0051",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0051.json",
+    "ground_truth": {
+      "azimuth_deg": 213.61,
+      "elevation_deg": -40.44,
+      "range_m": 1778.2,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0052",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0052.json",
+    "ground_truth": {
+      "azimuth_deg": 315.59,
+      "elevation_deg": -18.96,
+      "range_m": 309.1,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0053",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0053.json",
+    "ground_truth": {
+      "azimuth_deg": 325.4,
+      "elevation_deg": -13.78,
+      "range_m": 963.2,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0054",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0054.json",
+    "ground_truth": {
+      "azimuth_deg": 330.49,
+      "elevation_deg": -11.25,
+      "range_m": 1601.6,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0055",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0055.json",
+    "ground_truth": {
+      "azimuth_deg": 252.82,
+      "elevation_deg": -1.11,
+      "range_m": 1816.7,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0056",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0056.json",
+    "ground_truth": {
+      "azimuth_deg": 221.29,
+      "elevation_deg": 3.75,
+      "range_m": 4325.2,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0057",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0057.json",
+    "ground_truth": {
+      "azimuth_deg": 224.71,
+      "elevation_deg": -6.88,
+      "range_m": 2361.0,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0058",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0058.json",
+    "ground_truth": {
+      "azimuth_deg": 78.53,
+      "elevation_deg": -20.17,
+      "range_m": 3751.6,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0059",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0059.json",
+    "ground_truth": {
+      "azimuth_deg": 54.47,
+      "elevation_deg": -2.55,
+      "range_m": 1552.9,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0060",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0060.json",
+    "ground_truth": {
+      "azimuth_deg": 122.64,
+      "elevation_deg": 8.8,
+      "range_m": 3652.6,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0061",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0061.json",
+    "ground_truth": {
+      "azimuth_deg": 52.63,
+      "elevation_deg": -43.66,
+      "range_m": 3598.7,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0062",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0062.json",
+    "ground_truth": {
+      "azimuth_deg": 138.93,
+      "elevation_deg": 2.04,
+      "range_m": 1174.5,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0063",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0063.json",
+    "ground_truth": {
+      "azimuth_deg": 117.75,
+      "elevation_deg": 2.37,
+      "range_m": 860.1,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0064",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0064.json",
+    "ground_truth": {
+      "azimuth_deg": 333.93,
+      "elevation_deg": -29.79,
+      "range_m": 3577.1,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0065",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0065.json",
+    "ground_truth": {
+      "azimuth_deg": 198.37,
+      "elevation_deg": -18.16,
+      "range_m": 2255.8,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0066",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0066.json",
+    "ground_truth": {
+      "azimuth_deg": 299.75,
+      "elevation_deg": -3.02,
+      "range_m": 4717.2,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0067",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0067.json",
+    "ground_truth": {
+      "azimuth_deg": 288.23,
+      "elevation_deg": 0.45,
+      "range_m": 2543.1,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0068",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0068.json",
+    "ground_truth": {
+      "azimuth_deg": 165.3,
+      "elevation_deg": -35.49,
+      "range_m": 2602.2,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0069",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0069.json",
+    "ground_truth": {
+      "azimuth_deg": 108.42,
+      "elevation_deg": 3.64,
+      "range_m": 3390.7,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0070",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0070.json",
+    "ground_truth": {
+      "azimuth_deg": 280.3,
+      "elevation_deg": -8.58,
+      "range_m": 2574.4,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0071",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0071.json",
+    "ground_truth": {
+      "azimuth_deg": 22.25,
+      "elevation_deg": -18.06,
+      "range_m": 3120.3,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0072",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0072.json",
+    "ground_truth": {
+      "azimuth_deg": 331.36,
+      "elevation_deg": -12.34,
+      "range_m": 1731.6,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0073",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0073.json",
+    "ground_truth": {
+      "azimuth_deg": 106.26,
+      "elevation_deg": -29.37,
+      "range_m": 1730.2,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0074",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0074.json",
+    "ground_truth": {
+      "azimuth_deg": 332.78,
+      "elevation_deg": -43.84,
+      "range_m": 2268.5,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0075",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0075.json",
+    "ground_truth": {
+      "azimuth_deg": 75.52,
+      "elevation_deg": -31.29,
+      "range_m": 3964.5,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0076",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0076.json",
+    "ground_truth": {
+      "azimuth_deg": 261.36,
+      "elevation_deg": 10.2,
+      "range_m": 3834.8,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0077",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0077.json",
+    "ground_truth": {
+      "azimuth_deg": 113.1,
+      "elevation_deg": 2.35,
+      "range_m": 3466.1,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0078",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0078.json",
+    "ground_truth": {
+      "azimuth_deg": 69.65,
+      "elevation_deg": -7.62,
+      "range_m": 3399.6,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0079",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0079.json",
+    "ground_truth": {
+      "azimuth_deg": 327.33,
+      "elevation_deg": -27.71,
+      "range_m": 2346.5,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0080",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0080.json",
+    "ground_truth": {
+      "azimuth_deg": 2.67,
+      "elevation_deg": -5.42,
+      "range_m": 1605.2,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0081",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0081.json",
+    "ground_truth": {
+      "azimuth_deg": 287.35,
+      "elevation_deg": -18.62,
+      "range_m": 2723.4,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0082",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0082.json",
+    "ground_truth": {
+      "azimuth_deg": 41.32,
+      "elevation_deg": -16.12,
+      "range_m": 3015.8,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0083",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0083.json",
+    "ground_truth": {
+      "azimuth_deg": 312.42,
+      "elevation_deg": -29.64,
+      "range_m": 4791.4,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0084",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0084.json",
+    "ground_truth": {
+      "azimuth_deg": 195.67,
+      "elevation_deg": -5.54,
+      "range_m": 1630.5,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0085",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0085.json",
+    "ground_truth": {
+      "azimuth_deg": 203.05,
+      "elevation_deg": -21.77,
+      "range_m": 536.4,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0086",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0086.json",
+    "ground_truth": {
+      "azimuth_deg": 33.27,
+      "elevation_deg": 14.4,
+      "range_m": 1702.4,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0087",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0087.json",
+    "ground_truth": {
+      "azimuth_deg": 133.95,
+      "elevation_deg": 9.33,
+      "range_m": 2811.4,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0088",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0088.json",
+    "ground_truth": {
+      "azimuth_deg": 114.61,
+      "elevation_deg": -28.03,
+      "range_m": 2182.4,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0089",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0089.json",
+    "ground_truth": {
+      "azimuth_deg": 12.29,
+      "elevation_deg": -26.45,
+      "range_m": 3410.4,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0090",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0090.json",
+    "ground_truth": {
+      "azimuth_deg": 184.37,
+      "elevation_deg": -6.12,
+      "range_m": 4875.7,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0091",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0091.json",
+    "ground_truth": {
+      "azimuth_deg": 155.55,
+      "elevation_deg": 6.67,
+      "range_m": 708.4,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0092",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0092.json",
+    "ground_truth": {
+      "azimuth_deg": 15.14,
+      "elevation_deg": 14.04,
+      "range_m": 4556.5,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0093",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0093.json",
+    "ground_truth": {
+      "azimuth_deg": 257.84,
+      "elevation_deg": -18.82,
+      "range_m": 430.4,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0094",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0094.json",
+    "ground_truth": {
+      "azimuth_deg": 234.75,
+      "elevation_deg": 0.7,
+      "range_m": 1132.1,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0095",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0095.json",
+    "ground_truth": {
+      "azimuth_deg": 184.53,
+      "elevation_deg": -17.74,
+      "range_m": 2936.6,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0096",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0096.json",
+    "ground_truth": {
+      "azimuth_deg": 234.52,
+      "elevation_deg": -38.46,
+      "range_m": 561.6,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0097",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0097.json",
+    "ground_truth": {
+      "azimuth_deg": 213.11,
+      "elevation_deg": 2.54,
+      "range_m": 4960.6,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0098",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0098.json",
+    "ground_truth": {
+      "azimuth_deg": 308.01,
+      "elevation_deg": 10.7,
+      "range_m": 2735.4,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0099",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0099.json",
+    "ground_truth": {
+      "azimuth_deg": 248.54,
+      "elevation_deg": -37.58,
+      "range_m": 3121.4,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0100",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0100.json",
+    "ground_truth": {
+      "azimuth_deg": 238.93,
+      "elevation_deg": -27.57,
+      "range_m": 3925.6,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0101",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0101.json",
+    "ground_truth": {
+      "azimuth_deg": 167.35,
+      "elevation_deg": -21.3,
+      "range_m": 4498.7,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0102",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0102.json",
+    "ground_truth": {
+      "azimuth_deg": 301.29,
+      "elevation_deg": -18.35,
+      "range_m": 3044.6,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0103",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0103.json",
+    "ground_truth": {
+      "azimuth_deg": 258.17,
+      "elevation_deg": -25.18,
+      "range_m": 4535.0,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0104",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0104.json",
+    "ground_truth": {
+      "azimuth_deg": 260.63,
+      "elevation_deg": -39.65,
+      "range_m": 1757.7,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0105",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0105.json",
+    "ground_truth": {
+      "azimuth_deg": 334.45,
+      "elevation_deg": -5.4,
+      "range_m": 2575.9,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0106",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0106.json",
+    "ground_truth": {
+      "azimuth_deg": 287.01,
+      "elevation_deg": -19.49,
+      "range_m": 2085.1,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0107",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0107.json",
+    "ground_truth": {
+      "azimuth_deg": 241.73,
+      "elevation_deg": -0.34,
+      "range_m": 4061.5,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0108",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0108.json",
+    "ground_truth": {
+      "azimuth_deg": 28.6,
+      "elevation_deg": -35.19,
+      "range_m": 4720.4,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0109",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0109.json",
+    "ground_truth": {
+      "azimuth_deg": 242.41,
+      "elevation_deg": -26.22,
+      "range_m": 4069.0,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0110",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0110.json",
+    "ground_truth": {
+      "azimuth_deg": 26.01,
+      "elevation_deg": 3.38,
+      "range_m": 3351.7,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0111",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0111.json",
+    "ground_truth": {
+      "azimuth_deg": 220.06,
+      "elevation_deg": -41.96,
+      "range_m": 4518.9,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0112",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0112.json",
+    "ground_truth": {
+      "azimuth_deg": 352.08,
+      "elevation_deg": -20.09,
+      "range_m": 2950.0,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0113",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0113.json",
+    "ground_truth": {
+      "azimuth_deg": 276.21,
+      "elevation_deg": -35.15,
+      "range_m": 2684.0,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0114",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0114.json",
+    "ground_truth": {
+      "azimuth_deg": 11.39,
+      "elevation_deg": 4.63,
+      "range_m": 1791.0,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0115",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0115.json",
+    "ground_truth": {
+      "azimuth_deg": 343.32,
+      "elevation_deg": -20.46,
+      "range_m": 2813.9,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0116",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0116.json",
+    "ground_truth": {
+      "azimuth_deg": 293.65,
+      "elevation_deg": -16.44,
+      "range_m": 4611.3,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0117",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0117.json",
+    "ground_truth": {
+      "azimuth_deg": 182.87,
+      "elevation_deg": -37.57,
+      "range_m": 3686.4,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0118",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0118.json",
+    "ground_truth": {
+      "azimuth_deg": 289.51,
+      "elevation_deg": -24.9,
+      "range_m": 2251.4,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0119",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0119.json",
+    "ground_truth": {
+      "azimuth_deg": 295.27,
+      "elevation_deg": -35.36,
+      "range_m": 1501.0,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  },
+  {
+    "packet_id": "AVS_PKT_0120",
+    "packet_file": "data/avs_vector_dataset/4ch_packets/AVS_PKT_0120.json",
+    "ground_truth": {
+      "azimuth_deg": 102.03,
+      "elevation_deg": 13.99,
+      "range_m": 4977.6,
+      "target_type": "Tactical Intruder Drone / AUV"
+    }
+  }
+]

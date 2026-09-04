@@ -77,6 +77,7 @@ class DetectionSchema(BaseModel):
     guardrailCategory: str = "PLASTIC"
     isDebris: bool = True
     guardrailReason: Optional[str] = None
+    isPrimaryGeoTag: Optional[bool] = False
 
     model_config = ConfigDict(populate_by_name=True)
 

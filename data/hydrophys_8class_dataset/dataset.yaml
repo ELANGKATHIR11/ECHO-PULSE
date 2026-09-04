@@ -1,0 +1,23 @@
+# HydroPhys-OmniNet 8-Class Multi-Modal Marine Sonar & Optical Dataset
+path: F:/echopulsenet---marine-sonar-intelligence-platform (1)/data/hydrophys_8class_dataset/unified
+train: images/train
+val: images/val
+test: images/test
+
+nc: 8
+names:
+  0: ghost_gear
+  1: shipwreck
+  2: unexploded_ordnance
+  3: pipeline_anomaly
+  4: marine_debris
+  5: subsea_cable
+  6: biological_cluster
+  7: geological_formation
+
+metadata:
+  total_samples: 2500
+  sonar_samples: 1390
+  optical_samples: 1110
+  created_timestamp: 2026-08-31 21:57:40
+  engine: "HydroPhys Synthetic Acoustic & Optical Generator"

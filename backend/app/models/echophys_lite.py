@@ -184,7 +184,8 @@ class EchoPhysLite(nn.Module):
 # ------------------------------------------------------------------------------
 class EchoPhysLiteEngine:
     def __init__(self, device: Optional[str] = None):
-        self.device = torch.device(device if device else ("cuda" if torch.cuda.is_available() else "cpu"))
+        dev_str = str(device) if device else "NPU"
+        self.device = torch.device("cuda" if torch.cuda.is_available() and dev_str.lower() != "npu" else "cpu")
         self.model = EchoPhysLite(num_classes=8).to(self.device)
         
         # Load trained weights if checkpoint exists

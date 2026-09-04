@@ -1,4 +1,13 @@
-import { app, BrowserWindow, shell } from 'electron';
+/**
+ * ==============================================================================
+ * EchoPulseNet Marine Sonar Intelligence Platform
+ * Electron Desktop Application Shell
+ * Multi-Silicon Hardware Accelerated Native Desktop Runtime
+ * Supports NVIDIA RTX 5060 DGPU + Intel(R) AI Boost NPU Co-Processing
+ * ==============================================================================
+ */
+
+import { app, BrowserWindow, shell, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { spawn, exec } from 'child_process';
@@ -6,6 +15,14 @@ import http from 'http';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Enable Chromium High-Performance Hardware GPU Acceleration for RTX 5060 & WebGL2
+app.commandLine.appendSwitch('enable-gpu-rasterization');
+app.commandLine.appendSwitch('enable-zero-copy');
+app.commandLine.appendSwitch('ignore-gpu-blocklist');
+app.commandLine.appendSwitch('enable-native-gpu-memory-buffers');
+app.commandLine.appendSwitch('high-dpi-support', '1');
+app.commandLine.appendSwitch('disable-http-cache');
 
 let mainWindow = null;
 let backendProcess = null;
@@ -24,7 +41,7 @@ function ensurePostgres() {
             resolve(true);
           });
         } else {
-          console.log('[EchoPulseNet Desktop] PostgreSQL Service Started.');
+          console.log('[EchoPulseNet Desktop] PostgreSQL Service Active.');
           resolve(true);
         }
       });
@@ -42,7 +59,7 @@ function startBackend() {
   
   backendProcess = spawn(pythonCmd, ['-m', 'uvicorn', 'app.main:app', '--host', '127.0.0.1', '--port', String(SERVER_PORT)], {
     cwd: path.join(__dirname, 'backend'),
-    env: { ...process.env, PYTHONUNBUFFERED: '1' },
+    env: { ...process.env, PYTHONUNBUFFERED: '1', OPENBLAS_NUM_THREADS: '1', OMP_NUM_THREADS: '1' },
     stdio: 'inherit'
   });
 
@@ -55,12 +72,13 @@ function startBackend() {
   });
 }
 
-function waitForServer(url, timeout = 20000) {
+function waitForServer(url, timeout = 25000) {
   const start = Date.now();
   return new Promise((resolve) => {
     const check = () => {
       http.get(`${url}/api/v1/system/telemetry`, (res) => {
         if (res.statusCode === 200) {
+          console.log('[EchoPulseNet Desktop] Backend server online & responding.');
           resolve(true);
         } else {
           retry();
@@ -72,10 +90,10 @@ function waitForServer(url, timeout = 20000) {
 
     const retry = () => {
       if (Date.now() - start > timeout) {
-        console.warn('[EchoPulseNet Desktop] Server health timeout, loading UI directly...');
+        console.warn('[EchoPulseNet Desktop] Server health check timed out, loading UI directly...');
         resolve(false);
       } else {
-        setTimeout(check, 400);
+        setTimeout(check, 350);
       }
     };
 
@@ -85,12 +103,12 @@ function waitForServer(url, timeout = 20000) {
 
 async function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1480,
-    height: 960,
-    minWidth: 1080,
-    minHeight: 720,
+    width: 1540,
+    height: 980,
+    minWidth: 1100,
+    minHeight: 740,
     backgroundColor: '#020712',
-    title: 'EchoPulseNet | Marine Sonar Intelligence Platform (Native Desktop Edition)',
+    title: 'EchoPulseNet PRO | Marine Sonar Intelligence Platform (Native Desktop Edition)',
     autoHideMenuBar: true,
     show: false,
     webPreferences: {
@@ -137,4 +155,3 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 });
-

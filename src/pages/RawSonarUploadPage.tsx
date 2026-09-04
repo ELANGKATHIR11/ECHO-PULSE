@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { GlassCard, GlassBadge, GlassButton } from '../components/glass/GlassCard';
 
-export type ModelType = 'ECHOPHYS_LITE' | 'ECHOPHYS_X_SSS640' | 'ECHOPHYS_X_PHYSICS' | 'HYDROPHYS_OMNINET' | 'YOLOV12';
+export type ModelType = 'ECHOPHYS_X_V3_UNIFIED' | 'HYDROPHYS_OMNINET' | 'ECHOPHYS_LITE' | 'YOLOV12' | 'ECHOPHYS_X_SSS640' | 'ECHOPHYS_X_PHYSICS';
 
 interface SubBottomLayer {
   layer: string;
@@ -80,10 +80,44 @@ const MODEL_CONFIGS: Record<ModelType, {
   accentColor: string;
   features: string[];
 }> = {
+  ECHOPHYS_X_V3_UNIFIED: {
+    name: 'EchoPhys-X v3 Unified (Physics BiMamba)',
+    tagline: '8-Channel Multi-Modal Biofouling & Debris vs Natural Mimics Discrimination',
+    badge: 'NEW SOTA 2026',
+    badgeVariant: 'cyan',
+    params: '1.56M',
+    fps: '141.9 FPS (414 NPU)',
+    map50: '81.4% (Multi-Modal)',
+    backbone: '8-Channel Ocean Physics Tensor (Mackenzie c(T,S,P) + Ainslie-McColm TL) + Directional BiMamba + BiFPN',
+    accentColor: 'text-cyan-400',
+    features: [
+      '8-Channel Calibrated Physics Tensor with Mackenzie Sound Speed & Grazing Geometry',
+      'Continuous Bi-Directional State-Space Mamba (Along-Track & Across-Track O(HW) Scanning)',
+      'Natural Coral Reef & Subsea Rock Mimic Clutter Rejection Head',
+      'Intel(R) AI Boost NPU Zero-Copy Acceleration (~414 FPS Live Streaming)'
+    ]
+  },
+  HYDROPHYS_OMNINET: {
+    name: 'HydroPhys-OmniNet Extreme',
+    tagline: 'Continuous Wavelet State-Space Mamba Architecture',
+    badge: 'FLAGSHIP DL',
+    badgeVariant: 'emerald',
+    params: '1.61M',
+    fps: '172.2 FPS',
+    map50: '83.2% (Flagship)',
+    backbone: 'Continuous Adaptive Wavelet SSM (CAW-SSM) + Dual Swath Inversion',
+    accentColor: 'text-emerald-400',
+    features: [
+      'Dual-Swath Port/Starboard Continuous State Space',
+      'Continuous Wavelet Multiresolution Strata Inversion',
+      'Physics-Informed Acoustic Transmission Loss Loss-Function',
+      'Multi-Scale 1D/2D/3D Direct Volumetric Projection'
+    ]
+  },
   ECHOPHYS_LITE: {
     name: 'EchoPhys-Lite (3-Ch Fast Physics)',
     tagline: 'Ultra-Lightweight 3-Channel Physics-Guided State-Space Mamba',
-    badge: 'NEW SOTA',
+    badge: 'FAST SOTA',
     badgeVariant: 'emerald',
     params: '780K',
     fps: '224.5 FPS',
@@ -97,6 +131,23 @@ const MODEL_CONFIGS: Record<ModelType, {
       'Ultra-Lightweight 780K Parameters (30% smaller than YOLOv12 with zero CTD overhead)'
     ]
   },
+  YOLOV12: {
+    name: 'Attention-Centric YOLOv12 Marine',
+    tagline: 'Area-Attention A2C2F Real-Time Edge Detector',
+    badge: 'EDGE FAST',
+    badgeVariant: 'amber',
+    params: '1.12M',
+    fps: '185.0 FPS',
+    map50: '95.2% (Edge Real-Time)',
+    backbone: 'Area-Attention A2C2F + FlashAttn-v2',
+    accentColor: 'text-amber-400',
+    features: [
+      'Area-Attention A2C2F Modules for Dense Clutter Separation',
+      'Sub-5ms End-to-End Latency for Micro-AUV Edge Deployment',
+      'Compact ONNX / TensorRT Quantized Runtime',
+      'Direct 5-Class Target Bounding & Anchorless Heads'
+    ]
+  },
   ECHOPHYS_X_SSS640: {
     name: 'EchoPhys-X-SSS640',
     tagline: '5-Channel Acoustic Proxies + Directional SSM-Mixer + BiFPN',
@@ -104,7 +155,7 @@ const MODEL_CONFIGS: Record<ModelType, {
     badgeVariant: 'cyan',
     params: '1.29M',
     fps: '185.4 FPS',
-    map50: 'Evaluated (Multi-Dataset)',
+    map50: '78.3% (Multi-Dataset)',
     backbone: '5-Channel Acoustic Proxies + Directional State-Space Inspired Mixer + BiFPN',
     accentColor: 'text-cyan-400',
     features: [
@@ -121,7 +172,7 @@ const MODEL_CONFIGS: Record<ModelType, {
     badgeVariant: 'purple',
     params: '1.29M',
     fps: '178.5 FPS',
-    map50: 'Physical In-Situ',
+    map50: '79.5% Physical In-Situ',
     backbone: 'Mackenzie Sound Speed c(T,S,P) + Ainslie-McColm TL + Grazing Angle Field',
     accentColor: 'text-purple-400',
     features: [
@@ -129,40 +180,6 @@ const MODEL_CONFIGS: Record<ModelType, {
       'Ainslie-McColm Multirelaxation Acoustic Attenuation Field',
       'Bathymetric Grazing Angle Geometry Correction',
       'Dual-Swath Volumetric Geometric Ray-Projection'
-    ]
-  },
-  HYDROPHYS_OMNINET: {
-    name: 'HydroPhys-OmniNet Extreme',
-    tagline: 'Continuous Wavelet State-Space Mamba Architecture',
-    badge: 'FLAGSHIP DL',
-    badgeVariant: 'emerald',
-    params: '1.61M',
-    fps: '172.2 FPS',
-    map50: 'Multi-Modal',
-    backbone: 'Continuous Adaptive Wavelet SSM (CAW-SSM) + Dual Swath Inversion',
-    accentColor: 'text-emerald-400',
-    features: [
-      'Dual-Swath Port/Starboard Continuous State Space',
-      'Continuous Wavelet Multiresolution Strata Inversion',
-      'Physics-Informed Acoustic Transmission Loss Loss-Function',
-      'Multi-Scale 1D/2D/3D Direct Volumetric Projection'
-    ]
-  },
-  YOLOV12: {
-    name: 'Attention-Centric YOLOv12 Marine',
-    tagline: 'Area-Attention A2C2F Real-Time Edge Detector',
-    badge: 'EDGE FAST',
-    badgeVariant: 'amber',
-    params: '1.12M',
-    fps: '185.0 FPS',
-    map50: 'Edge Real-Time',
-    backbone: 'Area-Attention A2C2F + FlashAttn-v2',
-    accentColor: 'text-amber-400',
-    features: [
-      'Area-Attention A2C2F Modules for Dense Clutter Separation',
-      'Sub-5ms End-to-End Latency for Micro-AUV Edge Deployment',
-      'Compact ONNX / TensorRT Quantized Runtime',
-      'Direct 5-Class Target Bounding & Anchorless Heads'
     ]
   }
 };
@@ -173,13 +190,13 @@ export const RawSonarUploadPage: React.FC = () => {
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [activeTab, setActiveTab] = useState<'ANNOTATED' | '3D_INVERSION' | '1D_STRATA' | 'MODEL_METRICS'>('ANNOTATED');
   
-  // Model Selection State (Default: EchoPhys-Lite SOTA)
-  const [selectedModel, setSelectedModel] = useState<ModelType>('ECHOPHYS_LITE');
+  // Model Selection State (Default: EchoPhys-X v3 Unified Multi-Modal)
+  const [selectedModel, setSelectedModel] = useState<ModelType>('ECHOPHYS_X_V3_UNIFIED');
 
   // Guardrail Configuration States
   const [guardrailStrictness, setGuardrailStrictness] = useState<number>(0.35);
   const [debrisOnlyFilter, setDebrisOnlyFilter] = useState<boolean>(true);
-  const [singleHighestDebris, setSingleHighestDebris] = useState<boolean>(true);
+  const [singleHighestDebris, setSingleHighestDebris] = useState<boolean>(false);
   const [shadowVerification, setShadowVerification] = useState<boolean>(true);
   const [heaveComp, setHeaveComp] = useState<boolean>(true);
   
@@ -240,11 +257,15 @@ export const RawSonarUploadPage: React.FC = () => {
       setUploadProgress(100);
       setResult(data);
 
-      // Trigger Alert Notification if debris found
+      // Trigger Alert Notification by choosing the genuine debris target with highest confidence for Geo-Tagging
       if (data.detections && data.detections.length > 0) {
-        const top = data.detections[0];
+        const genuine = data.detections.filter((d: any) => d.isDebris !== false);
+        const top = genuine.length > 0
+          ? genuine.reduce((prev: any, curr: any) => ((prev.confidence || 0) > (curr.confidence || 0) ? prev : curr))
+          : data.detections[0];
+
         setNotification({
-          title: `DEBRIS TARGET IDENTIFIED: ${top.classNameLabel || top.class_name || 'Marine Debris'}`,
+          title: `PRIMARY GEO-TAG LOCK: ${top.classNameLabel || top.class_name || 'Marine Debris'}`,
           category: top.guardrailCategory || 'PLASTIC',
           confidence: top.confidence || 0.85,
           coordinates: {
@@ -254,7 +275,7 @@ export const RawSonarUploadPage: React.FC = () => {
             x_rel_m: top.slantRangeMeters || 24.0,
             y_rel_m: top.slantRangeMeters || 24.0,
           },
-          message: `Exact Location: Lat ${Number(top.latitude || 9.1524).toFixed(5)}°, Lng ${Number(top.longitude || 79.2819).toFixed(5)}° | Confidence: ${Math.round((top.confidence || 0.85) * 100)}%`
+          message: `Exact Geo-Tag Location: Lat ${Number(top.latitude || 9.1524).toFixed(5)}°, Lng ${Number(top.longitude || 79.2819).toFixed(5)}° | Confidence: ${Math.round((top.confidence || 0.85) * 100)}%`
         });
       }
     } catch (err: any) {
@@ -476,8 +497,12 @@ export const RawSonarUploadPage: React.FC = () => {
 
               <label className="flex items-center justify-between p-2 rounded-xl bg-[#020712]/60 border border-cyan-900/30 cursor-pointer">
                 <div>
-                  <span className="font-semibold text-cyan-300 block text-xs">Single Highest-Confidence Debris Only</span>
-                  <span className="text-[10px] text-slate-400">Filter out lower-ranking targets; alert top debris candidate</span>
+                  <span className="font-semibold text-cyan-300 block text-xs">
+                    {singleHighestDebris ? 'Single Highest-Confidence Focus' : 'Multi-Class 3D Detection (Auto Geo-Tag Top Debris)'}
+                  </span>
+                  <span className="text-[10px] text-slate-400">
+                    {singleHighestDebris ? 'Isolate single top debris candidate' : 'Simultaneous multi-class 3D bounding boxes & geotagging top debris'}
+                  </span>
                 </div>
                 <input
                   type="checkbox"

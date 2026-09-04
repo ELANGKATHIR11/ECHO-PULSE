@@ -81,6 +81,7 @@ export interface Detection {
   isDebris?: boolean;
   guardrailReason?: string;
   threatLevel?: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
+  isPrimaryGeoTag?: boolean;
   positionSource?: string;
   positionUncertaintyMeters?: number | null;
   inferenceSource?: string;

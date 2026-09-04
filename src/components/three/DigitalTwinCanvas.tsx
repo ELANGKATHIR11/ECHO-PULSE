@@ -609,45 +609,78 @@ function SubseaAnomalyMarker({
     }
   });
 
-  let color = '#22d3ee';
-  let badgeLabel = 'DET';
-  if (detection.class === 'ghost_gear') {
+  let color = '#06b6d4'; // Cyan for Plastic
+  let badgeLabel = 'PLASTIC';
+  const detClass = (detection.class || '').toLowerCase();
+
+  if (['electronic', 'electronics', 'e_waste', 'cell_phone', 'laptop', 'remote', 'transponder', 'mouse', 'keyboard'].includes(detClass)) {
+    color = '#ef4444';
+    badgeLabel = 'E-WASTE';
+  } else if (['ghost_gear', 'submerged_net', 'fishing_net'].includes(detClass)) {
     color = '#f59e0b';
     badgeLabel = 'NET';
-  } else if (detection.class === 'shipwreck') {
+  } else if (['metal_scrap', 'metal', 'knife', 'scissors', 'structural_metal'].includes(detClass)) {
+    color = '#e67e22';
+    badgeLabel = 'SCRAP';
+  } else if (['shipwreck', 'wreck'].includes(detClass)) {
     color = '#ec4899';
     badgeLabel = 'WRECK';
-  } else if (detection.class === 'unexploded_ordnance') {
-    color = '#ef4444';
+  } else if (['unexploded_ordnance', 'uxo', 'mine'].includes(detClass)) {
+    color = '#dc2626';
     badgeLabel = 'UXO';
-  } else if (detection.class === 'pipeline_anomaly') {
+  } else if (['pipeline_anomaly', 'pipe'].includes(detClass)) {
     color = '#8b5cf6';
     badgeLabel = 'PIPE';
+  } else if (['electrical', 'subsea_cable', 'power_cable', 'cable'].includes(detClass)) {
+    color = '#f59e0b';
+    badgeLabel = 'CABLE';
+  } else if (['biological_cluster', 'geological_formation', 'not_a_debris', 'boat', 'chair', 'vase'].includes(detClass)) {
+    color = '#64748b';
+    badgeLabel = 'REVERT';
+  } else if (['bottle', 'cup', 'handbag', 'backpack', 'marine_debris'].includes(detClass)) {
+    color = '#06b6d4';
+    badgeLabel = 'PLASTIC';
   }
+
+  const isPrimaryGeoTag = (detection as any).isPrimaryGeoTag || false;
 
   return (
     <group position={position}>
+      {/* 3D Volumetric Wireframe Bounding Box */}
+      <mesh position={[0, 0.6, 0]}>
+        <boxGeometry args={[1.5, 1.2, 1.5]} />
+        <meshBasicMaterial color={color} wireframe opacity={isPrimaryGeoTag ? 0.9 : (isSelected ? 0.8 : 0.45)} transparent />
+      </mesh>
+
       {/* Laser Targeting Guide Vector to Seabed */}
       <mesh position={[0, 1.0, 0]}>
         <cylinderGeometry args={[0.02, 0.02, 2.0]} />
-        <meshBasicMaterial color={color} transparent opacity={isSelected ? 0.9 : 0.4} />
+        <meshBasicMaterial color={color} transparent opacity={isPrimaryGeoTag ? 1.0 : (isSelected ? 0.9 : 0.4)} />
       </mesh>
+
+      {/* Primary Geo-Tag Radar Lock Ring */}
+      {isPrimaryGeoTag && (
+        <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[1.1, 1.35, 32]} />
+          <meshBasicMaterial color="#38bdf8" side={THREE.DoubleSide} opacity={0.85} transparent />
+        </mesh>
+      )}
 
       {/* Rotating 3D Diamond Beacon */}
       <group ref={markerRef} position={[0, 2.1, 0]} onClick={onSelect}>
         <mesh>
-          <octahedronGeometry args={[isSelected ? 0.55 : 0.38, 0]} />
+          <octahedronGeometry args={[isPrimaryGeoTag ? 0.6 : (isSelected ? 0.55 : 0.38), 0]} />
           <meshStandardMaterial
             color={color}
             emissive={color}
-            emissiveIntensity={isSelected ? 1.0 : 0.5}
+            emissiveIntensity={isPrimaryGeoTag ? 1.2 : (isSelected ? 1.0 : 0.5)}
             metalness={0.8}
             roughness={0.2}
           />
         </mesh>
         <mesh>
-          <octahedronGeometry args={[isSelected ? 0.72 : 0.52, 0]} />
-          <meshBasicMaterial color={color} wireframe opacity={0.6} transparent />
+          <octahedronGeometry args={[isPrimaryGeoTag ? 0.8 : (isSelected ? 0.72 : 0.52), 0]} />
+          <meshBasicMaterial color={color} wireframe opacity={0.7} transparent />
         </mesh>
       </group>
 
@@ -664,7 +697,9 @@ function SubseaAnomalyMarker({
         <div
           onClick={onSelect}
           className={`px-2 py-0.5 rounded font-mono text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-2xl cursor-pointer transition-all ${
-            isSelected
+            isPrimaryGeoTag
+              ? 'bg-[#040D1B] text-cyan-300 border-2 border-cyan-300 scale-110 shadow-[0_0_20px_rgba(6,182,212,0.8)] animate-pulse'
+              : isSelected
               ? 'bg-[#040D1B] text-white border-2 border-cyan-400 scale-110 shadow-[0_0_16px_rgba(34,211,238,0.6)]'
               : 'bg-[#020712]/90 text-cyan-300 border border-cyan-500/40 hover:border-cyan-400'
           }`}
@@ -673,7 +708,7 @@ function SubseaAnomalyMarker({
             className="w-1.5 h-1.5 rounded-full"
             style={{ backgroundColor: color }}
           />
-          <span>{badgeLabel}</span>
+          <span>{isPrimaryGeoTag ? `★ GEO-TAG: ${badgeLabel}` : badgeLabel}</span>
           <span className="text-slate-400">{(detection.confidence * 100).toFixed(0)}%</span>
         </div>
       </Html>

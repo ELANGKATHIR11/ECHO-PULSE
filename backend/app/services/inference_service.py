@@ -60,11 +60,12 @@ class UnifiedInferenceService:
       - Rigorous WGS84 Geotagging & Spatial Uncertainty Propagation
     """
     def __init__(self, device: str = None):
-        if device is None:
-            self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        else:
-            self.device = torch.device(device)
-            
+        # Prioritize Intel(R) AI Boost NPU by default
+        from ..core.npu_accelerator import npu_manager
+        
+        self.device_name = device if device else npu_manager.get_preferred_device()
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() and self.device_name.lower() != "npu" else "cpu")
+        
         self.unet = LightweightSonarUNet(in_channels=1, out_channels=2).to(self.device)
         self.autoencoder = SonarAutoencoder().to(self.device)
         self.aara_head = AcousticAngularReflectanceAttention(in_features=64).to(self.device)
@@ -74,6 +75,14 @@ class UnifiedInferenceService:
         self.autoencoder.eval()
         self.aara_head.eval()
         self.cross_attn.eval()
+
+        # NPU Compiled Models on Intel(R) AI Boost
+        self.npu_autoencoder = None
+        self.npu_unet = None
+        if npu_manager.is_npu_available:
+            self.npu_autoencoder = npu_manager.compile_for_npu("models_checkpoints/seabed_autoencoder.onnx", device_target="NPU")
+            self.npu_unet = npu_manager.compile_for_npu("models_checkpoints/unet_shadow.onnx", device_target="NPU")
+            print(f"[*] UnifiedInferenceService: [NPU ACTIVE] Operating on {npu_manager.npu_name}")
 
         # Load Attention-Centric YOLOv12 Model
         self.yolo_model = None
@@ -93,11 +102,11 @@ class UnifiedInferenceService:
             if weight_to_load:
                 try:
                     self.yolo_model = YOLO(weight_to_load)
-                    print(f"[*] UnifiedInferenceService: Loaded YOLOv12 model from {weight_to_load} on {self.device}")
+                    print(f"[*] UnifiedInferenceService: Loaded YOLOv12 model from {weight_to_load} on {self.device_name}")
                 except Exception as e:
                     print(f"[!] Warning: Failed to load YOLOv12 model: {e}")
 
-        # 1. Load HydroPhys-OmniNet (Primary Continuous Wave State-Space Engine)
+        # 1. Load HydroPhys-OmniNet (Primary Continuous Wave State-Space Engine on NPU)
         self.hydrophys_engine = None
         try:
             from ..models.hydrophys_omninet import HydroPhysOmniVisionEngine
@@ -105,8 +114,8 @@ class UnifiedInferenceService:
             if not Path(omni_ckpt).exists():
                 omni_ckpt = "models_checkpoints/echophys_x_v3_unified_best.pt"
             if Path(omni_ckpt).exists():
-                self.hydrophys_engine = HydroPhysOmniVisionEngine(weights_path=omni_ckpt, device=str(self.device))
-                print(f"[*] UnifiedInferenceService: Loaded HydroPhys-OmniNet Engine on {self.device}")
+                self.hydrophys_engine = HydroPhysOmniVisionEngine(weights_path=omni_ckpt, device=self.device_name)
+                print(f"[*] UnifiedInferenceService: Loaded HydroPhys-OmniNet Engine on {self.device_name}")
         except Exception as e:
             print(f"[!] Warning: HydroPhys-OmniNet loading deferred: {e}")
 
@@ -119,8 +128,8 @@ class UnifiedInferenceService:
             from ..models.echophys_omni_3d import EchoPhysOmni3DInference
             v3_ckpt = "models_checkpoints/echophys_x_v3_unified_best.pt"
             if Path(v3_ckpt).exists():
-                self.echophys_v3_engine = EchoPhysOmni3DInference(checkpoint_path=v3_ckpt, device=str(self.device))
-                print(f"[*] UnifiedInferenceService: Loaded EchoPhys-X v3 Unified Engine on {self.device}")
+                self.echophys_v3_engine = EchoPhysOmni3DInference(checkpoint_path=v3_ckpt, device=self.device_name)
+                print(f"[*] UnifiedInferenceService: Loaded EchoPhys-X v3 Unified Engine on {self.device_name}")
         except Exception as e:
             print(f"[!] Warning: EchoPhys-X v3 loading deferred: {e}")
 
@@ -186,7 +195,10 @@ class UnifiedInferenceService:
             }
             return []
 
-        raw_img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+        if isinstance(image_path, np.ndarray):
+            raw_img = image_path if len(image_path.shape) == 2 else cv2.cvtColor(image_path, cv2.COLOR_BGR2GRAY)
+        else:
+            raw_img = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
         if raw_img is None:
             raise ValueError(f"Unable to decode sonar raster at {image_path}")
             
@@ -614,20 +626,24 @@ class UnifiedInferenceService:
             }
         }
 
-        # Apply Threshold Filtering and Single Highest-Confidence Debris Selection if requested
+        # Apply Threshold Filtering
         valid_detections = [d for d in detections if d.confidence >= min_confidence]
         
-        if single_highest_debris and len(valid_detections) > 0:
-            # Prioritize genuine debris targets over excluded natural features
+        # Multi-Class Identification & Primary Geo-Tag Debris Selection:
+        # Choose the debris target with highest confidence for marking the geo-tag location
+        # while preserving all multi-class detections for comprehensive 3D bounding box rendering.
+        primary_target = None
+        if len(valid_detections) > 0:
             debris_candidates = [d for d in valid_detections if d.isDebris]
             if debris_candidates:
-                top_target = max(debris_candidates, key=lambda d: d.confidence)
-                final_detections = [top_target]
+                primary_target = max(debris_candidates, key=lambda d: d.confidence)
             else:
-                top_target = max(valid_detections, key=lambda d: d.confidence)
-                final_detections = [top_target]
-        else:
-            final_detections = valid_detections
+                primary_target = max(valid_detections, key=lambda d: d.confidence)
+
+            for d in valid_detections:
+                d.isPrimaryGeoTag = (primary_target is not None and d == primary_target)
+
+        final_detections = valid_detections
 
         # Local & PostGIS Sync
         try:

@@ -279,22 +279,58 @@ class HydroPhysOmniNet(nn.Module):
         return res
 
 # ------------------------------------------------------------------------------
-# 6. Real-Time 1D / 2D / 3D Omni-Vision Pipeline
+# 6. Real-Time 1D / 2D / 3D Omni-Vision Pipeline (with Native Intel AI Boost NPU)
 # ------------------------------------------------------------------------------
+class HydroPhysFlatNPUWrapper(nn.Module):
+    def __init__(self, net):
+        super().__init__()
+        self.net = net
+    def forward(self, x8):
+        f3, f4, f5 = self.net.backbone(x8)
+        p3, p4, p5 = self.net.fpn(f3, f4, f5)
+        h3, h4, h5 = self.net.head_p3(p3), self.net.head_p4(p4), self.net.head_p5(p5)
+        return (h3['obj'], h3['cls'], h3['box'], h3['height_3d_m'], h3['p_mimic'], h3['bio_ratio'],
+                h4['obj'], h4['cls'], h4['box'], h4['height_3d_m'], h4['p_mimic'], h4['bio_ratio'],
+                h5['obj'], h5['cls'], h5['box'], h5['height_3d_m'], h5['p_mimic'], h5['bio_ratio'])
+
+
 class HydroPhysOmniVisionEngine:
-    def __init__(self, weights_path: str = "models_checkpoints/echophys_x_v3_unified_best.pt", device: str = None):
-        self.device = torch.device(device if device else ("cuda" if torch.cuda.is_available() else "cpu"))
-        self.model = HydroPhysOmniNet(num_classes=8).to(self.device)
+    def __init__(self, weights_path: str = "models_checkpoints/hydrophys_omninet_extreme_best.pt", device: str = None):
+        # Hardware preference: Intel(R) AI Boost NPU > CUDA RTX 5060 > CPU
+        self.device_str = device if device else "NPU"
+        self.torch_device = torch.device("cuda" if torch.cuda.is_available() and self.device_str.lower() != "npu" else "cpu")
+        self.model = HydroPhysOmniNet(num_classes=8).to(self.torch_device)
+
+        if not Path(weights_path).exists():
+            fallback = "models_checkpoints/echophys_x_v3_unified_best.pt"
+            if Path(fallback).exists():
+                weights_path = fallback
 
         if Path(weights_path).exists():
-            ckpt = torch.load(weights_path, map_location=self.device)
+            ckpt = torch.load(weights_path, map_location=self.torch_device, weights_only=False)
             state_dict = ckpt.get("model_state_dict", ckpt)
             self.model.load_state_dict(state_dict, strict=False)
-            print(f"[PASS] HydroPhys-OmniNet initialized with best weights from {weights_path}")
+            print(f"[PASS] HydroPhys-OmniNet initialized with weights from {weights_path}")
         else:
             print(f"[!] Running initialized HydroPhys-OmniNet weights.")
 
         self.model.eval()
+        
+        # Compile NPU execution graph on Intel(R) AI Boost
+        self.npu_compiled = None
+        try:
+            import openvino as ov
+            core = ov.Core()
+            if "NPU" in core.available_devices and self.device_str.upper() in ["NPU", "AUTO"]:
+                wrapper = HydroPhysFlatNPUWrapper(self.model).eval()
+                dummy8 = torch.randn(1, 8, 640, 640)
+                ov_m = ov.convert_model(wrapper, example_input=dummy8)
+                ov_m.reshape([1, 8, 640, 640])
+                self.npu_compiled = core.compile_model(ov_m, "NPU")
+                self.npu_name = str(core.get_property("NPU", "FULL_DEVICE_NAME"))
+                print(f"[PASS] HydroPhys-OmniNet successfully compiled to {self.npu_name} (NPU Native Acceleration)!")
+        except Exception as e:
+            print(f"[!] OpenVINO NPU compilation deferred: {e}")
 
     @torch.no_grad()
     def process_omni_frame(
@@ -317,10 +353,47 @@ class HydroPhysOmniVisionEngine:
 
         orig_w, orig_h = im_pil.size
         im_resized = im_pil.convert("L").resize((640, 640))
-        im_t = torch.from_numpy(np.array(im_resized, dtype=np.uint8)).float().div_(255.0).unsqueeze(0).unsqueeze(0).to(self.device)
+        im_t = torch.from_numpy(np.array(im_resized, dtype=np.uint8)).float().div_(255.0).unsqueeze(0).unsqueeze(0)
 
         t0 = time.perf_counter()
-        outputs = self.model(im_t)
+        
+        if self.npu_compiled is not None:
+            # Execute on Intel(R) AI Boost NPU
+            phys_t = make_physics_acoustic_tensor(im_t, depth_m=altitude_m, freq_khz=450.0)
+            npu_res = self.npu_compiled([phys_t.numpy()])
+            
+            # Map NPU output list to dictionary structure
+            outs_list = list(npu_res.values())
+            outputs = {
+                "p3": {
+                    "obj": torch.from_numpy(outs_list[0]),
+                    "cls": torch.from_numpy(outs_list[1]),
+                    "box": torch.from_numpy(outs_list[2]),
+                    "height_3d_m": torch.from_numpy(outs_list[3]),
+                    "p_mimic": torch.from_numpy(outs_list[4]),
+                    "bio_ratio": torch.from_numpy(outs_list[5]),
+                },
+                "p4": {
+                    "obj": torch.from_numpy(outs_list[6]),
+                    "cls": torch.from_numpy(outs_list[7]),
+                    "box": torch.from_numpy(outs_list[8]),
+                    "height_3d_m": torch.from_numpy(outs_list[9]),
+                    "p_mimic": torch.from_numpy(outs_list[10]),
+                    "bio_ratio": torch.from_numpy(outs_list[11]),
+                },
+                "p5": {
+                    "obj": torch.from_numpy(outs_list[12]),
+                    "cls": torch.from_numpy(outs_list[13]),
+                    "box": torch.from_numpy(outs_list[14]),
+                    "height_3d_m": torch.from_numpy(outs_list[15]),
+                    "p_mimic": torch.from_numpy(outs_list[16]),
+                    "bio_ratio": torch.from_numpy(outs_list[17]),
+                }
+            }
+        else:
+            im_t = im_t.to(self.torch_device)
+            outputs = self.model(im_t)
+
         latency_ms = (time.perf_counter() - t0) * 1000.0
 
         # Parse Multi-Scale Heads (P3, P4, P5)

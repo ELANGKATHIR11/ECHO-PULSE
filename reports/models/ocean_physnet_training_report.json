@@ -1,0 +1,9 @@
+{
+  "model": "OCEAN-PHYSNet (Physics-Constrained Multimodal Acoustic Network)",
+  "device": "NVIDIA GeForce RTX 5060 Laptop GPU",
+  "parameters": 3969382,
+  "epochs": 15,
+  "training_time_sec": 170.3290410041809,
+  "best_val_loss": 8.390098496487266,
+  "final_accuracy": 1.0
+}

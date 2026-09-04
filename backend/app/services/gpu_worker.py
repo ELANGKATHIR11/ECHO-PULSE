@@ -438,12 +438,19 @@ class SingleGpuInferenceWorker:
                     })
                 engine_name = "HydroPhys-OmniNet Extreme"
 
-            # Filter single highest confidence debris target if requested
-            if single_highest_debris and len(dets) > 1:
-                debris_candidates = [d for d in dets if d.get("isDebris", True)]
+            # Multi-Class Identification & Primary Geo-Tag Debris Selection:
+            # Choose the debris target with highest confidence for marking the geo-tag location
+            # while preserving all multi-class targets for simultaneous 3D bounding box rendering.
+            primary_target = None
+            if len(dets) > 0:
+                debris_candidates = [d for d in dets if d.get("isDebris", True) or d.get("isArtificialAnomaly", True)]
                 if debris_candidates:
-                    top_target = max(debris_candidates, key=lambda x: x["score"])
-                    dets = [top_target]
+                    primary_target = max(debris_candidates, key=lambda x: x.get("score", 0.0))
+                else:
+                    primary_target = max(dets, key=lambda x: x.get("score", 0.0))
+
+            for d in dets:
+                d["isPrimaryGeoTag"] = (primary_target is not None and d is primary_target)
 
             return {
                 "status": "SUCCESS",
@@ -451,7 +458,8 @@ class SingleGpuInferenceWorker:
                 "engine": engine_name,
                 "device": self.gpu_device_name,
                 "detectionsCount": len(dets),
-                "detections": dets
+                "detections": dets,
+                "primaryDebrisTarget": primary_target
             }
 
         raise ValueError(f"Unknown job type: {job_type}")

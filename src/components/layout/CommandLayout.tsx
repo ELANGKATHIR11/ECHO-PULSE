@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { Navbar } from './Navbar';
 import { Sidebar } from './Sidebar';
 import { RenderProfile } from '../../types';
+import { OceanLiquidCausticBackground } from '../glass/OceanLiquidCausticBackground';
 
 export const CommandLayout: React.FC = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -11,6 +12,9 @@ export const CommandLayout: React.FC = () => {
 
   return (
     <div className="h-screen w-screen bg-[#020712] dark:bg-[#020712] light:bg-[#d2ecf9] text-slate-200 dark:text-slate-200 light:text-[#061930] font-sans flex flex-col overflow-hidden select-none relative transition-colors">
+      {/* 3D Ocean-Blue Translucent Liquid-Glass Caustic Engine & Interactive Hydro-Particles */}
+      <OceanLiquidCausticBackground interactive={true} />
+
       {/* Background Liquid Caustic Drift Texture */}
       <div className="liquid-caustic-layer" />
 

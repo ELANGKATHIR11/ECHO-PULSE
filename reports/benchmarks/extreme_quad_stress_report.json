@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-08-31 22:53:18",
+  "duration_sec": 60.0,
+  "score": 52210,
+  "metrics": {
+    "cpu_ops": 8144,
+    "cpu_gflops": 36.2,
+    "dgpu_tflops": 33.99,
+    "dgpu_ops": 14922,
+    "dgpu_temp_c": 86,
+    "dgpu_vram_mb": 1261,
+    "dgpu_power_w": 98.8,
+    "igpu_ops": 29771,
+    "igpu_fps": 492.6,
+    "npu_ops": 32401,
+    "npu_fps": 536.2,
+    "npu_device_name": "Intel(R) AI Boost"
+  }
+}

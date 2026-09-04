@@ -17,7 +17,12 @@ if %errorlevel% equ 0 (
     "F:\Program Files\PostgreSQL\18\bin\pg_ctl.exe" start -D "F:\Program Files\PostgreSQL\18\data" -w >nul 2>&1
 )
 
-REM 2. Launch Desktop Application via Electron
-echo [*] Launching Native Desktop App...
+REM 2. Activate conda dgpu-core environment if available
+if exist "C:\Users\elang\miniconda3\envs\dgpu-core\python.exe" (
+    set "PATH=C:\Users\elang\miniconda3\envs\dgpu-core;C:\Users\elang\miniconda3\envs\dgpu-core\Scripts;C:\Users\elang\miniconda3\envs\dgpu-core\Library\bin;%PATH%"
+)
+
+REM 3. Launch Desktop Application via Electron
+echo [*] Launching Native Desktop App (RTX 5060 + Intel AI Boost NPU)...
 npx electron .
 

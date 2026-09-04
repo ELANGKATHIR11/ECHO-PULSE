@@ -127,8 +127,9 @@ def compute_lite_loss(outputs: Dict[str, torch.Tensor], labels: List[torch.Tenso
             tgt_box[b_idx, :, gy, gx] = torch.tensor([cx, cy, w, h], device=device)
             mask[b_idx, gy, gx] = True
 
-    # Classification loss: BCE with logits
-    l_cls = F.binary_cross_entropy_with_logits(cls_logits, tgt_cls)
+    # Classification loss: BCE with pos_weight to counter background class imbalance (80x80 grid = 6400 cells)
+    pos_weight = torch.tensor([50.0] * num_classes, device=device).view(1, num_classes, 1, 1)
+    l_cls = F.binary_cross_entropy_with_logits(cls_logits, tgt_cls, pos_weight=pos_weight)
 
     # Box regression loss: Smooth L1 over active target grid cells
     if mask.any():
@@ -138,7 +139,7 @@ def compute_lite_loss(outputs: Dict[str, torch.Tensor], labels: List[torch.Tenso
     else:
         l_box = box_coords.sum() * 0.0
 
-    total_loss = l_cls + 2.0 * l_box
+    total_loss = l_cls + 5.0 * l_box
     return total_loss, {"cls": float(l_cls.detach()), "box": float(l_box.detach())}
 
 
@@ -182,10 +183,10 @@ def train_echophys_lite(epochs: int = 15, batch_size: int = 16, lr: float = 1e-3
         pin_memory=torch.cuda.is_available()
     )
 
+    torch.backends.cudnn.benchmark = True
     model = EchoPhysLite(num_classes=8).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs, eta_min=1e-5)
-    scaler = torch.cuda.amp.GradScaler(enabled=torch.cuda.is_available())
 
     os.makedirs("models_checkpoints", exist_ok=True)
     os.makedirs("reports/models", exist_ok=True)
@@ -207,13 +208,11 @@ def train_echophys_lite(epochs: int = 15, batch_size: int = 16, lr: float = 1e-3
             # Transform to 3-Channel Physics Tensor [Backscatter + Specular HF + Shadow Profile]
             physics_3ch = make_echophys_lite_tensor(ims)
 
-            with torch.cuda.amp.autocast(enabled=torch.cuda.is_available()):
-                outputs = model(physics_3ch)
-                loss, parts = compute_lite_loss(outputs, labs, num_classes=8)
+            outputs = model(physics_3ch)
+            loss, parts = compute_lite_loss(outputs, labs, num_classes=8)
 
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
+            loss.backward()
+            optimizer.step()
 
             epoch_loss += float(loss.detach())
             batches += 1
@@ -229,9 +228,8 @@ def train_echophys_lite(epochs: int = 15, batch_size: int = 16, lr: float = 1e-3
             for ims, labs, _ in val_loader:
                 ims = ims.to(device, non_blocking=True)
                 physics_3ch = make_echophys_lite_tensor(ims)
-                with torch.cuda.amp.autocast(enabled=torch.cuda.is_available()):
-                    outputs = model(physics_3ch)
-                    v_loss, _ = compute_lite_loss(outputs, labs, num_classes=8)
+                outputs = model(physics_3ch)
+                v_loss, _ = compute_lite_loss(outputs, labs, num_classes=8)
                 val_loss += float(v_loss.detach())
                 val_batches += 1
 

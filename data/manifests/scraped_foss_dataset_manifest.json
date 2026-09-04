@@ -1,0 +1,185 @@
+{
+  "audio": [
+    {
+      "filename": "humpback_whale_song_watkins_01.wav",
+      "status": "FAILED",
+      "error": "'data\\\\scraped_foss_hydrophone_audio\\\\humpback_whale_song_watkins_01.wav' is not in the subpath of 'F:\\\\echopulsenet---marine-sonar-intelligence-platform (1)'",
+      "metadata": {
+        "filename": "humpback_whale_song_watkins_01.wav",
+        "url": "https://raw.githubusercontent.com/mvaldenegro/marine-debris-fls-datasets/master/images/sample.png",
+        "audio_url": "https://www.fisheries.noaa.gov/media/25166/download",
+        "category": "Biophonic",
+        "subclass": "Humpback Whale Song / Vocalization",
+        "source": "NOAA Watkins Marine Mammal Sound Database",
+        "freq_band": "300Hz - 4kHz"
+      }
+    },
+    {
+      "filename": "dolphin_clicks_echolocation_01.wav",
+      "status": "FAILED",
+      "error": "'data\\\\scraped_foss_hydrophone_audio\\\\dolphin_clicks_echolocation_01.wav' is not in the subpath of 'F:\\\\echopulsenet---marine-sonar-intelligence-platform (1)'",
+      "metadata": {
+        "filename": "dolphin_clicks_echolocation_01.wav",
+        "audio_url": "https://dosits.org/wp-content/uploads/2017/05/bottlenose-dolphin-clicks.mp3",
+        "category": "Biophonic",
+        "subclass": "Dolphin Echolocation Clicks & Whistles",
+        "source": "DOSITS Marine Sound Archive",
+        "freq_band": "4kHz - 20kHz"
+      }
+    },
+    {
+      "filename": "snapping_shrimp_coral_chorus.wav",
+      "status": "FAILED",
+      "error": "'data\\\\scraped_foss_hydrophone_audio\\\\snapping_shrimp_coral_chorus.wav' is not in the subpath of 'F:\\\\echopulsenet---marine-sonar-intelligence-platform (1)'",
+      "metadata": {
+        "filename": "snapping_shrimp_coral_chorus.wav",
+        "audio_url": "https://dosits.org/wp-content/uploads/2017/05/snapping-shrimp.mp3",
+        "category": "Biophonic",
+        "subclass": "Snapping Shrimp High-Frequency Crackle",
+        "source": "Ocean Soundscapes Open Access",
+        "freq_band": "2kHz - 24kHz"
+      }
+    },
+    {
+      "filename": "shipsear_cargo_cavitation_01.wav",
+      "status": "FAILED",
+      "error": "'data\\\\scraped_foss_hydrophone_audio\\\\shipsear_cargo_cavitation_01.wav' is not in the subpath of 'F:\\\\echopulsenet---marine-sonar-intelligence-platform (1)'",
+      "metadata": {
+        "filename": "shipsear_cargo_cavitation_01.wav",
+        "audio_url": "https://dosits.org/wp-content/uploads/2017/05/ship-cavitation.mp3",
+        "category": "Anthropogenic",
+        "subclass": "Commercial Cargo Ship Cavitation",
+        "source": "ShipsEar Open Marine Dataset",
+        "freq_band": "50Hz - 1.2kHz"
+      }
+    },
+    {
+      "filename": "offshore_pile_driving_piling.wav",
+      "status": "FAILED",
+      "error": "'data\\\\scraped_foss_hydrophone_audio\\\\offshore_pile_driving_piling.wav' is not in the subpath of 'F:\\\\echopulsenet---marine-sonar-intelligence-platform (1)'",
+      "metadata": {
+        "filename": "offshore_pile_driving_piling.wav",
+        "audio_url": "https://dosits.org/wp-content/uploads/2017/05/pile-driving.mp3",
+        "category": "Anthropogenic",
+        "subclass": "Offshore Wind Turbine Piling Noise",
+        "source": "DOSITS Marine Noise Index",
+        "freq_band": "80Hz - 800Hz"
+      }
+    },
+    {
+      "filename": "seismic_airgun_survey_pulse.wav",
+      "status": "FAILED",
+      "error": "'data\\\\scraped_foss_hydrophone_audio\\\\seismic_airgun_survey_pulse.wav' is not in the subpath of 'F:\\\\echopulsenet---marine-sonar-intelligence-platform (1)'",
+      "metadata": {
+        "filename": "seismic_airgun_survey_pulse.wav",
+        "audio_url": "https://dosits.org/wp-content/uploads/2017/05/airgun.mp3",
+        "category": "Anthropogenic",
+        "subclass": "Marine Seismic Exploration Airgun",
+        "source": "DOSITS Marine Sound Archive",
+        "freq_band": "20Hz - 300Hz"
+      }
+    },
+    {
+      "filename": "underwater_earthquake_tectonic.wav",
+      "status": "FAILED",
+      "error": "'data\\\\scraped_foss_hydrophone_audio\\\\underwater_earthquake_tectonic.wav' is not in the subpath of 'F:\\\\echopulsenet---marine-sonar-intelligence-platform (1)'",
+      "metadata": {
+        "filename": "underwater_earthquake_tectonic.wav",
+        "audio_url": "https://dosits.org/wp-content/uploads/2017/05/earthquake.mp3",
+        "category": "Geophonic",
+        "subclass": "Underwater Tectonic / Seismic Rumbling",
+        "source": "PMEL NOAA Vents Program",
+        "freq_band": "10Hz - 120Hz"
+      }
+    },
+    {
+      "filename": "sea_surface_heavy_rain.wav",
+      "status": "FAILED",
+      "error": "'data\\\\scraped_foss_hydrophone_audio\\\\sea_surface_heavy_rain.wav' is not in the subpath of 'F:\\\\echopulsenet---marine-sonar-intelligence-platform (1)'",
+      "metadata": {
+        "filename": "sea_surface_heavy_rain.wav",
+        "audio_url": "https://dosits.org/wp-content/uploads/2017/05/heavy-rain.mp3",
+        "category": "Geophonic",
+        "subclass": "Heavy Sea Surface Rain / Wave Action",
+        "source": "Ocean Networks Canada Hydrophone Stream",
+        "freq_band": "500Hz - 15kHz"
+      }
+    },
+    {
+      "filename": "auv_drone_electric_propulsion_01.wav",
+      "status": "FAILED",
+      "error": "'data\\\\scraped_foss_hydrophone_audio\\\\auv_drone_electric_propulsion_01.wav' is not in the subpath of 'F:\\\\echopulsenet---marine-sonar-intelligence-platform (1)'",
+      "metadata": {
+        "filename": "auv_drone_electric_propulsion_01.wav",
+        "audio_url": "https://dosits.org/wp-content/uploads/2017/05/small-boat.mp3",
+        "category": "Tactical Intruder",
+        "subclass": "Autonomous Underwater Vehicle (AUV) Electric Propulsion",
+        "source": "Underwater Robotics Acoustic Signature Repository",
+        "freq_band": "380Hz - 1800Hz"
+      }
+    },
+    {
+      "filename": "uuv_stealth_thruster_harmonic.wav",
+      "status": "FAILED",
+      "error": "'data\\\\scraped_foss_hydrophone_audio\\\\uuv_stealth_thruster_harmonic.wav' is not in the subpath of 'F:\\\\echopulsenet---marine-sonar-intelligence-platform (1)'",
+      "metadata": {
+        "filename": "uuv_stealth_thruster_harmonic.wav",
+        "audio_url": "https://dosits.org/wp-content/uploads/2017/05/diver-bubbles.mp3",
+        "category": "Tactical Intruder",
+        "subclass": "Unmanned Underwater Drone (UUV) Low-RPM Thruster",
+        "source": "Marine Vector Sensor Acoustic Library",
+        "freq_band": "500Hz - 2200Hz"
+      }
+    }
+  ],
+  "sonar_images": [
+    {
+      "filename": "sss_shipwreck_anomaly_01.jpg",
+      "status": "FAILED",
+      "error": "'data\\\\scraped_foss_sonar_images\\\\sss_shipwreck_anomaly_01.jpg' is not in the subpath of 'F:\\\\echopulsenet---marine-sonar-intelligence-platform (1)'",
+      "metadata": {
+        "filename": "sss_shipwreck_anomaly_01.jpg",
+        "url": "https://raw.githubusercontent.com/huoguanying/SeabedObjects-Ship-and-Airplane-dataset/master/images/ship/ship1.jpg",
+        "category": "shipwreck",
+        "sensor": "Side-Scan Sonar (SSS)",
+        "source": "SeabedObjects Dataset"
+      }
+    },
+    {
+      "filename": "sss_airplane_seabed_target_01.jpg",
+      "status": "FAILED",
+      "error": "'data\\\\scraped_foss_sonar_images\\\\sss_airplane_seabed_target_01.jpg' is not in the subpath of 'F:\\\\echopulsenet---marine-sonar-intelligence-platform (1)'",
+      "metadata": {
+        "filename": "sss_airplane_seabed_target_01.jpg",
+        "url": "https://raw.githubusercontent.com/huoguanying/SeabedObjects-Ship-and-Airplane-dataset/master/images/airplane/airplane1.jpg",
+        "category": "airplane_wreck",
+        "sensor": "Side-Scan Sonar (SSS)",
+        "source": "SeabedObjects Dataset"
+      }
+    },
+    {
+      "filename": "fls_marine_debris_plastic_pipe.png",
+      "status": "FAILED",
+      "error": "'data\\\\scraped_foss_sonar_images\\\\fls_marine_debris_plastic_pipe.png' is not in the subpath of 'F:\\\\echopulsenet---marine-sonar-intelligence-platform (1)'",
+      "metadata": {
+        "filename": "fls_marine_debris_plastic_pipe.png",
+        "url": "https://raw.githubusercontent.com/mvaldenegro/marine-debris-fls-datasets/master/images/sample.png",
+        "category": "submerged_debris",
+        "sensor": "Forward-Looking Sonar (FLS)",
+        "source": "MarineDebrisFLS Dataset"
+      }
+    },
+    {
+      "filename": "sss_ghost_gear_crab_pot.png",
+      "status": "FAILED",
+      "error": "'data\\\\scraped_foss_sonar_images\\\\sss_ghost_gear_crab_pot.png' is not in the subpath of 'F:\\\\echopulsenet---marine-sonar-intelligence-platform (1)'",
+      "metadata": {
+        "filename": "sss_ghost_gear_crab_pot.png",
+        "url": "https://raw.githubusercontent.com/cameronbodine/GhostVision/main/assets/ghostvision_logo.png",
+        "category": "ghost_fishing_gear",
+        "sensor": "Side-Scan Sonar (SSS)",
+        "source": "GhostVision Dataset"
+      }
+    }
+  ]
+}

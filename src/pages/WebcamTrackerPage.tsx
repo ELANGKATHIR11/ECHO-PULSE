@@ -120,6 +120,7 @@ export interface DetectionResult {
   bbox: [number, number, number, number];
   class: string;
   score: number;
+  isPrimaryGeoTag?: boolean;
 }
 
 export const WebcamTrackerPage: React.FC = () => {
@@ -134,7 +135,7 @@ export const WebcamTrackerPage: React.FC = () => {
   const [modelType, setModelType] = useState<'ECHOPHYS_LITE' | 'HYDROPHYS_OMNINET' | 'ECHOPHYS_X_V3' | 'BACKEND_YOLO12' | 'TF_COCO' | 'CLIENT_CV'>('ECHOPHYS_LITE');
   const [isModelLoading, setIsModelLoading] = useState<boolean>(false);
   const [modelStatusText, setModelStatusText] = useState<string>('EchoPhys-Lite (3-Ch Fast Mamba) Active');
-  const [singleHighestDebris, setSingleHighestDebris] = useState<boolean>(true);
+  const [singleHighestDebris, setSingleHighestDebris] = useState<boolean>(false);
   const [liveNotification, setLiveNotification] = useState<{
     title: string;
     category: string;
@@ -365,25 +366,23 @@ export const WebcamTrackerPage: React.FC = () => {
     };
   }, []);
 
-  // Built-in Real-time Computer Vision Detection Fallback Engine (Motion & Color Gradient Segmentation)
+  // Built-in Real-time Multi-Class Computer Vision Detection Fallback Engine (Motion & Color Gradient Segmentation)
   const runClientCVInference = (ctx: CanvasRenderingContext2D, width: number, height: number): DetectionResult[] => {
     const results: DetectionResult[] = [];
     try {
       const currentImageData = ctx.getImageData(0, 0, width, height);
       const data = currentImageData.data;
 
-      // Color Space & Edge Debris Feature Detection
-      // Look for contrast anomalies, high saturation polymers, or high brightness objects
-      const gridCols = 8;
-      const gridRows = 6;
+      // Color Space & Multi-Class Debris Feature Detection
+      const gridCols = 6;
+      const gridRows = 4;
       const cellW = Math.floor(width / gridCols);
       const cellH = Math.floor(height / gridRows);
 
-      let maxDiffCell: { col: number; row: number; score: number; debrisType: string } | null = null;
-      let highestScore = 0;
+      const candidateCells: Array<{ col: number; row: number; score: number; debrisType: string }> = [];
 
-      for (let r = 1; r < gridRows - 1; r++) {
-        for (let c = 1; c < gridCols - 1; c++) {
+      for (let r = 0; r < gridRows; r++) {
+        for (let c = 0; c < gridCols; c++) {
           const centerX = Math.floor((c + 0.5) * cellW);
           const centerY = Math.floor((r + 0.5) * cellH);
           const idx = (centerY * width + centerX) * 4;
@@ -398,21 +397,28 @@ export const WebcamTrackerPage: React.FC = () => {
           const saturation = maxVal === 0 ? 0 : (maxVal - minVal) / maxVal;
           const brightness = (red * 0.299 + green * 0.587 + blue * 0.114);
 
-          let cellScore = (saturation * 0.6) + (Math.abs(brightness - 128) / 128 * 0.4);
-
+          let cellScore = (saturation * 0.55) + (Math.abs(brightness - 128) / 128 * 0.35);
           let detectedClass = 'bottle';
-          if (blue > red + 30 && blue > green + 20) {
+
+          // Multi-Class Heuristic Discrimination
+          if (blue > red + 25 && blue > green + 15) {
             detectedClass = 'bottle';
-            cellScore += 0.2;
-          } else if (red > 140 && green < 100) {
-            detectedClass = 'cell_phone';
             cellScore += 0.25;
-          } else if (red > 120 && green > 120 && blue < 80) {
-            detectedClass = 'cup';
-            cellScore += 0.15;
-          } else if (brightness > 200) {
-            detectedClass = 'suitcase';
-            cellScore += 0.1;
+          } else if (red > 135 && green < 105 && blue < 105) {
+            detectedClass = 'electronic';
+            cellScore += 0.28;
+          } else if (red > 115 && green > 115 && blue < 75) {
+            detectedClass = 'metal_scrap';
+            cellScore += 0.22;
+          } else if (green > red + 20 && green > blue + 10) {
+            detectedClass = 'ghost_gear';
+            cellScore += 0.24;
+          } else if (brightness > 195) {
+            detectedClass = 'plastic';
+            cellScore += 0.18;
+          } else if (brightness < 45) {
+            detectedClass = 'subsea_cable';
+            cellScore += 0.20;
           }
 
           if (prevFrameImageData.current) {
@@ -422,28 +428,44 @@ export const WebcamTrackerPage: React.FC = () => {
             const diffB = Math.abs(blue - prevData[idx + 2]);
             const motionMagnitude = (diffR + diffG + diffB) / 3;
 
-            if (motionMagnitude > 18) {
-              cellScore += Math.min(motionMagnitude / 100, 0.35);
+            if (motionMagnitude > 16) {
+              cellScore += Math.min(motionMagnitude / 100, 0.30);
             }
           }
 
-          if (cellScore > highestScore && cellScore > 0.42) {
-            highestScore = cellScore;
-            maxDiffCell = { col: c, row: r, score: Math.min(cellScore, 0.98), debrisType: detectedClass };
+          if (cellScore > 0.44) {
+            candidateCells.push({
+              col: c,
+              row: r,
+              score: Math.min(cellScore, 0.96),
+              debrisType: detectedClass,
+            });
           }
         }
       }
 
-      if (maxDiffCell) {
-        const x = Math.max(20, (maxDiffCell.col - 0.6) * cellW);
-        const y = Math.max(20, (maxDiffCell.row - 0.6) * cellH);
-        const w = Math.min(width - x - 20, cellW * 2.2);
-        const h = Math.min(height - y - 20, cellH * 2.2);
+      // Sort candidate cells by score and pick top non-overlapping multi-class candidates
+      candidateCells.sort((a, b) => b.score - a.score);
+      const chosenCells: typeof candidateCells = [];
+      for (const cand of candidateCells) {
+        const isOverlap = chosenCells.some(
+          (c) => Math.abs(c.col - cand.col) <= 1 && Math.abs(c.row - cand.row) <= 1
+        );
+        if (!isOverlap && chosenCells.length < 5) {
+          chosenCells.push(cand);
+        }
+      }
+
+      for (const cell of chosenCells) {
+        const x = Math.max(15, (cell.col - 0.4) * cellW);
+        const y = Math.max(15, (cell.row - 0.4) * cellH);
+        const w = Math.min(width - x - 15, cellW * 1.8);
+        const h = Math.min(height - y - 15, cellH * 1.8);
 
         results.push({
           bbox: [x, y, w, h],
-          class: maxDiffCell.debrisType,
-          score: maxDiffCell.score,
+          class: cell.debrisType,
+          score: cell.score,
         });
       }
 
@@ -489,7 +511,7 @@ export const WebcamTrackerPage: React.FC = () => {
           } else if (visionFilterMode === 'NIGHT_MARINE') {
             ctx.filter = 'contrast(180%) brightness(110%) sepia(100%) hue-rotate(90deg) saturate(300%)';
           } else if (visionFilterMode === 'EDGE_SOBEL') {
-            ctx.filter = 'contrast(250%) grayscale(100%) invert(100%)';
+            ctx.filter = 'contrast(200%) grayscale(100%) invert(100%)';
           } else {
             ctx.filter = 'none';
           }
@@ -515,7 +537,7 @@ export const WebcamTrackerPage: React.FC = () => {
           ctx.fillStyle = scanGrad;
           ctx.fillRect(0, scanY - 30, canvas.width, 40);
 
-          // 2. Perform Real-time Detection via Backend DL Models (EchoPhys-Lite / HydroPhys-OmniNet / EchoPhys-X v3 / YOLOv12) or Client ML/CV
+          // 2. Perform Real-time Multi-Class Detection via Backend DL Models or Client ML/CV
           let rawDetections: DetectionResult[] = [];
           try {
             if (['ECHOPHYS_LITE', 'HYDROPHYS_OMNINET', 'ECHOPHYS_X_V3', 'BACKEND_YOLO12'].includes(modelType)) {
@@ -543,6 +565,7 @@ export const WebcamTrackerPage: React.FC = () => {
                           bbox: d.bbox,
                           class: d.class || 'marine_debris',
                           score: d.score || 0.85,
+                          isPrimaryGeoTag: d.isPrimaryGeoTag || false,
                         }));
                       }
 
@@ -576,42 +599,68 @@ export const WebcamTrackerPage: React.FC = () => {
               return pred.score >= confidenceThreshold && w >= minObjectSize && h >= minObjectSize;
             });
 
-            // If single highest debris mode is on, extract top candidate
+            // Single highest debris focus mode (if toggled on)
             if (singleHighestDebris && filtered.length > 0) {
               const top = filtered.reduce((prev, current) => (prev.score > current.score ? prev : current), filtered[0]);
               filtered = [top];
             }
 
-            setActiveDetections(filtered);
-            setLiveTargetsCount(filtered.length);
+            // PRIMARY GEO-TAG SELECTION:
+            // The model specifically chooses the genuine debris candidate with the HIGHEST CONFIDENCE
+            // for marking the Geo-Tag location, while preserving all multi-class 3D detections.
+            const genuineDebrisCandidates = filtered.filter((p) => {
+              const rawClass = p.class.toLowerCase();
+              const tax = DEBRIS_TAXONOMY[rawClass];
+              return tax ? tax.isDebris : true;
+            });
 
-            // Project 2D Detections into 3D Bathymetric Coordinates via Sensor Fusion
-            const projected = filtered.map((pred) => {
+            const topDebrisTarget = genuineDebrisCandidates.length > 0
+              ? genuineDebrisCandidates.reduce((prev, curr) => (prev.score > curr.score ? prev : curr))
+              : (filtered.length > 0 ? filtered.reduce((prev, curr) => (prev.score > curr.score ? prev : curr)) : null);
+
+            // Enrich detections with primary geo-tag flag
+            const enrichedDetections: DetectionResult[] = filtered.map((pred) => {
+              const isPrimary = topDebrisTarget !== null && (
+                pred === topDebrisTarget ||
+                (Math.abs(pred.bbox[0] - topDebrisTarget.bbox[0]) < 2 && Math.abs(pred.bbox[1] - topDebrisTarget.bbox[1]) < 2)
+              );
+              return {
+                ...pred,
+                isPrimaryGeoTag: isPrimary,
+              };
+            });
+
+            setActiveDetections(enrichedDetections);
+            setLiveTargetsCount(enrichedDetections.length);
+
+            // Project 2D Multi-Class Detections into 3D Bathymetric Coordinates via Sensor Fusion
+            const projected = enrichedDetections.map((pred) => {
               return sensorFusion.projectBoundingBoxTo3D(
                 pred.bbox,
                 canvas.width,
                 canvas.height,
                 pred.class,
                 pred.score,
-                irSensorDistanceM
+                irSensorDistanceM,
+                pred.isPrimaryGeoTag || false
               );
             });
             setProjected3DTargets(projected);
             setLiveGps(sensorFusion.getGpsState());
 
-            // Auto-persist top debris target into PostgreSQL/PostGIS in real time
-            if (projected.length > 0) {
-              sensorFusion.syncTargetToPostgres(projected[0]);
+            // Auto-persist the HIGHEST CONFIDENCE debris target into PostgreSQL/PostGIS for exact Geo-Tag marking
+            const primaryProjected = projected.find((p) => p.isPrimaryGeoTag) || projected[0];
+            if (primaryProjected) {
+              sensorFusion.syncTargetToPostgres(primaryProjected);
             }
 
-            if (filtered.length > 0) {
-              triggerSonarPing(filtered[0].score > 0.8 ? 1046 : 784);
+            if (enrichedDetections.length > 0) {
+              const topScore = topDebrisTarget ? topDebrisTarget.score : enrichedDetections[0].score;
+              triggerSonarPing(topScore > 0.8 ? 1046 : 784);
             }
 
-
-
-            // 3. Render High-Tech Liquid Glass HUD & Bounding Boxes
-            filtered.forEach((pred, idx) => {
+            // 3. Render High-Tech Liquid Glass HUD & Multi-Class 3D Bounding Boxes
+            enrichedDetections.forEach((pred, idx) => {
               const [origX, y, w, h] = pred.bbox;
               const x = isMirrored ? (canvas.width - origX - w) : origX;
               const rawClass = pred.class.toLowerCase();
@@ -622,14 +671,15 @@ export const WebcamTrackerPage: React.FC = () => {
                 color: '#38bdf8',
               };
 
-              const boxColor = taxonomy.color;
+              const isPrimary = pred.isPrimaryGeoTag;
+              const boxColor = isPrimary ? '#38bdf8' : taxonomy.color;
 
               // Outer glowing box
               ctx.save();
               ctx.strokeStyle = boxColor;
-              ctx.lineWidth = 2.5;
+              ctx.lineWidth = isPrimary ? 3.2 : 2.2;
               ctx.shadowColor = boxColor;
-              ctx.shadowBlur = 12;
+              ctx.shadowBlur = isPrimary ? 18 : 10;
 
               // Corner bracket styling
               const cornerSize = Math.min(w * 0.22, 24);
@@ -653,14 +703,14 @@ export const WebcamTrackerPage: React.FC = () => {
               ctx.stroke();
 
               // Translucent center fill
-              ctx.fillStyle = `${boxColor}25`;
+              ctx.fillStyle = isPrimary ? `${boxColor}35` : `${boxColor}20`;
               ctx.fillRect(x, y, w, h);
 
               // 3D Volumetric Wireframe Box Projection (Isometric Height-from-Shadow)
               const isoDx = Math.floor(w * 0.25);
               const isoDy = Math.floor(h * 0.22);
               ctx.strokeStyle = boxColor;
-              ctx.lineWidth = 1.8;
+              ctx.lineWidth = isPrimary ? 2.2 : 1.6;
               ctx.setLineDash([3, 3]);
               // 3D Top Plane
               ctx.strokeRect(x + isoDx, Math.max(0, y - isoDy), w, h);
@@ -677,18 +727,30 @@ export const WebcamTrackerPage: React.FC = () => {
               const cx = x + w / 2;
               const cy = y + h / 2;
               ctx.beginPath();
-              ctx.arc(cx, cy, 4, 0, 2 * Math.PI);
+              ctx.arc(cx, cy, isPrimary ? 5 : 3.5, 0, 2 * Math.PI);
               ctx.fillStyle = boxColor;
               ctx.fill();
-              ctx.moveTo(cx - 10, cy);
-              ctx.lineTo(cx + 10, cy);
-              ctx.moveTo(cx, cy - 10);
-              ctx.lineTo(cx, cy + 10);
+              ctx.beginPath();
+              ctx.moveTo(cx - 10, cy); ctx.lineTo(cx + 10, cy);
+              ctx.moveTo(cx, cy - 10); ctx.lineTo(cx, cy + 10);
+              ctx.strokeStyle = boxColor;
               ctx.stroke();
+
+              // Animated Pulsing Radar Ring for the Highest-Confidence Geo-Tag Debris
+              if (isPrimary) {
+                const pulseRadius = 14 + Math.sin(performance.now() / 180) * 4;
+                ctx.beginPath();
+                ctx.arc(cx, cy, pulseRadius, 0, 2 * Math.PI);
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 1.8;
+                ctx.setLineDash([4, 2]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+              }
 
               // Acoustic Shadow Ray Vector Simulation
               const shadowLengthPx = Math.min(w * 1.4, 180);
-              ctx.strokeStyle = 'rgba(239, 68, 68, 0.6)';
+              ctx.strokeStyle = isPrimary ? 'rgba(56, 189, 248, 0.8)' : 'rgba(239, 68, 68, 0.6)';
               ctx.setLineDash([4, 4]);
               ctx.beginPath();
               ctx.moveTo(x + w, cy);
@@ -696,32 +758,33 @@ export const WebcamTrackerPage: React.FC = () => {
               ctx.stroke();
               ctx.setLineDash([]);
 
-              // Header Tag (Class Label + Confidence)
-              const labelText = `${taxonomy.marineLabel.toUpperCase()}`;
+              // Header Tag (Class Label + Confidence + Geo-Tag Indicator)
+              const primaryPrefix = isPrimary ? '★ PRIMARY GEO-TAG | ' : '';
+              const labelText = `${primaryPrefix}${taxonomy.marineLabel.toUpperCase()}`;
               const scoreText = `${(pred.score * 100).toFixed(0)}% CONF`;
-              ctx.font = 'bold 12px "JetBrains Mono", monospace';
-              const textMetrics = ctx.measureText(`${labelText} | ${scoreText}`);
-              const tagWidth = Math.max(textMetrics.width + 16, 120);
-
+              ctx.font = 'bold 11px "JetBrains Mono", monospace';
+              const textMetrics = ctx.measureText(`${labelText} [${scoreText}]`);
+              const tagWidth = Math.max(textMetrics.width + 16, 140);
               const tagY = y > 30 ? y - 26 : y + h + 6;
 
               // Tag Background with glass effect
-              ctx.fillStyle = 'rgba(2, 7, 18, 0.88)';
+              ctx.fillStyle = isPrimary ? 'rgba(3, 18, 38, 0.94)' : 'rgba(2, 7, 18, 0.88)';
               ctx.strokeStyle = boxColor;
-              ctx.lineWidth = 1;
+              ctx.lineWidth = isPrimary ? 2 : 1;
               ctx.fillRect(x, tagY, tagWidth, 22);
               ctx.strokeRect(x, tagY, tagWidth, 22);
 
               // Tag text
-              ctx.fillStyle = boxColor;
+              ctx.fillStyle = isPrimary ? '#38bdf8' : boxColor;
               ctx.fillText(`${labelText} [${scoreText}]`, x + 6, tagY + 15);
 
               // Sub-metrics indicator at bottom
               ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
               ctx.font = '10px "JetBrains Mono", monospace';
               const shadowEst = ((shadowLengthPx * 0.035)).toFixed(1);
+              const primaryBadge = isPrimary ? ' | [GEO-TAG LOCK]' : '';
               ctx.fillText(
-                `Area: ${(w * h).toFixed(0)}px² | Shadow: ${shadowEst}m | ID: #TRK-${idx + 1}`,
+                `Area: ${(w * h).toFixed(0)}px² | Shadow: ${shadowEst}m | ID: #TRK-${idx + 1}${primaryBadge}`,
                 x,
                 y + h + 18
               );
@@ -731,7 +794,7 @@ export const WebcamTrackerPage: React.FC = () => {
 
             // Calculate Latency & FPS
             const endTime = performance.now();
-            setLatencyMs(Math.round(endTime - startTime));
+            setLatencyMs(Math.round(endTime - startTime));;
 
             frameCount.current += 1;
             if (endTime - lastFpsUpdate.current >= 1000) {
@@ -923,19 +986,26 @@ export const WebcamTrackerPage: React.FC = () => {
         {/* Live Model Architecture Selector Bar */}
         <div className="pt-4 space-y-2 border-t border-cyan-900/30">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-[11px] font-mono font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-              <Cpu className="w-3.5 h-3.5 text-cyan-400" />
-              SELECT ACTIVE DL INFERENCE ENGINE (REAL-TIME RTX 5060):
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-mono font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <Cpu className="w-3.5 h-3.5 text-cyan-400" />
+                SELECT ACTIVE DL INFERENCE ENGINE (REAL-TIME RTX 5060):
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/30 text-cyan-300 font-semibold">
+                MULTI-CLASS 3D ACTIVE
+              </span>
+            </div>
             <div className="flex items-center gap-3">
-              <label className="flex items-center gap-2 cursor-pointer text-xs font-mono bg-[#020712]/70 px-2.5 py-1 rounded-xl border border-cyan-900/40">
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-mono bg-[#020712]/70 px-2.5 py-1 rounded-xl border border-cyan-900/40 hover:border-cyan-500/40 transition-colors">
                 <input
                   type="checkbox"
                   checked={singleHighestDebris}
                   onChange={(e) => setSingleHighestDebris(e.target.checked)}
                   className="rounded border-cyan-700 text-cyan-500 focus:ring-cyan-400"
                 />
-                <span className="text-cyan-300 font-bold">SINGLE HIGHEST DEBRIS ONLY</span>
+                <span className="text-cyan-300 font-bold">
+                  {singleHighestDebris ? 'SINGLE DEBRIS FOCUS' : 'MULTI-CLASS (AUTO GEO-TAG HIGHEST CONF)'}
+                </span>
               </label>
 
               <div className="flex items-center gap-2 text-xs font-mono bg-[#020712]/70 px-2.5 py-1 rounded-xl border border-cyan-900/40">
@@ -1258,12 +1328,18 @@ export const WebcamTrackerPage: React.FC = () => {
                   activeDetections.map((det, i) => {
                     const rawClass = det.class.toLowerCase();
                     const tax = DEBRIS_TAXONOMY[rawClass];
+                    const isPrimary = det.isPrimaryGeoTag;
                     return (
                       <span
                         key={i}
-                        className="px-2.5 py-1 rounded-lg bg-cyan-950/80 dark:bg-cyan-950/80 light:bg-sky-100 border border-cyan-500/40 text-cyan-200 dark:text-cyan-200 light:text-[#00639b] text-[10px] font-bold shrink-0 flex items-center gap-1.5"
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold shrink-0 flex items-center gap-1.5 transition-all ${
+                          isPrimary
+                            ? 'bg-cyan-900/90 border-2 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.5)]'
+                            : 'bg-cyan-950/80 dark:bg-cyan-950/80 light:bg-sky-100 border border-cyan-500/40 text-cyan-200 dark:text-cyan-200 light:text-[#00639b]'
+                        }`}
                       >
-                        <Crosshair className="w-3 h-3 text-cyan-400" />
+                        <Crosshair className={`w-3 h-3 ${isPrimary ? 'text-amber-300 animate-spin' : 'text-cyan-400'}`} />
+                        {isPrimary ? '★ [GEO-TAG] ' : ''}
                         {tax ? tax.marineLabel.split('/')[0] : det.class} ({(det.score * 100).toFixed(0)}%)
                       </span>
                     );
@@ -1362,7 +1438,8 @@ export const WebcamTrackerPage: React.FC = () => {
                   modelVersion: 'HydroPhys-OmniNet 3D',
                   imageCropUrl: '',
                   verifiedStatus: 'UNVERIFIED',
-                  source: 'optical_webcam'
+                  source: 'optical_webcam',
+                  isPrimaryGeoTag: p.isPrimaryGeoTag || false,
                 }))}
 
                 colorScheme="OCEANIC"
@@ -1408,21 +1485,44 @@ export const WebcamTrackerPage: React.FC = () => {
                 </span>
               </div>
 
+              {/* Active Geo-Tag Anchor Spotlight Banner */}
+              {projected3DTargets.find((p) => p.isPrimaryGeoTag) && (
+                <div className="p-1.5 rounded-lg bg-cyan-950/70 border border-cyan-400/40 flex items-center justify-between text-[10px] font-mono">
+                  <span className="text-cyan-300 font-bold flex items-center gap-1">
+                    <Crosshair className="w-3 h-3 text-amber-400 animate-spin" />
+                    PRIMARY GEO-TAG TARGET:
+                  </span>
+                  <span className="text-amber-300 font-bold">
+                    {projected3DTargets.find((p) => p.isPrimaryGeoTag)?.label} ({((projected3DTargets.find((p) => p.isPrimaryGeoTag)?.confidence || 0) * 100).toFixed(0)}%)
+                  </span>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-2 font-mono text-[10px]">
                 <div className="bg-black/40 p-1.5 rounded border border-cyan-900/20">
                   <span className="text-slate-400 block text-[9px]">WGS84 LATITUDE:</span>
-                  <span className="text-cyan-300 font-bold">{liveGps.latitude.toFixed(5)}° N</span>
+                  <span className="text-cyan-300 font-bold">
+                    {(projected3DTargets.find((p) => p.isPrimaryGeoTag)?.wgs84.lat || liveGps.latitude).toFixed(5)}° N
+                  </span>
                 </div>
                 <div className="bg-black/40 p-1.5 rounded border border-cyan-900/20">
                   <span className="text-slate-400 block text-[9px]">WGS84 LONGITUDE:</span>
-                  <span className="text-cyan-300 font-bold">{liveGps.longitude.toFixed(5)}° E</span>
+                  <span className="text-cyan-300 font-bold">
+                    {(projected3DTargets.find((p) => p.isPrimaryGeoTag)?.wgs84.lng || liveGps.longitude).toFixed(5)}° E
+                  </span>
+                </div>
+                <div className="bg-black/40 p-1.5 rounded border border-cyan-900/20">
+                  <span className="text-slate-400 block text-[9px]">TARGET DEPTH:</span>
+                  <span className="text-emerald-300 font-bold">
+                    {(projected3DTargets.find((p) => p.isPrimaryGeoTag)?.wgs84.depthMeters || liveGps.altitudeMeters).toFixed(1)} m
+                  </span>
                 </div>
                 <div className="bg-black/40 p-1.5 rounded border border-cyan-900/20">
                   <span className="text-slate-400 block text-[9px]">IR / ToF DISTANCE:</span>
                   <span className="text-amber-300 font-bold">{irSensorDistanceM.toFixed(1)} m</span>
                 </div>
-                <div className="bg-black/40 p-1.5 rounded border border-cyan-900/20">
-                  <span className="text-slate-400 block text-[9px]">COMPASS BEARING:</span>
+                <div className="bg-black/40 p-1.5 rounded border border-cyan-900/20 col-span-2 flex justify-between items-center">
+                  <span className="text-slate-400 text-[9px]">COMPASS BEARING:</span>
                   <span className="text-purple-300 font-bold">{liveGps.headingDeg.toFixed(0)}° HEADING</span>
                 </div>
               </div>

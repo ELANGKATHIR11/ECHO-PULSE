@@ -5,6 +5,7 @@ interface GlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'subtle' | 'glow' | 'interactive' | 'deep' | 'kpi';
   className?: string;
   liquid?: boolean;
+  shimmer?: boolean;
 }
 
 export const GlassCard: React.FC<GlassCardProps> = ({
@@ -12,20 +13,23 @@ export const GlassCard: React.FC<GlassCardProps> = ({
   variant = 'default',
   className = '',
   liquid = true,
+  shimmer = false,
   ...props
 }) => {
   if (variant === 'kpi') {
     return (
       <div
-        className={`kpi-card relative overflow-hidden transition-all duration-300 ${className}`}
+        className={`kpi-card relative overflow-hidden transition-all duration-300 liquid-glass-3d ${
+          shimmer ? 'liquid-shimmer-effect' : ''
+        } ${className}`}
         {...props}
       >
         {/* Liquid Specular Top Sheen Edge */}
-        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/40 dark:via-cyan-400/40 light:via-sky-400/50 to-transparent pointer-events-none z-10" />
+        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/50 dark:via-cyan-400/50 light:via-sky-400/60 to-transparent pointer-events-none z-10" />
 
         {/* Convex Ambient Flare */}
         {liquid && (
-          <div className="absolute top-0 left-0 w-36 h-24 bg-radial from-white/[0.08] dark:from-white/[0.08] light:from-white/[0.6] to-transparent pointer-events-none z-0" />
+          <div className="absolute top-0 left-0 w-36 h-24 bg-radial from-cyan-400/[0.12] dark:from-cyan-400/[0.12] light:from-white/[0.6] to-transparent pointer-events-none z-0" />
         )}
 
         <div className="relative z-10 flex flex-col justify-between flex-1">{children}</div>
@@ -35,20 +39,22 @@ export const GlassCard: React.FC<GlassCardProps> = ({
 
   const variantStyles = {
     default:
-      'bg-[#050E1F]/70 dark:bg-[#050E1F]/70 light:bg-white/85 backdrop-blur-2xl border border-cyan-500/25 dark:border-cyan-500/25 light:border-sky-300/60 shadow-[0_16px_40px_-10px_rgba(0,0,0,0.75),inset_0_1px_1.5px_0_rgba(255,255,255,0.22)] dark:shadow-[0_16px_40px_-10px_rgba(0,0,0,0.75),inset_0_1px_1.5px_0_rgba(255,255,255,0.22)] light:shadow-[0_10px_30px_-6px_rgba(15,23,42,0.08),inset_0_1px_1.5px_0_rgba(255,255,255,0.95)] text-slate-200 dark:text-slate-200 light:text-slate-800',
+      'bg-[#050E1F]/65 dark:bg-[#050E1F]/65 light:bg-white/85 backdrop-blur-2xl border border-cyan-500/30 dark:border-cyan-500/30 light:border-sky-300/60 shadow-[0_16px_40px_-10px_rgba(0,0,0,0.75),0_0_16px_rgba(34,211,238,0.08),inset_0_1px_1.5px_0_rgba(255,255,255,0.25)] dark:shadow-[0_16px_40px_-10px_rgba(0,0,0,0.75),0_0_16px_rgba(34,211,238,0.08),inset_0_1px_1.5px_0_rgba(255,255,255,0.25)] light:shadow-[0_10px_30px_-6px_rgba(15,23,42,0.08),inset_0_1px_1.5px_0_rgba(255,255,255,0.95)] text-slate-200 dark:text-slate-200 light:text-slate-800',
     subtle:
-      'bg-[#040B18]/55 dark:bg-[#040B18]/55 light:bg-slate-50/75 backdrop-blur-xl border border-cyan-900/35 dark:border-cyan-900/35 light:border-slate-200/90 shadow-[0_8px_24px_rgba(0,0,0,0.45),inset_0_1px_1px_0_rgba(255,255,255,0.15)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45),inset_0_1px_1px_0_rgba(255,255,255,0.15)] light:shadow-[0_4px_16px_rgba(15,23,42,0.04),inset_0_1px_1px_0_rgba(255,255,255,0.9)] text-slate-300 dark:text-slate-300 light:text-slate-700',
+      'bg-[#040B18]/50 dark:bg-[#040B18]/50 light:bg-slate-50/75 backdrop-blur-xl border border-cyan-900/40 dark:border-cyan-900/40 light:border-slate-200/90 shadow-[0_8px_24px_rgba(0,0,0,0.45),inset_0_1px_1px_0_rgba(255,255,255,0.15)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45),inset_0_1px_1px_0_rgba(255,255,255,0.15)] light:shadow-[0_4px_16px_rgba(15,23,42,0.04),inset_0_1px_1px_0_rgba(255,255,255,0.9)] text-slate-300 dark:text-slate-300 light:text-slate-700',
     glow:
-      'bg-[#051124]/80 dark:bg-[#051124]/80 light:bg-white/92 backdrop-blur-2xl border border-cyan-400/50 dark:border-cyan-400/50 light:border-sky-400/70 shadow-[0_0_30px_rgba(6,182,212,0.22),0_16px_48px_rgba(0,0,0,0.8),inset_0_1px_2px_0_rgba(255,255,255,0.35)] dark:shadow-[0_0_30px_rgba(6,182,212,0.22),0_16px_48px_rgba(0,0,0,0.8),inset_0_1px_2px_0_rgba(255,255,255,0.35)] light:shadow-[0_0_24px_rgba(2,132,199,0.16),0_12px_36px_rgba(15,23,42,0.09),inset_0_1px_2px_0_rgba(255,255,255,1)] text-white dark:text-white light:text-slate-900',
+      'bg-[#051124]/75 dark:bg-[#051124]/75 light:bg-white/92 backdrop-blur-2xl border border-cyan-400/55 dark:border-cyan-400/55 light:border-sky-400/70 shadow-[0_0_35px_rgba(6,182,212,0.28),0_16px_48px_rgba(0,0,0,0.8),inset_0_1px_2px_0_rgba(255,255,255,0.4)] dark:shadow-[0_0_35px_rgba(6,182,212,0.28),0_16px_48px_rgba(0,0,0,0.8),inset_0_1px_2px_0_rgba(255,255,255,0.4)] light:shadow-[0_0_24px_rgba(2,132,199,0.16),0_12px_36px_rgba(15,23,42,0.09),inset_0_1px_2px_0_rgba(255,255,255,1)] text-white dark:text-white light:text-slate-900',
     interactive:
-      'bg-[#050E1F]/70 dark:bg-[#050E1F]/70 light:bg-white/85 backdrop-blur-2xl border border-cyan-500/25 dark:border-cyan-500/25 light:border-sky-300/60 hover:border-cyan-400/60 dark:hover:border-cyan-400/60 light:hover:border-sky-500/80 hover:bg-[#081830]/85 dark:hover:bg-[#081830]/85 light:hover:bg-sky-50/95 transition-all duration-300 hover:shadow-[0_0_24px_rgba(34,211,238,0.25),0_16px_40px_rgba(0,0,0,0.7),inset_0_1px_2px_0_rgba(255,255,255,0.4)] dark:hover:shadow-[0_0_24px_rgba(34,211,238,0.25),0_16px_40px_rgba(0,0,0,0.7),inset_0_1px_2px_0_rgba(255,255,255,0.4)] light:hover:shadow-[0_8px_28px_rgba(2,132,199,0.16),inset_0_1px_2px_0_rgba(255,255,255,1)] cursor-pointer text-slate-200 dark:text-slate-200 light:text-slate-800 active:scale-[0.99]',
+      'bg-[#050E1F]/65 dark:bg-[#050E1F]/65 light:bg-white/85 backdrop-blur-2xl border border-cyan-500/30 dark:border-cyan-500/30 light:border-sky-300/60 hover:border-cyan-400/70 dark:hover:border-cyan-400/70 light:hover:border-sky-500/80 hover:bg-[#081830]/80 dark:hover:bg-[#081830]/80 light:hover:bg-sky-50/95 transition-all duration-300 hover:shadow-[0_0_28px_rgba(34,211,238,0.3),0_20px_45px_rgba(0,0,0,0.75),inset_0_1px_2px_0_rgba(255,255,255,0.45)] dark:hover:shadow-[0_0_28px_rgba(34,211,238,0.3),0_20px_45px_rgba(0,0,0,0.75),inset_0_1px_2px_0_rgba(255,255,255,0.45)] light:hover:shadow-[0_8px_28px_rgba(2,132,199,0.16),inset_0_1px_2px_0_rgba(255,255,255,1)] cursor-pointer text-slate-200 dark:text-slate-200 light:text-slate-800 active:scale-[0.99]',
     deep:
-      'bg-[#020610]/85 dark:bg-[#020610]/85 light:bg-slate-100/90 backdrop-blur-2xl border border-cyan-900/45 dark:border-cyan-900/45 light:border-slate-300/80 shadow-[0_20px_50px_rgba(0,0,0,0.85),inset_0_1px_1.5px_0_rgba(255,255,255,0.18)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.85),inset_0_1px_1.5px_0_rgba(255,255,255,0.18)] light:shadow-[0_8px_30px_rgba(15,23,42,0.06),inset_0_1px_1.5px_0_rgba(255,255,255,0.85)] text-slate-200 dark:text-slate-200 light:text-slate-800',
+      'bg-[#020610]/80 dark:bg-[#020610]/80 light:bg-slate-100/90 backdrop-blur-2xl border border-cyan-900/50 dark:border-cyan-900/50 light:border-slate-300/80 shadow-[0_20px_50px_rgba(0,0,0,0.85),inset_0_1px_1.5px_0_rgba(255,255,255,0.2)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.85),inset_0_1px_1.5px_0_rgba(255,255,255,0.2)] light:shadow-[0_8px_30px_rgba(15,23,42,0.06),inset_0_1px_1.5px_0_rgba(255,255,255,0.85)] text-slate-200 dark:text-slate-200 light:text-slate-800',
   };
 
   return (
     <div
-      className={`rounded-2xl relative overflow-hidden transition-all duration-300 ${variantStyles[variant]} ${className}`}
+      className={`rounded-2xl relative overflow-hidden transition-all duration-300 liquid-glass-3d ${
+        shimmer ? 'liquid-shimmer-effect' : ''
+      } ${variantStyles[variant]} ${className}`}
       {...props}
     >
       {/* Liquid Specular Top Sheen Edge */}
@@ -56,7 +62,7 @@ export const GlassCard: React.FC<GlassCardProps> = ({
 
       {/* Convex Ambient Flare */}
       {liquid && (
-        <div className="absolute top-0 left-0 w-36 h-24 bg-radial from-white/[0.08] dark:from-white/[0.08] light:from-white/[0.6] to-transparent pointer-events-none z-0" />
+        <div className="absolute top-0 left-0 w-36 h-24 bg-radial from-cyan-400/[0.1] dark:from-cyan-400/[0.1] light:from-white/[0.6] to-transparent pointer-events-none z-0" />
       )}
 
       <div className="relative z-10">{children}</div>
@@ -70,6 +76,7 @@ interface GlassPanelProps extends React.HTMLAttributes<HTMLDivElement> {
   actions?: React.ReactNode;
   className?: string;
   bodyClassName?: string;
+  shimmer?: boolean;
 }
 
 export const GlassPanel: React.FC<GlassPanelProps> = ({
@@ -78,18 +85,21 @@ export const GlassPanel: React.FC<GlassPanelProps> = ({
   actions,
   className = '',
   bodyClassName = 'p-4',
+  shimmer = false,
   ...props
 }) => {
   return (
     <div
-      className={`rounded-2xl bg-[#040E1E]/75 dark:bg-[#040E1E]/75 light:bg-white/85 backdrop-blur-2xl border border-cyan-500/25 dark:border-cyan-500/25 light:border-sky-300/60 shadow-[0_16px_40px_-10px_rgba(0,0,0,0.75),inset_0_1px_1.5px_0_rgba(255,255,255,0.25)] dark:shadow-[0_16px_40px_-10px_rgba(0,0,0,0.75),inset_0_1px_1.5px_0_rgba(255,255,255,0.25)] light:shadow-[0_10px_30px_-6px_rgba(15,23,42,0.08),inset_0_1px_1.5px_0_rgba(255,255,255,0.95)] flex flex-col relative overflow-hidden text-slate-200 dark:text-slate-200 light:text-slate-800 transition-all duration-300 ${className}`}
+      className={`rounded-2xl bg-[#040E1E]/70 dark:bg-[#040E1E]/70 light:bg-white/85 backdrop-blur-2xl border border-cyan-500/30 dark:border-cyan-500/30 light:border-sky-300/60 shadow-[0_16px_40px_-10px_rgba(0,0,0,0.75),0_0_20px_rgba(34,211,238,0.08),inset_0_1px_1.5px_0_rgba(255,255,255,0.28)] dark:shadow-[0_16px_40px_-10px_rgba(0,0,0,0.75),0_0_20px_rgba(34,211,238,0.08),inset_0_1px_1.5px_0_rgba(255,255,255,0.28)] light:shadow-[0_10px_30px_-6px_rgba(15,23,42,0.08),inset_0_1px_1.5px_0_rgba(255,255,255,0.95)] flex flex-col relative overflow-hidden text-slate-200 dark:text-slate-200 light:text-slate-800 transition-all duration-300 liquid-glass-3d ${
+        shimmer ? 'liquid-shimmer-effect' : ''
+      } ${className}`}
       {...props}
     >
       {/* Liquid Specular Top Sheen */}
       <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/40 dark:via-cyan-400/40 light:via-sky-400/50 to-transparent pointer-events-none z-10" />
 
       {/* Convex Ambient Flare */}
-      <div className="absolute top-0 left-0 w-44 h-24 bg-radial from-white/[0.08] dark:from-white/[0.08] light:from-white/[0.6] to-transparent pointer-events-none z-0" />
+      <div className="absolute top-0 left-0 w-44 h-24 bg-radial from-cyan-400/[0.1] dark:from-cyan-400/[0.1] light:from-white/[0.6] to-transparent pointer-events-none z-0" />
 
       {header && (
         <div className="px-4 py-3 border-b border-cyan-900/35 dark:border-cyan-900/35 light:border-slate-200/80 bg-[#020814]/60 dark:bg-[#020814]/60 light:bg-slate-50/80 backdrop-blur-md flex items-center justify-between gap-2 shrink-0 relative z-10">
@@ -190,13 +200,13 @@ export const GlassStat: React.FC<GlassStatProps> = ({
 
   return (
     <div
-      className={`rounded-2xl bg-[#040E1E]/75 dark:bg-[#040E1E]/75 light:bg-white/85 backdrop-blur-2xl border border-cyan-500/25 dark:border-cyan-500/25 light:border-sky-300/60 p-4 shadow-[0_16px_40px_-10px_rgba(0,0,0,0.7),inset_0_1px_1.5px_0_rgba(255,255,255,0.22)] dark:shadow-[0_16px_40px_-10px_rgba(0,0,0,0.7),inset_0_1px_1.5px_0_rgba(255,255,255,0.22)] light:shadow-[0_8px_24px_rgba(15,23,42,0.06),inset_0_1px_1.5px_0_rgba(255,255,255,0.95)] flex flex-col justify-between font-mono relative overflow-hidden transition-all duration-300 hover:border-cyan-400/50 dark:hover:border-cyan-400/50 light:hover:border-sky-400 hover:translate-y-[-1px] ${className}`}
+      className={`rounded-2xl bg-[#040E1E]/70 dark:bg-[#040E1E]/70 light:bg-white/85 backdrop-blur-2xl border border-cyan-500/30 dark:border-cyan-500/30 light:border-sky-300/60 p-4 shadow-[0_16px_40px_-10px_rgba(0,0,0,0.7),0_0_16px_rgba(34,211,238,0.08),inset_0_1px_1.5px_0_rgba(255,255,255,0.25)] dark:shadow-[0_16px_40px_-10px_rgba(0,0,0,0.7),0_0_16px_rgba(34,211,238,0.08),inset_0_1px_1.5px_0_rgba(255,255,255,0.25)] light:shadow-[0_8px_24px_rgba(15,23,42,0.06),inset_0_1px_1.5px_0_rgba(255,255,255,0.95)] flex flex-col justify-between font-mono relative overflow-hidden transition-all duration-300 liquid-glass-3d hover:border-cyan-400/60 dark:hover:border-cyan-400/60 light:hover:border-sky-400 hover:shadow-[0_0_24px_rgba(34,211,238,0.25)] ${className}`}
     >
       {/* Liquid Specular Top Sheen */}
-      <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/30 dark:via-cyan-400/30 light:via-sky-400/40 to-transparent pointer-events-none" />
+      <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/40 dark:via-cyan-400/40 light:via-sky-400/50 to-transparent pointer-events-none" />
 
       {/* Ambient Flare */}
-      <div className="absolute top-0 left-0 w-32 h-20 bg-radial from-white/[0.07] dark:from-white/[0.07] light:from-white/[0.5] to-transparent pointer-events-none" />
+      <div className="absolute top-0 left-0 w-32 h-20 bg-radial from-cyan-400/[0.1] dark:from-cyan-400/[0.1] light:from-white/[0.5] to-transparent pointer-events-none" />
 
       <div className="flex items-center justify-between mb-2 relative z-10">
         <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 dark:text-slate-400 light:text-slate-500 truncate">
