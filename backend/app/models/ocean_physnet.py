@@ -16,6 +16,7 @@ from ..sonar.ocean_phys_encoders import (
     MultipathTokenizer,
     OceanStateProjector
 )
+from ..sonar.beats_encoder import BEATsAcousticTransformerEncoder
 from ..sonar.physics_attention import (
     PhysicsBiasedCrossAttention,
     FourierNeuralOperatorPropagationBlock
@@ -25,6 +26,7 @@ from ..sonar.physics_attention import (
 class OCEANPhysNet(nn.Module):
     """
     OCEAN-PHYSNet Master Architecture:
+    - BEATs Acoustic Transformer Encoder: Self-supervised discrete acoustic tokenization
     - Ocean State Conditioning [T(z), S(z), P(z), c(z), alpha(f,z), H, B]
     - Complex Multi-Representation Hydrophone & AVS Encoders
     - Multipath Hypothesis Separation
@@ -37,12 +39,17 @@ class OCEANPhysNet(nn.Module):
     NUM_CLASSES = 4
     NUM_SUBCLASSES = 17
 
-    def __init__(self, d_model: int = 256, num_heads: int = 8, num_paths: int = 4):
+    def __init__(self, d_model: int = 256, num_heads: int = 8, num_paths: int = 4, use_beats: bool = True):
         super().__init__()
         self.d_model = d_model
+        self.use_beats = use_beats
 
-        # 1. Encoders
-        self.hydro_encoder = ComplexHydrophoneSpectralEncoder(d_model=d_model)
+        # 1. Encoders: BEATs Transformer Acoustic Encoder + AVS Spatial + Ocean Projector
+        if use_beats:
+            self.hydro_encoder = BEATsAcousticTransformerEncoder(d_model=d_model, num_heads=num_heads, num_layers=4)
+        else:
+            self.hydro_encoder = ComplexHydrophoneSpectralEncoder(d_model=d_model)
+
         self.avs_encoder = ComplexAVSSpatialEncoder(d_model=d_model)
         self.ocean_projector = OceanStateProjector(ocean_dim=16, d_model=d_model, num_tokens=4)
         self.multipath_tokenizer = MultipathTokenizer(d_model=d_model, num_paths=num_paths)
@@ -101,7 +108,12 @@ class OCEANPhysNet(nn.Module):
         B = x_hydro.shape[0]
 
         # 1. Multi-Branch Encoders
-        hydro_tokens = self.hydro_encoder(x_hydro) # (B, T_h, d_model)
+        if self.use_beats:
+            hydro_tokens, beats_cls = self.hydro_encoder(x_hydro) # (B, T_h, d_model), (B, d_model)
+        else:
+            hydro_tokens = self.hydro_encoder(x_hydro) # (B, T_h, d_model)
+            beats_cls = None
+
         avs_tokens, intensity_3d = self.avs_encoder(avs_4ch) # (B, T_a, d_model), (B, 3)
         ocean_tokens = self.ocean_projector(ocean_state) # (B, 4, d_model)
 
@@ -168,6 +180,8 @@ class OCEANPhysNet(nn.Module):
             "helmholtz_residual": helmholtz_res,
             "mahalanobis_ood_distance": mahalanobis_dist,
             "is_novel_event": is_novel_event,
+            "beats_cls_embedding": beats_cls,
+            "pressure_field": p_field,
             "attention_weights": attn_weights,
             "multipath_weights": path_weights,
             "latent_embedding": latent_z

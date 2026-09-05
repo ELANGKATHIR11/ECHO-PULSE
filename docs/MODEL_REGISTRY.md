@@ -9,7 +9,7 @@
 
 | ID | Model Identifier | Role / Description | Status | Architecture | Input / Output Schema | Checkpoint |
 |---|---|---|---|---|---|---|
-| **1** | `OCEAN-PHYSNet-X` | Physics-aware multimodal fusion | `ACTIVE` | FNO Helmholtz + Cross-Attention + Fourier Encoders | In: Hydro (1,L), AVS (4,L), Ocean State (16)<br>Out: Class (4), Subclass (17), DOA (Az/El), Range, OOD | `models_checkpoints/ocean_physnet_best.pt` |
+| **1** | `OCEAN-PHYSNet-X` | Physics-aware multimodal fusion | `ACTIVE` | BEATs Transformer Acoustic Encoder + FNO Helmholtz + Cross-Attention | In: Hydro (1,L), AVS (4,L), Ocean State (16)<br>Out: Class (4), Subclass (17), DOA (Az/El), Range, OOD, BEATs Embedding | `models_checkpoints/ocean_physnet_best.pt` |
 | **2** | `EchoPhys-Lite-X` | Adaptive low-latency edge inference | `ACTIVE` | 3-Ch Specular/Shadow Decomposition + BiMamba-Lite (780K params) | In: Sonar Image (3,H,W)<br>Out: 8-Class Bounding Boxes, Segmentation, Height Profile | `models_checkpoints/echophys_lite_best.pt` |
 | **3** | `EchoPhys-OmniNet-X` | Reliability / physics-gated multimodal fusion | `ACTIVE` | Bilateral Wave-Equation State-Space (CAW-SSM) | In: 8-Ch Acoustic Physics Tensor (8,H,W)<br>Out: 8-Class Segmentation, Volumetric Strata, Anomaly | `models_checkpoints/hydrophys_omninet_extreme_best.pt` |
 | **4** | `EchoPhys-Omni-3D-X` | 4D underwater state / localization | `ACTIVE` | 1D Strata Wavelet + 2D ProtoMask + 3D Volumetric Voxel Projector | In: Sub-bottom Ping (1024) + SSS (1,H,W)<br>Out: 4D Spatiotemporal Geotag, Volumetric Voxels, Height | `models_checkpoints/echophys_x_v3_unified_best.pt` |
