@@ -1,34 +1,49 @@
 {
-  "timestamp": "2026-09-05T11:38:05Z",
+  "timestamp": "2026-09-05T11:46:09Z",
   "device_used": "cuda:0",
   "gpu_name": "NVIDIA GeForce RTX 5060 Laptop GPU",
   "npu_status": "Intel(R) AI Boost",
   "final_system_health": {
-    "ram_percent": 86.6,
-    "ram_avail_gb": 2.06,
-    "cpu_percent": 6.3,
+    "ram_percent": 73.7,
+    "ram_avail_gb": 4.05,
+    "cpu_percent": 22.8,
     "vram_alloc_gb": 0.02
+  },
+  "datasets_used": {
+    "hydrophone_audio_files": 766,
+    "avs_vector_packets": 120,
+    "sonar_debris_images": 2500
   },
   "models_trained": [
     {
       "model": "Acoustic-Triage-Transformer-X",
-      "loss": 2.498133579889933,
-      "time_sec": 1.29
+      "loss": 1.4557666854655489,
+      "time_sec": 2.48,
+      "samples": 766
     },
     {
       "model": "AVS-GeoPhysics-X",
-      "loss": 0.9977460006872813,
-      "time_sec": 0.78
+      "loss": 1.3973443061113358,
+      "time_sec": 0.75,
+      "samples": 120
     },
     {
       "model": "EchoPhys-Lite-X",
-      "loss": 2.0989990234375,
-      "time_sec": 4.44
+      "loss": 1.8527337098732972,
+      "time_sec": 40.33,
+      "samples": 2500
+    },
+    {
+      "model": "HydroPhys-OmniNet-X",
+      "loss": 2.0178195571899415,
+      "time_sec": 14.89,
+      "samples": 2500
     },
     {
       "model": "OCEAN-PHYSNet-X",
-      "loss": 0.6105245083570481,
-      "time_sec": 6.21
+      "loss": 0.5527899205684662,
+      "time_sec": 3.57,
+      "samples": 766
     }
   ]
 }
