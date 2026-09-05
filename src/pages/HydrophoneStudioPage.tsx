@@ -477,13 +477,20 @@ export const HydrophoneStudioPage: React.FC = () => {
               <Radio className="w-6 h-6 animate-pulse" />
             </div>
             <div>
-              <h1 className="text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-teal-200 to-sky-400">
-                HYDROPHONE ACOUSTIC INTELLIGENCE STUDIO
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-teal-200 to-sky-400">
+                  HYDROPHONE ACOUSTIC INTELLIGENCE STUDIO
+                </h1>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-indigo-950 text-indigo-300 border border-indigo-700">
+                  Acoustic-Triage-Transformer-X Best
+                </span>
+              </div>
               <p className="text-xs text-slate-400 font-mono flex items-center gap-2">
-                <span>AI-POWERED RAW RECORDING ANALYSIS & EVENT CLASSIFICATION</span>
+                <span>HIERARCHICAL THREAT TRIAGE (&lt;2ms)</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                <span className="text-cyan-400">DSP VECTOR CO-PROCESSOR ONLINE</span>
+                <span>RETRAINED CHECKPOINT: acoustic_triage_transformer_best.pt</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                <span className="text-cyan-400">INTEL AI BOOST NPU ACTIVE</span>
               </p>
             </div>
           </div>

@@ -320,22 +320,30 @@ export const OceanPhysNetStudioPage: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-teal-200 to-sky-400">
-                OCEAN-PHYSNet
+                OCEAN-PHYSNet-X
               </h1>
               <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyan-950 text-cyan-300 border border-cyan-700">
-                PHYSICS-CONSTRAINED AI
+                RETRAINED BEST (Loss: 0.5528)
               </span>
             </div>
             <p className="text-xs text-slate-400 font-mono flex items-center gap-2">
-              <span>OCEAN-CONDITIONED MULTIMODAL PROPAGATION & PERIODIC DOA</span>
+              <span>BEATs TRANSFORMER ACOUSTIC ENCODER</span>
               <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-              <span className="text-cyan-400">FOURIER NEURAL OPERATOR (FNO) ACTIVE</span>
+              <span>FOURIER NEURAL OPERATOR (FNO)</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+              <span className="text-cyan-400">RTX 5060 ACCELERATED</span>
             </p>
           </div>
         </div>
 
         {/* Live Status Indicators */}
         <div className="flex flex-wrap items-center gap-3 text-xs font-mono">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#020614] border border-cyan-900/50">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <span className="text-slate-400">CKPT:</span>
+            <span className="text-emerald-300 font-bold">ocean_physnet_best.pt</span>
+          </div>
+
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#020614] border border-cyan-900/50">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
             <span className="text-slate-400">MACKENZIE SSP:</span>

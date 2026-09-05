@@ -96,9 +96,9 @@ class AcousticRetrainingService:
                 "Geophonic (Hydrothermal, Seismic, Sea Rain, Ice Calving)",
                 "Tactical Intruder (AUVs, UUVs, USVs, DPV Divers, Torpedoes)"
             ],
-            "active_model_checkpoint": "echophys_x_marine_v3.pt",
-            "last_retrained": "2026-09-01T17:16:00Z",
-            "model_architecture": "EchoPhys-X Marine Audio Spectrogram Transformer (AST) + Continuous Wave BiMamba"
+            "active_model_checkpoint": "acoustic_triage_transformer_best.pt",
+            "last_retrained": "2026-09-05T11:46:09Z",
+            "model_architecture": "Acoustic-Triage-Transformer-X + OCEAN-PHYSNet-X (BEATs Transformer + FNO Helmholtz)"
         }
 
     def add_annotation(self, sample_data: Dict[str, Any]) -> Dict[str, Any]:

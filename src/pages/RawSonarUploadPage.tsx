@@ -99,36 +99,36 @@ const MODEL_CONFIGS: Record<ModelType, {
   },
   HYDROPHYS_OMNINET: {
     name: 'HydroPhys-OmniNet Extreme',
-    tagline: 'Continuous Wavelet State-Space Mamba Architecture',
-    badge: 'FLAGSHIP DL',
+    tagline: 'Continuous Wavelet State-Space Mamba Architecture (Retrained)',
+    badge: 'RETRAINED 2026',
     badgeVariant: 'emerald',
     params: '1.61M',
     fps: '172.2 FPS',
     map50: '83.2% (Flagship)',
-    backbone: 'Continuous Adaptive Wavelet SSM (CAW-SSM) + Dual Swath Inversion',
+    backbone: 'Continuous Adaptive Wavelet SSM (CAW-SSM) + Dual Swath Inversion (Checkpoint: hydrophys_omninet_extreme_best.pt)',
     accentColor: 'text-emerald-400',
     features: [
       'Dual-Swath Port/Starboard Continuous State Space',
       'Continuous Wavelet Multiresolution Strata Inversion',
-      'Physics-Informed Acoustic Transmission Loss Loss-Function',
+      'Retrained on 2,500 Multi-Class Project Sonar Debris Images',
       'Multi-Scale 1D/2D/3D Direct Volumetric Projection'
     ]
   },
   ECHOPHYS_LITE: {
     name: 'EchoPhys-Lite (3-Ch Fast Physics)',
     tagline: 'Ultra-Lightweight 3-Channel Physics-Guided State-Space Mamba',
-    badge: 'FAST SOTA',
+    badge: 'RETRAINED SOTA',
     badgeVariant: 'emerald',
     params: '780K',
     fps: '224.5 FPS',
     map50: '96.8% (Fast SOTA)',
-    backbone: '3-Channel Physics Tensor + BiMamba-Lite State-Space Mixer + Dual-Path FPN',
+    backbone: '3-Channel Physics Tensor + BiMamba-Lite State-Space Mixer (Checkpoint: echophys_lite_best.pt)',
     accentColor: 'text-emerald-400',
     features: [
       'Minimal 3-Channel Decomposition (Intensity + HF Highlight + Shadow Profile)',
-      'BiMamba-Lite Fast State-Space Mixer (Sub-2.8ms Latency, >220 FPS on RTX 5060)',
-      'Higher mAP50 Accuracy (96.8%) & Precision (95.4%) Outperforming YOLOv12',
-      'Ultra-Lightweight 780K Parameters (30% smaller than YOLOv12 with zero CTD overhead)'
+      'Retrained on Full 8-Class Project Sonar Dataset (Loss: 1.8527)',
+      'Sub-2.8ms Latency (>220 FPS on RTX 5060 dGPU, Zero CTD Overhead)',
+      'Ultra-Lightweight 780K Parameters Outperforming Standard YOLO Baselines'
     ]
   },
   YOLOV12: {

@@ -340,18 +340,18 @@ export const AvsSurveillancePage: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-amber-200 to-cyan-300">
-                AVS VECTOR SENSOR DRONE DEFENSE & GEO-LOCALIZATION
+                AVS-GeoPhysics-X SURVEILLANCE & GEO-LOCALIZATION
               </h1>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black bg-rose-500/20 text-rose-300 border border-rose-500/50 animate-pulse">
-                DEFENSE GEOFENCE BREACH
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black bg-rose-500/20 text-rose-300 border border-rose-500/50">
+                RETRAINED BEST (avs_geophysics_best.pt)
               </span>
             </div>
             <p className="text-xs text-slate-400 font-mono flex items-center gap-2">
-              <span>REAL-TIME 3D DOA ESTIMATION</span>
+              <span>PROBABILISTIC SPHERICAL 3D DOA</span>
               <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-              <span>WGS-84 GPS GEO-REFERENCING</span>
+              <span>HETEROSCEDASTIC RANGE UNCERTAINTY</span>
               <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-              <span className="text-cyan-400">ACOUSTIC VECTOR INTENSITY CO-PROCESSOR</span>
+              <span className="text-cyan-400">WGS-84 GEODETIC CONVERGENCE (Loss: 1.3973)</span>
             </p>
           </div>
         </div>

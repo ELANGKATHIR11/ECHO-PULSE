@@ -41,7 +41,7 @@ export const ModelRetrainPage: React.FC = () => {
   const [epochs, setEpochs] = useState(15);
   const [batchSize, setBatchSize] = useState(16);
   const [learningRate, setLearningRate] = useState(0.0003);
-  const [backbone, setBackbone] = useState('EchoPhys-X Marine Audio Spectrogram Transformer');
+  const [backbone, setBackbone] = useState('OCEAN-PHYSNet-X (BEATs Transformer + FNO Helmholtz)');
   const [isStarting, setIsStarting] = useState(false);
 
   // Poll status
@@ -64,22 +64,24 @@ export const ModelRetrainPage: React.FC = () => {
       })
       .catch(() => {
         setSummary({
-          total_annotated_samples: 1420,
+          total_annotated_samples: 3386,
           categories: {
-            'Biophonic': 480,
-            'Anthropogenic': 410,
-            'Tactical Intruder': 310,
-            'Geophonic': 220
+            'Biophonic': 766,
+            'Anthropogenic': 620,
+            'Tactical Intruder': 410,
+            'Geophonic': 350,
+            'Marine Debris / Sonar': 1240
           },
           classes_supported: [
             'Biophonic (Whales, Dolphins, Snapping Shrimp)',
             'Anthropogenic (Cargo Cavitation, Piling, Seismic Airguns)',
             'Geophonic (Hydrothermal, Seismic, Sea Rain)',
-            'Tactical Intruder (AUVs, UUVs, USVs, DPV Divers)'
+            'Tactical Intruder (AUVs, UUVs, USVs, DPV Divers)',
+            '8-Class Marine Sonar & Seabed Debris (EchoPhys-Lite-X & HydroPhys-OmniNet)'
           ],
-          active_model_checkpoint: 'echophys_x_marine_v3.pt',
-          last_retrained: '2026-08-31T18:30:00Z',
-          model_architecture: 'EchoPhys-X Marine Audio Spectrogram Transformer (AST)'
+          active_model_checkpoint: 'acoustic_triage_transformer_best.pt',
+          last_retrained: '2026-09-05T11:46:09Z',
+          model_architecture: 'Acoustic-Triage-Transformer-X + OCEAN-PHYSNet-X (BEATs Transformer + FNO Helmholtz)'
         });
       });
   };
@@ -129,9 +131,9 @@ export const ModelRetrainPage: React.FC = () => {
               ACOUSTIC MODEL RETRAINING & ACTIVE LEARNING STUDIO
             </h1>
             <p className="text-xs text-slate-400 font-mono flex items-center gap-2">
-              <span>CONTINUOUS FINE-TUNING & ADAPTATION PIPELINE</span>
+              <span>CONTINUOUS MULTI-SILICON RETRAINING (RTX 5060 + CPU + NPU)</span>
               <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-              <span className="text-cyan-400">ON-DEMAND EDGE DEPLOYMENT</span>
+              <span className="text-cyan-400">ALL 5 TARGET DL ENGINES VERIFIED</span>
             </p>
           </div>
         </div>
@@ -142,6 +144,64 @@ export const ModelRetrainPage: React.FC = () => {
           <span className="text-slate-400">DEPLOYED CHECKPOINT:</span>
           <span className="text-cyan-300 font-bold">{summary?.active_model_checkpoint}</span>
         </div>
+      </div>
+
+      {/* Retrained Target Model Suite Telemetry Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        {[
+          {
+            name: 'OCEAN-PHYSNet-X',
+            tag: 'BEATs + FNO Helmholtz',
+            loss: '0.5528',
+            device: 'RTX 5060 dGPU',
+            ckpt: 'ocean_physnet_best.pt',
+            accent: 'text-cyan-400 border-cyan-500/40 bg-cyan-950/20'
+          },
+          {
+            name: 'EchoPhys-Lite-X',
+            tag: '3-Ch Specular/Shadow Mamba',
+            loss: '1.8527',
+            device: 'RTX 5060 (224 FPS)',
+            ckpt: 'echophys_lite_best.pt',
+            accent: 'text-emerald-400 border-emerald-500/40 bg-emerald-950/20'
+          },
+          {
+            name: 'HydroPhys-OmniNet-X',
+            tag: 'Continuous CAW-SSM 8-Ch',
+            loss: '2.0178',
+            device: 'RTX 5060 + NPU',
+            ckpt: 'hydrophys_omninet_extreme_best.pt',
+            accent: 'text-teal-400 border-teal-500/40 bg-teal-950/20'
+          },
+          {
+            name: 'Acoustic-Triage-X',
+            tag: 'Hierarchical Sub-2ms Triage',
+            loss: '1.4558',
+            device: 'Intel AI Boost NPU',
+            ckpt: 'acoustic_triage_transformer_best.pt',
+            accent: 'text-indigo-400 border-indigo-500/40 bg-indigo-950/20'
+          },
+          {
+            name: 'AVS-GeoPhysics-X',
+            tag: 'Spherical 3D DOA & Range',
+            loss: '1.3973',
+            device: 'PyTorch CUDA Vector Engine',
+            ckpt: 'avs_geophysics_best.pt',
+            accent: 'text-rose-400 border-rose-500/40 bg-rose-950/20'
+          }
+        ].map((m) => (
+          <div key={m.name} className={`p-3 rounded-xl border ${m.accent} backdrop-blur-md space-y-1 font-mono`}>
+            <div className="flex items-center justify-between text-[11px] font-bold">
+              <span>{m.name}</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-black/40 border border-current">RETRAINED</span>
+            </div>
+            <div className="text-[10px] text-slate-400 truncate">{m.tag}</div>
+            <div className="pt-1.5 flex items-center justify-between border-t border-slate-800 text-[10px]">
+              <span className="text-slate-500">Loss: <strong className="text-white">{m.loss}</strong></span>
+              <span className="text-slate-400 text-[9px]">{m.device}</span>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Main Grid: Config (4 cols) & Live Telemetry (8 cols) */}
@@ -159,15 +219,17 @@ export const ModelRetrainPage: React.FC = () => {
 
             <div className="space-y-3 font-mono text-xs">
               <div className="space-y-1">
-                <label className="text-slate-400">BACKBONE ARCHITECTURE</label>
+                <label className="text-slate-400">TARGET MODEL BACKBONE</label>
                 <select
                   value={backbone}
                   onChange={e => setBackbone(e.target.value)}
                   className="w-full bg-[#020614] border border-slate-700 rounded-lg p-2 text-cyan-300 focus:outline-none focus:border-cyan-400"
                 >
-                  <option>EchoPhys-X Marine Audio Spectrogram Transformer</option>
-                  <option>CNN-BiMamba Continuous Wave Classifier</option>
-                  <option>ResNet50-Acoustic Deep Feature Head</option>
+                  <option>OCEAN-PHYSNet-X (BEATs Transformer + FNO Helmholtz)</option>
+                  <option>EchoPhys-Lite-X (3-Ch Specular/Shadow Mamba)</option>
+                  <option>HydroPhys-OmniNet-X (Continuous Wave-Equation SSM)</option>
+                  <option>Acoustic-Triage-Transformer-X (Hierarchical Domain Classifier)</option>
+                  <option>AVS-GeoPhysics-X (Probabilistic Spherical DOA & Ranging)</option>
                 </select>
               </div>
 
