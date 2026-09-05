@@ -8,6 +8,7 @@
  */
 
 import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { spawn, exec } from 'child_process';
@@ -55,11 +56,17 @@ function ensurePostgres() {
 function startBackend() {
   console.log('[EchoPulseNet Desktop] Launching Unified AI & Web Server on port 8000...');
   
-  const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
+  let pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
+  if (process.platform === 'win32') {
+    const condaPython = 'C:\\Users\\elang\\miniconda3\\envs\\dgpu-core\\python.exe';
+    if (fs.existsSync(condaPython)) {
+      pythonCmd = condaPython;
+    }
+  }
   
   backendProcess = spawn(pythonCmd, ['-m', 'uvicorn', 'app.main:app', '--host', '127.0.0.1', '--port', String(SERVER_PORT)], {
     cwd: path.join(__dirname, 'backend'),
-    env: { ...process.env, PYTHONUNBUFFERED: '1', OPENBLAS_NUM_THREADS: '1', OMP_NUM_THREADS: '1' },
+    env: { ...process.env, PYTHONUNBUFFERED: '1', OPENBLAS_NUM_THREADS: '4', OMP_NUM_THREADS: '4' },
     stdio: 'inherit'
   });
 
