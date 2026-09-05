@@ -2,7 +2,7 @@
   "name": "echopulsenet-marine-sonar-platform",
   "private": true,
   "version": "2.6.0",
-  "description": "EchoPulseNet: Native Edge Deep Ocean Sonar Intelligence & Real-Time Acoustic Inference Platform",
+  "description": "EchoPulseNet: Unified Underwater Acoustic, Acoustic Vector Sensor (AVS), and Side-Scan Sonar (SSS) Intelligence Platform with BEATs Transformer & Physics Core",
   "main": "electron_main.js",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",

@@ -1,14 +1,15 @@
-# 🌊 EchoPulseNet: Deep Ocean Sonar Intelligence & Defense-Grade Marine Digital Twin Platform
+# 🌊 EchoPulseNet: Unified Underwater Acoustic, AVS & Sonar Intelligence Platform
 
 [![Platform](https://img.shields.io/badge/Platform-Native_Edge_AI-06b6d4?style=for-the-badge&logo=nvidia)](https://github.com/ELANGKATHIR11/ECHO-PULSE)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.11+cu128-EE4C2C?style=for-the-badge&logo=pytorch)](https://pytorch.org/)
-[![Model](https://img.shields.io/badge/Model-HydroPhys--OmniNet_v4-38bdf8?style=for-the-badge)](https://github.com/ELANGKATHIR11/ECHO-PULSE)
+[![BEATs](https://img.shields.io/badge/Transformer-BEATs_Acoustic_Encoder-8b5cf6?style=for-the-badge)](https://github.com/ELANGKATHIR11/ECHO-PULSE)
+[![Models](https://img.shields.io/badge/Models-7_Target_Physics_Suite-38bdf8?style=for-the-badge)](docs/MODEL_REGISTRY.md)
 [![Frontend](https://img.shields.io/badge/Frontend-React_19_|_Three.js-61DAFB?style=for-the-badge&logo=react)](https://react.dev/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![PostGIS](https://img.shields.io/badge/PostGIS-3.4_Spatial_DB-336791?style=for-the-badge&logo=postgresql)](https://postgis.net/)
 [![License](https://img.shields.io/badge/License-GPLv3_|_Proprietary_Models-blue?style=for-the-badge)](LICENSE)
 
-**EchoPulseNet** is an offline-capable, 100% native edge marine intelligence system designed for real-time acoustic target detection, autonomous underwater vehicle (AUV/ROV) hydrographic surveys, interactive 3D bathymetric Digital Twin visualization, system GPS & IR distance sensor fusion, and active learning annotation.
+**EchoPulseNet** is an offline-capable, 100% native edge marine intelligence platform designed for real-time acoustic target detection, Acoustic Vector Sensor (AVS) spherical DOA localization, hydrophone soundscape classification via BEATs transformer encoders, side-scan sonar (SSS) shadow height inversion, interactive 3D bathymetric Digital Twin visualization, and PostGIS geofencing.
 
 Built for **Smart India Hackathon (SIH 2026)** under Problem Statement **ID: 26057** (*AI-Powered Automated Underwater Marine Debris and Anomaly Detection System using Side-Scan Sonar Imagery*) for the **Ministry of Earth Sciences (MoES) / National Institute of Ocean Technology (NIOT)**.
 
@@ -18,51 +19,71 @@ Built for **Smart India Hackathon (SIH 2026)** under Problem Statement **ID: 260
 
 ```mermaid
 graph TD
-    %% 1. Marine & Optical Sensor Ingestion Layer
-    subgraph SENSOR_INGESTION["1. Marine & Optical Sensor Ingestion"]
-        RawSonar["Acoustic Sonar Files (.XTF / .JSF / .SL2 / .DAT)"]
-        WebcamFeed["Live Optical Environmental Camera Stream"]
-        HardwareGps["System WGS84 GPS Telemetry + Gyro Heading"]
-        HardwareIR["Hardware IR / ToF Distance Calibrator"]
+    %% 1. Multimodal Marine Sensor Ingestion
+    subgraph INGESTION["1. Multimodal Marine Sensor Ingestion"]
+        RawSonar["Side-Scan Sonar (.XTF / .JSF / .SL2 / Imagery)"]
+        HydroAudio["Hydrophone Acoustic Stream (WAV / Pings)"]
+        AVSArray["4-Channel Acoustic Vector Sensor (P, Ux, Uy, Uz)"]
+        TelemetryGPS["Vessel / Towfish Telemetry (WGS-84, Depth, SSP)"]
     end
 
-    %% 2. Hydrographic Digital Signal Processing (DSP)
-    subgraph EDGE_DSP["2. Hydrographic Digital Signal Processing (DSP)"]
-        BLD["Bottom-Line Detection\n(BLD) & Water-Column\nRemoval"]
-        SRC["Slant-Range to Ground-\nRange Geometric Transform"]
-        FFT["2D-FFT Notch De-striping\n& Empirical Gain\nNormalization (EGN)"]
+    %% 2. Physics Core & DSP Preprocessing
+    subgraph PHYSICS_CORE["2. Seawater Physics Core & DSP"]
+        SSP["Mackenzie Sound Speed Profile c(z) & Francois-Garrison alpha(f)"]
+        BLD["Bottom-Line Detection & Slant-to-Ground Transform"]
+        ActiveIntensity["Active Intensity I = 1/2 Re{p* v} & Multipath Modeling"]
+        AdaptiveLoss["Adaptive Physics Loss: lambda_phys = sigma(f(conf, disagree))"]
         
-        BLD --> SRC
-        SRC --> FFT
+        TelemetryGPS --> SSP
+        RawSonar --> BLD
+        AVSArray --> ActiveIntensity
     end
 
-    %% 3. Deep Learning Inference Core (Proprietary Models)
-    subgraph AI_CORE["3. Deep Learning Inference Core (Proprietary Models)"]
-        EchoPhys["EchoPhys-X (Dual-Head U-\nNet Shadow & Seabed\nAutoencoder)"]
-        HydroPhys["HydroPhys-OmniNet v4\n(Attention-Centric\nYOLOv12 Detector)"]
-        MultiFusion["Homoscedastic Multi-Task\nUncertainty Loss & Fusion"]
-        SensorFusion["Sensor Fusion & 3D Optical\nRay Triangulation Engine"]
+    %% 3. Target Model Family (Unified 7-Model Suite)
+    subgraph MODEL_FAMILY["3. Unified Target Model Family"]
+        BEATs["BEATs Transformer Acoustic Encoder\n(Discrete Tokenizer + Pre-LN ViT)"]
+        OceanPhys["1. OCEAN-PHYSNet-X\n(FNO Helmholtz + Cross-Attention)"]
+        EchoLite["2. EchoPhys-Lite-X\n(3-Ch Specular/Shadow BiMamba)"]
+        EchoOmni["3. EchoPhys-OmniNet-X\n(Bilateral Wave-Equation CAW-SSM)"]
+        Echo3D["4. EchoPhys-Omni-3D-X\n(1D Strata + 2D Mask + 3D Bounding Box)"]
+        HydroOmni["5. HydroPhys-OmniNet-X\n(Propagation-Aware Soundscape)"]
+        Triage["6. Acoustic-Triage-Transformer-X\n(Fast Hierarchical Triage <2ms)"]
+        AVSGeo["7. AVS-GeoPhysics-X\n(Probabilistic Spherical DOA + WGS-84)"]
         
-        EchoPhys --> MultiFusion
-        HydroPhys --> MultiFusion
+        HydroAudio --> BEATs
+        BEATs --> OceanPhys
+        HydroAudio --> Triage
+        ActiveIntensity --> AVSGeo
+        BLD --> EchoLite
+        BLD --> EchoOmni
+        BLD --> Echo3D
+        SSP --> OceanPhys
+        SSP --> HydroOmni
     end
 
-    %% 4. Spatial Geospatial Intelligence Database
-    subgraph POSTGIS_DB["4. Spatial Geospatial Intelligence Database"]
-        PostGIS["PostgreSQL 16 / PostGIS\n(Encrypted Connection)"]
-        GeoJSON["Spatial Hazard Matrix &\nCoastal Geofencing"]
+    %% 4. Spatial Database & Decision Engine
+    subgraph DECISION_LAYER["4. Spatial Intelligence & Geofencing"]
+        PostGIS["PostgreSQL 18 / PostGIS Spatial Database"]
+        HazardMatrix["MPA Coastal Geofencing & Debris Scoring"]
         
-        PostGIS --> GeoJSON
+        OceanPhys --> PostGIS
+        EchoLite --> PostGIS
+        AVSGeo --> PostGIS
+        PostGIS --> HazardMatrix
     end
 
-    %% 5. Interactive Mission Control HUD & Digital Twin
-    subgraph MISSION_CONTROL["5. Interactive Mission Control HUD & Digital Twin"]
-        HITL["Active Learning & Local\nGPU Retrain Studio"]
-        CommandCenter["Defense Command Center\nHUD (4-Quadrant)"]
-        Waterfall["60 FPS Cascading Sonar\nWaterfall & Calipers"]
-        WebcamHUD["Webcam Real-Time 3D\nMulti-Object Projector"]
-        Twin3D["3D Bathymetric Subsea\nDigital Twin Mesh (Three.js)"]
+    %% 5. Ocean-Blue Translucent Liquid Glass Workstation
+    subgraph UI_WORKSTATION["5. Interactive 3D Digital Twin Workstation"]
+        Twin3D["Three.js 3D Acoustic Ray & Bathymetric Twin"]
+        DOACompass["3D Spherical DOA Vector & Uncertainty Ellipse"]
+        Waterfall["Cascading Sonar Waterfall & Calipers"]
+        CommandHUD["4-Quadrant Defense Command Center HUD"]
     end
+
+    HazardMatrix --> CommandHUD
+    AVSGeo --> DOACompass
+    Echo3D --> Twin3D
+```
 
     %% Cross-Subgraph Dataflow Links
     RawSonar --> BLD
